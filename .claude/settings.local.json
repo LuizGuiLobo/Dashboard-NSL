@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh auth:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(where npx:*)",
+      "Bash(node -e \"console.log\\(require.resolve\\(''''npm/bin/npx-cli.js''''\\)\\)\")",
+      "Read(//c/Program Files/nodejs/node_modules/**)",
+      "Bash(npm root:*)",
+      "Bash(npm list:*)"
+    ]
+  }
+}

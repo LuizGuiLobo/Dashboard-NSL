@@ -1,0 +1,8 @@
+.env
+.env.local
+.vercel/
+.DS_Store
+Thumbs.db
+.vscode/settings.json
+*.log
+node_modules/

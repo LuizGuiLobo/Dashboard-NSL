@@ -1,0 +1,31 @@
+<!-- ══════════════════════════════════════════════
+     SEÇÃO: DASHBOARD
+     Claude Code: claude src/html/sections/dashboard.html
+══════════════════════════════════════════════ -->
+
+<section id="dashboard" class="section active">
+  <h2 class="sec-title">Dashboard Geral</h2>
+  <div class="grid-4">
+    <div class="card kpi-y"><div class="card-label">OS em Aberto</div><div class="card-value" id="kpi-abertas">—</div><div class="card-sub">em andamento</div></div>
+    <div class="card kpi-r"><div class="card-label">Aguard. Aprovação</div><div class="card-value" id="kpi-aprovacao">—</div><div class="card-sub">Meta: máx 3</div></div>
+    <div class="card kpi-g"><div class="card-label">Prontas</div><div class="card-value" id="kpi-prontas">—</div><div class="card-sub">p/ retirada</div></div>
+    <div class="card kpi-b"><div class="card-label">Total no Sistema</div><div class="card-value" id="kpi-total">—</div><div class="card-sub">todas as OS</div></div>
+  </div>
+  <div class="grid-2">
+    <div class="card"><div class="block-title">OS por Setor</div><div id="dash-setores"><div style="color:var(--muted);font-size:13px">Carregando...</div></div></div>
+    <div class="card"><div class="block-title">Alertas</div><div id="dash-alertas"><div style="color:var(--muted);font-size:13px">Carregando...</div></div></div>
+  </div>
+  <div class="card">
+    <div class="block-title">Todas as OS</div>
+    <div style="margin-bottom:12px;display:flex;gap:10px;flex-wrap:wrap">
+      <input class="inp" id="dash-search" placeholder="🔍 Buscar por qualquer campo..." oninput="renderDashTable()" style="flex:1;min-width:200px">
+      <select class="inp" id="dash-filtro" onchange="renderDashTable()" style="width:auto">
+        <option value="">Todos os status</option>
+      </select>
+      <button class="btn btn-primary" onclick="abrirModal()">+ Nova OS</button>
+    </div>
+    <div style="overflow-x:auto"><table><thead id="dash-thead"></thead><tbody id="dash-tbody"><tr><td colspan="10" style="text-align:center;color:var(--muted);padding:28px"><span class="spinner"></span>Carregando OS...</td></tr></tbody></table></div>
+  </div>
+</section>
+
+<!-- KANBAN -->
