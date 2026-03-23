@@ -2,16 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "Static Server (serve)",
+      "name": "nsl-dev",
       "runtimeExecutable": "node",
-      "runtimeArgs": [".claude/serve.js"],
-      "port": 3000
-    },
-    {
-      "name": "Static Server (Python)",
-      "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8080"],
-      "port": 8080
+      "runtimeArgs": ["node_modules/vite/bin/vite.js", "--port", "5173"],
+      "port": 5173
     }
   ]
 }
