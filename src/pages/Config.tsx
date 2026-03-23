@@ -1,51 +1,57 @@
-import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { GripVertical, Plus, Trash2, Columns3, FormInput, Users } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { GripVertical, Plus, Trash2, Columns3, FormInput, Users, Copy, AlertTriangle } from 'lucide-react'
 import { PageTransition } from '@/components/layout/PageTransition'
+import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/Toast'
 import { staggerContainer, staggerItem } from '@/hooks/useAnimations'
-import { SETORES } from '@/lib/constants'
+import { SETORES, corDoSetor } from '@/lib/constants'
 import type { EtapaKanban, CampoConfig, Operador, OrdemServico } from '@/types'
 
 const CORES_ETAPA = ['#3b82f6', '#f59e0b', '#ef4444', '#10b981', '#8b5cf6', '#64748b', '#ec4899', '#06b6d4', '#f97316', '#84cc16']
 
 interface ConfigProps {
-  etapas: EtapaKanban[]
+  todasEtapas: EtapaKanban[]
+  etapasDoSetor: (setor: string) => EtapaKanban[]
   campos: CampoConfig[]
   operadores: Operador[]
   ordens: OrdemServico[]
-  onSalvarEtapas: (e: Omit<EtapaKanban, 'id'>[]) => Promise<void>
+  onSalvarEtapasSetor: (setor: string, e: Omit<EtapaKanban, 'id'>[]) => Promise<void>
   onSalvarCampos: (c: Omit<CampoConfig, 'id'>[]) => Promise<void>
   onSalvarOperadores: (o: Omit<Operador, 'id' | 'criado_em'>[]) => Promise<void>
 }
 
-export function Config({ etapas, campos, operadores, ordens, onSalvarEtapas, onSalvarCampos, onSalvarOperadores }: ConfigProps) {
+export function Config({ todasEtapas, etapasDoSetor, campos, operadores, ordens, onSalvarEtapasSetor, onSalvarCampos, onSalvarOperadores }: ConfigProps) {
   const [aba, setAba] = useState<'etapas' | 'campos' | 'operadores'>('etapas')
   const { toast } = useToast()
 
-  // Etapas
-  const [etapasTemp, setEtapasTemp] = useState<Array<{ label: string; cor: string; ordem: number; etapa_id: string }>>([])
+  // ==================== ETAPAS ====================
+  const [setorEtapas, setSetorEtapas] = useState(SETORES[0].nome)
+  const [etapasTemp, setEtapasTemp] = useState<Array<{ label: string; cor: string; ordem: number; etapa_id: string; setor: string }>>([])
   const [savingEtapas, setSavingEtapas] = useState(false)
+  const [modalCopiar, setModalCopiar] = useState(false)
 
+  // Load etapas when setor changes
   useEffect(() => {
-    setEtapasTemp(etapas.map((e, i) => ({ label: e.label, cor: e.cor, ordem: i + 1, etapa_id: e.etapa_id || `etapa_${i}` })))
-  }, [etapas])
+    const etapas = etapasDoSetor(setorEtapas)
+    setEtapasTemp(etapas.map((e, i) => ({
+      label: e.label,
+      cor: e.cor,
+      ordem: i + 1,
+      etapa_id: e.etapa_id || `etapa_${i}`,
+      setor: setorEtapas,
+    })))
+  }, [setorEtapas, todasEtapas, etapasDoSetor])
 
-  // Campos
-  const [camposTemp, setCamposTemp] = useState<Array<{ label: string; tipo: string; opcoes: string[]; obrigatorio: boolean; campo_id: string; ordem: number }>>([])
-  const [savingCampos, setSavingCampos] = useState(false)
-
-  useEffect(() => {
-    setCamposTemp(campos.map((c, i) => ({ label: c.label, tipo: c.tipo, opcoes: c.opcoes || [], obrigatorio: c.obrigatorio, campo_id: c.campo_id || `campo_${i}`, ordem: i })))
-  }, [campos])
-
-  // Operadores
-  const [opsTemp, setOpsTemp] = useState<Array<{ nome: string; setor: string; ativo: boolean }>>([])
-  const [savingOps, setSavingOps] = useState(false)
-
-  useEffect(() => {
-    setOpsTemp(operadores.map(o => ({ nome: o.nome, setor: o.setor, ativo: o.ativo })))
-  }, [operadores])
+  // Count OS per etapa for the current setor
+  const osCountByEtapa = useMemo(() => {
+    const counts: Record<string, number> = {}
+    const osDoSetor = ordens.filter(o => o.setor === setorEtapas)
+    etapasTemp.forEach(e => {
+      counts[e.label] = osDoSetor.filter(o => o.status === e.label).length
+    })
+    return counts
+  }, [ordens, setorEtapas, etapasTemp])
 
   // Drag etapas
   const [dragIdx, setDragIdx] = useState<number | null>(null)
@@ -67,11 +73,45 @@ export function Config({ etapas, campos, operadores, ordens, onSalvarEtapas, onS
   const salvarEtapas = async () => {
     setSavingEtapas(true)
     try {
-      await onSalvarEtapas(etapasTemp.map((e, i) => ({ label: e.label, cor: e.cor, ordem: i + 1, etapa_id: e.etapa_id })) as any)
-      toast('Etapas salvas!')
+      await onSalvarEtapasSetor(
+        setorEtapas,
+        etapasTemp.map((e, i) => ({ label: e.label, cor: e.cor, ordem: i + 1, etapa_id: e.etapa_id, setor: setorEtapas }))
+      )
+      toast(`Etapas de "${setorEtapas}" salvas!`)
     } catch (e: any) { toast(e.message, 'error') }
     setSavingEtapas(false)
   }
+
+  const excluirEtapa = (i: number) => {
+    const label = etapasTemp[i].label
+    const count = osCountByEtapa[label] || 0
+    if (count > 0) {
+      toast(`Existem ${count} OS na etapa "${label}". Mova-as antes de excluir.`, 'error')
+      return
+    }
+    setEtapasTemp(prev => prev.filter((_, j) => j !== i))
+  }
+
+  const copiarDeSetor = (setorOrigem: string) => {
+    const etapasOrigem = etapasDoSetor(setorOrigem)
+    setEtapasTemp(etapasOrigem.map((e, i) => ({
+      label: e.label,
+      cor: e.cor,
+      ordem: i + 1,
+      etapa_id: `etapa_${Date.now()}_${i}`,
+      setor: setorEtapas,
+    })))
+    setModalCopiar(false)
+    toast(`Etapas copiadas de "${setorOrigem}". Clique em Salvar para confirmar.`, 'info')
+  }
+
+  // ==================== CAMPOS ====================
+  const [camposTemp, setCamposTemp] = useState<Array<{ label: string; tipo: string; opcoes: string[]; obrigatorio: boolean; campo_id: string; ordem: number }>>([])
+  const [savingCampos, setSavingCampos] = useState(false)
+
+  useEffect(() => {
+    setCamposTemp(campos.map((c, i) => ({ label: c.label, tipo: c.tipo, opcoes: c.opcoes || [], obrigatorio: c.obrigatorio, campo_id: c.campo_id || `campo_${i}`, ordem: i })))
+  }, [campos])
 
   const salvarCampos = async () => {
     setSavingCampos(true)
@@ -82,6 +122,14 @@ export function Config({ etapas, campos, operadores, ordens, onSalvarEtapas, onS
     setSavingCampos(false)
   }
 
+  // ==================== OPERADORES ====================
+  const [opsTemp, setOpsTemp] = useState<Array<{ nome: string; setor: string; ativo: boolean }>>([])
+  const [savingOps, setSavingOps] = useState(false)
+
+  useEffect(() => {
+    setOpsTemp(operadores.map(o => ({ nome: o.nome, setor: o.setor, ativo: o.ativo })))
+  }, [operadores])
+
   const salvarOps = async () => {
     setSavingOps(true)
     try {
@@ -89,16 +137,6 @@ export function Config({ etapas, campos, operadores, ordens, onSalvarEtapas, onS
       toast('Operadores salvos!')
     } catch (e: any) { toast(e.message, 'error') }
     setSavingOps(false)
-  }
-
-  const excluirEtapa = (i: number) => {
-    const label = etapasTemp[i].label
-    const osComEtapa = ordens.filter(o => o.status === label)
-    if (osComEtapa.length > 0) {
-      alert(`Existem ${osComEtapa.length} OS na etapa "${label}". Mova-as antes de excluir.`)
-      return
-    }
-    setEtapasTemp(prev => prev.filter((_, j) => j !== i))
   }
 
   const inputClass = 'bg-dark-surface2 border border-dark-border rounded-lg px-3 py-2 text-sm text-white font-body placeholder-dark-muted focus:outline-none focus:border-accent transition-all'
@@ -130,60 +168,166 @@ export function Config({ etapas, campos, operadores, ordens, onSalvarEtapas, onS
           ))}
         </div>
 
-        {/* Etapas */}
+        {/* ==================== ETAPAS ==================== */}
         {aba === 'etapas' && (
-          <motion.div className="space-y-3" variants={staggerContainer} initial="hidden" animate="visible">
-            <div className="bg-dark-surface border border-dark-border rounded-xl p-4 text-sm text-dark-muted font-body flex items-center gap-2">
-              💡 Arraste para reordenar. As etapas definem as colunas do Kanban.
+          <motion.div className="space-y-4" variants={staggerContainer} initial="hidden" animate="visible">
+            {/* Setor selector */}
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
+              {SETORES.map(s => {
+                const active = setorEtapas === s.nome
+                const count = etapasDoSetor(s.nome).length
+                return (
+                  <button
+                    key={s.nome}
+                    onClick={() => setSetorEtapas(s.nome)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-body font-semibold whitespace-nowrap transition-all duration-200 border ${
+                      active ? 'text-white shadow-lg' : 'text-dark-muted bg-dark-surface2 border-dark-border hover:text-white'
+                    }`}
+                    style={active ? {
+                      backgroundColor: `${s.cor}20`,
+                      borderColor: `${s.cor}50`,
+                      color: s.cor,
+                      boxShadow: `0 4px 20px ${s.cor}15`,
+                    } : undefined}
+                  >
+                    {s.icon} {s.nome.split(' ').slice(0, 2).join(' ')}
+                    <span className="text-xs font-mono opacity-70">{count}</span>
+                  </button>
+                )
+              })}
             </div>
-            {etapasTemp.map((e, i) => (
+
+            <div className="bg-dark-surface border border-dark-border rounded-xl p-4 text-sm text-dark-muted font-body flex items-center gap-2">
+              💡 Cada setor tem suas proprias etapas. Arraste para reordenar. O numero indica OS ativas naquela etapa.
+            </div>
+
+            {/* Etapas list */}
+            <AnimatePresence mode="wait">
               <motion.div
-                key={e.etapa_id + i}
-                variants={staggerItem}
-                draggable
-                onDragStart={() => handleDragStart(i)}
-                onDragOver={ev => handleDragOver(ev, i)}
-                onDragEnd={handleDragEnd}
-                className={`flex items-center gap-3 bg-dark-surface border border-dark-border rounded-xl px-4 py-3 transition-all ${
-                  dragIdx === i ? 'opacity-50 border-accent' : ''
-                }`}
+                key={setorEtapas}
+                className="space-y-3"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
               >
-                <GripVertical className="w-4 h-4 text-dark-muted cursor-grab active:cursor-grabbing flex-shrink-0" />
-                <input
-                  className={`${inputClass} flex-1`}
-                  value={e.label}
-                  onChange={ev => setEtapasTemp(prev => prev.map((x, j) => j === i ? { ...x, label: ev.target.value } : x))}
-                />
-                <div className="flex gap-1.5 flex-shrink-0">
-                  {CORES_ETAPA.map(c => (
-                    <button
-                      key={c}
-                      onClick={() => setEtapasTemp(prev => prev.map((x, j) => j === i ? { ...x, cor: c } : x))}
-                      className="w-5 h-5 rounded-full transition-all hover:scale-110"
-                      style={{ backgroundColor: c, border: e.cor === c ? '2px solid white' : '2px solid transparent' }}
-                    />
-                  ))}
-                </div>
-                <button onClick={() => excluirEtapa(i)} className="p-1.5 rounded-lg text-dark-muted hover:text-red-400 hover:bg-red-500/10 transition-all">
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {etapasTemp.map((e, i) => {
+                  const osCount = osCountByEtapa[e.label] || 0
+                  return (
+                    <motion.div
+                      key={e.etapa_id + i}
+                      variants={staggerItem}
+                      draggable
+                      onDragStart={() => handleDragStart(i)}
+                      onDragOver={ev => handleDragOver(ev, i)}
+                      onDragEnd={handleDragEnd}
+                      className={`flex items-center gap-3 bg-dark-surface border rounded-xl px-4 py-3 transition-all group ${
+                        dragIdx === i ? 'opacity-50 border-accent scale-[0.98]' : 'border-dark-border'
+                      }`}
+                      style={{ borderLeftWidth: 3, borderLeftColor: e.cor }}
+                      whileHover={{ scale: 1.005 }}
+                    >
+                      <GripVertical className="w-4 h-4 text-dark-muted cursor-grab active:cursor-grabbing flex-shrink-0" />
+                      <span className="text-xs font-mono text-dark-muted w-5 text-center flex-shrink-0">{i + 1}</span>
+                      <input
+                        className={`${inputClass} flex-1`}
+                        value={e.label}
+                        onChange={ev => setEtapasTemp(prev => prev.map((x, j) => j === i ? { ...x, label: ev.target.value } : x))}
+                      />
+                      <div className="flex gap-1.5 flex-shrink-0">
+                        {CORES_ETAPA.map(c => (
+                          <button
+                            key={c}
+                            onClick={() => setEtapasTemp(prev => prev.map((x, j) => j === i ? { ...x, cor: c } : x))}
+                            className="w-5 h-5 rounded-full transition-all hover:scale-110"
+                            style={{ backgroundColor: c, border: e.cor === c ? '2px solid white' : '2px solid transparent' }}
+                          />
+                        ))}
+                      </div>
+                      {/* OS count badge */}
+                      {osCount > 0 && (
+                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-400 text-xs font-mono font-bold border border-yellow-500/20 flex-shrink-0">
+                          <AlertTriangle className="w-3 h-3" /> {osCount}
+                        </span>
+                      )}
+                      <button
+                        onClick={() => excluirEtapa(i)}
+                        className={`p-1.5 rounded-lg transition-all flex-shrink-0 ${
+                          osCount > 0
+                            ? 'text-dark-muted/30 cursor-not-allowed'
+                            : 'text-dark-muted hover:text-red-400 hover:bg-red-500/10'
+                        }`}
+                        title={osCount > 0 ? `${osCount} OS nesta etapa` : 'Excluir etapa'}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </motion.div>
+                  )
+                })}
               </motion.div>
-            ))}
-            <button
-              onClick={() => setEtapasTemp(prev => [...prev, { label: 'Nova Etapa', cor: '#64748b', ordem: prev.length + 1, etapa_id: `etapa_${Date.now()}` }])}
-              className="w-full py-2.5 rounded-xl border border-dashed border-dark-border text-sm font-body text-dark-muted hover:text-accent hover:border-accent/30 transition-all"
-            >
-              <Plus className="w-4 h-4 inline mr-1" /> Adicionar etapa
-            </button>
-            <div className="flex justify-end">
-              <button onClick={salvarEtapas} disabled={savingEtapas} className={btnSave}>
-                {savingEtapas ? 'Salvando...' : '💾 Salvar Etapas'}
+            </AnimatePresence>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setEtapasTemp(prev => [...prev, {
+                    label: 'Nova Etapa',
+                    cor: '#64748b',
+                    ordem: prev.length + 1,
+                    etapa_id: `etapa_${Date.now()}`,
+                    setor: setorEtapas,
+                  }])
+                  // Focus the new input after render
+                  setTimeout(() => {
+                    const inputs = document.querySelectorAll<HTMLInputElement>('.space-y-3 input[type="text"], .space-y-3 input:not([type])')
+                    if (inputs.length) inputs[inputs.length - 1].focus()
+                  }, 50)
+                }}
+                className="flex-1 py-2.5 rounded-xl border border-dashed border-dark-border text-sm font-body text-dark-muted hover:text-accent hover:border-accent/30 transition-all"
+              >
+                <Plus className="w-4 h-4 inline mr-1" /> Adicionar etapa
+              </button>
+              <button
+                onClick={() => setModalCopiar(true)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-dark-border text-sm font-body text-dark-muted hover:text-accent hover:border-accent/30 transition-all"
+              >
+                <Copy className="w-4 h-4" /> Copiar de outro setor
               </button>
             </div>
+
+            <div className="flex justify-end">
+              <button onClick={salvarEtapas} disabled={savingEtapas} className={btnSave}>
+                {savingEtapas ? 'Salvando...' : `💾 Salvar Etapas — ${setorEtapas}`}
+              </button>
+            </div>
+
+            {/* Modal copiar etapas */}
+            <Modal open={modalCopiar} onClose={() => setModalCopiar(false)} title="Copiar etapas de outro setor" size="sm">
+              <div className="space-y-2">
+                <p className="text-sm text-dark-muted font-body mb-4">
+                  Selecione o setor de origem. As etapas serao copiadas para <strong className="text-white">{setorEtapas}</strong>.
+                </p>
+                {SETORES.filter(s => s.nome !== setorEtapas).map(s => {
+                  const count = etapasDoSetor(s.nome).length
+                  return (
+                    <button
+                      key={s.nome}
+                      onClick={() => copiarDeSetor(s.nome)}
+                      className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-dark-surface2 border border-dark-border hover:border-accent/30 hover:bg-dark-surface transition-all text-left"
+                    >
+                      <span className="flex items-center gap-2 font-body text-sm text-white">
+                        <span style={{ color: s.cor }}>{s.icon}</span> {s.nome}
+                      </span>
+                      <span className="text-xs font-mono text-dark-muted">{count} etapas</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </Modal>
           </motion.div>
         )}
 
-        {/* Campos */}
+        {/* ==================== CAMPOS ==================== */}
         {aba === 'campos' && (
           <motion.div className="space-y-3" variants={staggerContainer} initial="hidden" animate="visible">
             <div className="bg-dark-surface border border-dark-border rounded-xl p-4 text-sm text-dark-muted font-body flex items-center gap-2">
@@ -242,7 +386,7 @@ export function Config({ etapas, campos, operadores, ordens, onSalvarEtapas, onS
           </motion.div>
         )}
 
-        {/* Operadores */}
+        {/* ==================== OPERADORES ==================== */}
         {aba === 'operadores' && (
           <motion.div className="space-y-3" variants={staggerContainer} initial="hidden" animate="visible">
             <div className="bg-dark-surface border border-dark-border rounded-xl p-4 text-sm text-dark-muted font-body flex items-center gap-2">

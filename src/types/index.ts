@@ -21,6 +21,7 @@ export interface EtapaKanban {
   label: string
   cor: string
   ordem: number
+  setor: string
 }
 
 export interface CampoConfig {

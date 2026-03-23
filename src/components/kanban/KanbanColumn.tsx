@@ -21,7 +21,7 @@ export function KanbanColumn({ etapa, ordens, onEdit, onDelete }: KanbanColumnPr
       className={`min-w-[280px] w-[280px] flex-shrink-0 rounded-xl transition-all duration-300 ${
         isOver ? 'ring-2 ring-offset-2 ring-offset-dark-bg' : ''
       }`}
-      style={isOver ? { ringColor: etapa.cor } : undefined}
+      style={isOver ? { ['--tw-ring-color' as any]: etapa.cor } : undefined}
     >
       {/* Header */}
       <div className="flex items-center gap-2 mb-3 px-1">

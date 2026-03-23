@@ -42,7 +42,8 @@ export function useOrdens() {
 }
 
 export function useEtapas() {
-  const [etapas, setEtapas] = useState<EtapaKanban[]>([])
+  // Cache all etapas indexed by setor
+  const [todasEtapas, setTodasEtapas] = useState<EtapaKanban[]>([])
   const [loading, setLoading] = useState(true)
 
   const carregar = useCallback(async () => {
@@ -52,23 +53,43 @@ export function useEtapas() {
       .select('*')
       .order('ordem', { ascending: true })
     if (error) console.error('Erro ao carregar etapas:', error.message)
-    setEtapas((data as EtapaKanban[]) || [])
+    setTodasEtapas((data as EtapaKanban[]) || [])
     setLoading(false)
   }, [])
 
   useEffect(() => { carregar() }, [carregar])
 
-  const salvar = async (novasEtapas: Omit<EtapaKanban, 'id'>[]) => {
-    const { error: del } = await supabase.from('etapas_kanban').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+  // Get etapas for a specific setor
+  const etapasDoSetor = useCallback((setor: string): EtapaKanban[] => {
+    return todasEtapas.filter(e => e.setor === setor).sort((a, b) => a.ordem - b.ordem)
+  }, [todasEtapas])
+
+  // Get all unique etapas (for dashboard/charts - all labels across all setores)
+  const todasEtapasUnicas = useCallback((): EtapaKanban[] => {
+    const seen = new Set<string>()
+    return todasEtapas.filter(e => {
+      if (seen.has(e.label)) return false
+      seen.add(e.label)
+      return true
+    })
+  }, [todasEtapas])
+
+  // Save etapas for a specific setor (delete all of that setor, reinsert)
+  const salvarSetor = async (setor: string, novasEtapas: Omit<EtapaKanban, 'id'>[]) => {
+    const { error: del } = await supabase
+      .from('etapas_kanban')
+      .delete()
+      .eq('setor', setor)
     if (del) throw new Error(del.message)
     if (novasEtapas.length) {
-      const { error: ins } = await supabase.from('etapas_kanban').insert(novasEtapas)
+      const etapasComSetor = novasEtapas.map(e => ({ ...e, setor }))
+      const { error: ins } = await supabase.from('etapas_kanban').insert(etapasComSetor)
       if (ins) throw new Error(ins.message)
     }
     await carregar()
   }
 
-  return { etapas, loading, carregar, salvar }
+  return { todasEtapas, loading, carregar, etapasDoSetor, todasEtapasUnicas, salvarSetor }
 }
 
 export function useCampos() {

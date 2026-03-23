@@ -9,7 +9,8 @@ import type { OrdemServico, EtapaKanban, CampoConfig, Operador } from '@/types'
 
 interface OrdensServicoPageProps {
   ordens: OrdemServico[]
-  etapas: EtapaKanban[]
+  todasEtapas: EtapaKanban[]
+  etapasDoSetor: (setor: string) => EtapaKanban[]
   campos: CampoConfig[]
   operadores: Operador[]
   loading: boolean
@@ -18,7 +19,7 @@ interface OrdensServicoPageProps {
   onExcluir: (id: string) => Promise<void>
 }
 
-export function OrdensServico({ ordens, etapas, campos, operadores, loading, onCriar, onAtualizar, onExcluir }: OrdensServicoPageProps) {
+export function OrdensServico({ ordens, todasEtapas, etapasDoSetor, campos, operadores, loading, onCriar, onAtualizar, onExcluir }: OrdensServicoPageProps) {
   const [modalCriar, setModalCriar] = useState(false)
   const [osEditando, setOsEditando] = useState<OrdemServico | null>(null)
   const [saving, setSaving] = useState(false)
@@ -69,15 +70,23 @@ export function OrdensServico({ ordens, etapas, campos, operadores, loading, onC
           </button>
         </div>
 
-        <OSTable ordens={ordens} etapas={etapas} loading={loading} onEdit={setOsEditando} onDelete={handleExcluir} />
+        <OSTable
+          ordens={ordens}
+          todasEtapas={todasEtapas}
+          etapasDoSetor={etapasDoSetor}
+          loading={loading}
+          onEdit={setOsEditando}
+          onDelete={handleExcluir}
+          onAtualizar={onAtualizar}
+        />
 
         <Modal open={modalCriar} onClose={() => setModalCriar(false)} title="Nova Ordem de Servico" size="lg">
-          <OSForm etapas={etapas} campos={campos} operadores={operadores} ordens={ordens} onSave={handleCriar} onCancel={() => setModalCriar(false)} saving={saving} />
+          <OSForm etapasDoSetor={etapasDoSetor} campos={campos} operadores={operadores} ordens={ordens} onSave={handleCriar} onCancel={() => setModalCriar(false)} saving={saving} />
         </Modal>
 
         <Modal open={!!osEditando} onClose={() => setOsEditando(null)} title={`Editar ${osEditando?.numero || ''}`} size="lg">
           {osEditando && (
-            <OSForm os={osEditando} etapas={etapas} campos={campos} operadores={operadores} ordens={ordens} onSave={handleEditar} onCancel={() => setOsEditando(null)} saving={saving} />
+            <OSForm os={osEditando} etapasDoSetor={etapasDoSetor} campos={campos} operadores={operadores} ordens={ordens} onSave={handleEditar} onCancel={() => setOsEditando(null)} saving={saving} />
           )}
         </Modal>
       </div>

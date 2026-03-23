@@ -6,33 +6,56 @@ import { ChartOSporSetor, ChartStatusPizza, ChartEvolucaoMensal, PatioIndicator 
 import { KPISkeleton } from '@/components/ui/Skeleton'
 import { staggerContainer } from '@/hooks/useAnimations'
 import { diasDesdeEntrada } from '@/lib/utils'
-import { SETORES } from '@/lib/constants'
 import type { OrdemServico, EtapaKanban } from '@/types'
 
 interface DashboardProps {
   ordens: OrdemServico[]
-  etapas: EtapaKanban[]
+  todasEtapas: EtapaKanban[]
+  etapasDoSetor: (setor: string) => EtapaKanban[]
+  todasEtapasUnicas: () => EtapaKanban[]
   loading: boolean
 }
 
-export function Dashboard({ ordens, etapas, loading }: DashboardProps) {
+export function Dashboard({ ordens, todasEtapas, etapasDoSetor, todasEtapasUnicas, loading }: DashboardProps) {
   const total = ordens.length
-  const abertas = ordens.filter(o => o.status !== 'Concluído' && o.status !== 'Entregue').length
-  const aguardando = ordens.filter(o => o.status === 'Aguardando Aprovação').length
+
+  // Use all unique labels to detect "final" statuses
+  const finalStatuses = new Set<string>()
+  const setoresVistos = new Set<string>()
+  todasEtapas.forEach(e => {
+    if (!setoresVistos.has(e.setor)) {
+      setoresVistos.add(e.setor)
+    }
+  })
+  // For each setor, the last etapa is "concluded"
+  setoresVistos.forEach(setor => {
+    const etapas = etapasDoSetor(setor)
+    if (etapas.length > 0) {
+      finalStatuses.add(etapas[etapas.length - 1].label)
+    }
+  })
+
+  const abertas = ordens.filter(o => !finalStatuses.has(o.status)).length
+  const aguardando = ordens.filter(o => {
+    const s = o.status.toLowerCase()
+    return s.includes('aguardando') && s.includes('aprov')
+  }).length
   const emAndamento = ordens.filter(o => {
     const s = o.status.toLowerCase()
-    return s.includes('serviço') || s.includes('reparo') || s.includes('teste')
+    return s.includes('serviço') || s.includes('reparo') || s.includes('teste') || s.includes('calibra')
   }).length
   const mes = new Date().getMonth()
   const concluidas = ordens.filter(o => {
     const d = new Date(o.atualizado_em || o.criado_em)
-    return (o.status === 'Concluído' || o.status === 'Entregue') && d.getMonth() === mes
+    return finalStatuses.has(o.status) && d.getMonth() === mes
   }).length
-  const patio = ordens.filter(o => o.setor === 'Veículo Diesel' && o.status !== 'Concluído' && o.status !== 'Entregue').length
+  const patio = ordens.filter(o => o.setor === 'Veículo Diesel' && !finalStatuses.has(o.status)).length
 
   const tempoMedio = ordens.length
     ? Math.round(ordens.reduce((acc, o) => acc + diasDesdeEntrada(o.data_entrada), 0) / ordens.length)
     : 0
+
+  const etapasUnicas = todasEtapasUnicas()
 
   return (
     <PageTransition>
@@ -67,7 +90,7 @@ export function Dashboard({ ordens, etapas, loading }: DashboardProps) {
             animate="visible"
           >
             <ChartOSporSetor ordens={ordens} />
-            <ChartStatusPizza ordens={ordens} etapas={etapas} />
+            <ChartStatusPizza ordens={ordens} etapas={etapasUnicas} />
             <ChartEvolucaoMensal ordens={ordens} />
           </motion.div>
         )}

@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { SETORES, TIPOS_OS } from '@/lib/constants'
 import { gerarNumeroOS } from '@/lib/utils'
 import type { OrdemServico, EtapaKanban, CampoConfig, Operador } from '@/types'
 
 interface OSFormProps {
   os?: OrdemServico | null
-  etapas: EtapaKanban[]
+  etapasDoSetor: (setor: string) => EtapaKanban[]
   campos: CampoConfig[]
   operadores: Operador[]
   ordens: OrdemServico[]
@@ -14,7 +15,7 @@ interface OSFormProps {
   saving?: boolean
 }
 
-export function OSForm({ os, etapas, campos, operadores, ordens, onSave, onCancel, saving }: OSFormProps) {
+export function OSForm({ os, etapasDoSetor, campos, operadores, ordens, onSave, onCancel, saving }: OSFormProps) {
   const isEdit = !!os
 
   const [form, setForm] = useState({
@@ -24,7 +25,7 @@ export function OSForm({ os, etapas, campos, operadores, ordens, onSave, onCance
     cliente: os?.cliente || '',
     modelo: os?.modelo || '',
     setor: os?.setor || SETORES[0].nome,
-    status: os?.status || etapas[0]?.label || '',
+    status: os?.status || '',
     operador: os?.operador || '',
     data_entrada: os?.data_entrada ? os.data_entrada.slice(0, 16) : new Date().toISOString().slice(0, 16),
     observacoes: os?.observacoes || '',
@@ -32,11 +33,42 @@ export function OSForm({ os, etapas, campos, operadores, ordens, onSave, onCance
     vinculo: '',
   })
 
+  // Get etapas for current setor
+  const etapasAtuais = useMemo(() => etapasDoSetor(form.setor), [etapasDoSetor, form.setor])
+
+  // When setor changes (and not editing), set status to first etapa of that setor
+  useEffect(() => {
+    if (!isEdit && etapasAtuais.length > 0) {
+      setForm(prev => ({ ...prev, status: etapasAtuais[0].label }))
+    }
+  }, [form.setor, etapasAtuais, isEdit])
+
+  // Initialize status on first render for new OS
+  useEffect(() => {
+    if (!isEdit && !form.status && etapasAtuais.length > 0) {
+      setForm(prev => ({ ...prev, status: etapasAtuais[0].label }))
+    }
+  }, [])
+
   const operadoresDoSetor = operadores.filter(o => o.setor === form.setor && o.ativo !== false)
   const mostrarVinculo = form.setor === 'Veículo Diesel' || form.setor === 'Turbinas'
   const osDisponiveis = ordens.filter(o => o.id !== os?.id && o.setor !== form.setor)
 
-  const set = (field: string, value: string) => setForm(prev => ({ ...prev, [field]: value }))
+  const set = (field: string, value: string) => {
+    if (field === 'setor' && !isEdit) {
+      // When changing setor, also reset status to first etapa of new setor
+      const novasEtapas = etapasDoSetor(value)
+      setForm(prev => ({
+        ...prev,
+        setor: value,
+        status: novasEtapas.length > 0 ? novasEtapas[0].label : '',
+        operador: '', // Reset operador when setor changes
+      }))
+      return
+    }
+    setForm(prev => ({ ...prev, [field]: value }))
+  }
+
   const setExtra = (key: string, value: string) => setForm(prev => ({
     ...prev,
     extras: { ...prev.extras, [key]: value },
@@ -48,6 +80,9 @@ export function OSForm({ os, etapas, campos, operadores, ordens, onSave, onCance
     const { vinculo, ...data } = form
     onSave(data)
   }
+
+  // Check if current status is unknown (not in etapas of this setor)
+  const statusDesconhecido = form.status && etapasAtuais.length > 0 && !etapasAtuais.find(e => e.label === form.status)
 
   const inputClass = 'w-full bg-dark-surface2 border border-dark-border rounded-lg px-3 py-2.5 text-sm text-white font-body placeholder-dark-muted focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all'
   const labelClass = 'text-xs font-body font-semibold text-dark-muted uppercase tracking-wider mb-1.5 block'
@@ -84,10 +119,31 @@ export function OSForm({ os, etapas, campos, operadores, ordens, onSave, onCance
           </select>
         </div>
         <div>
-          <label className={labelClass}>Status</label>
-          <select className={inputClass} value={form.status} onChange={e => set('status', e.target.value)}>
-            {etapas.map(e => <option key={e.label} value={e.label}>{e.label}</option>)}
-          </select>
+          <label className={labelClass}>Status / Etapa</label>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={form.setor}
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -5 }}
+              transition={{ duration: 0.15 }}
+            >
+              {statusDesconhecido && (
+                <p className="text-xs text-yellow-400 mb-1 font-body">
+                  ⚠️ Status "{form.status}" nao existe neste setor. Selecione um novo status.
+                </p>
+              )}
+              <select className={inputClass} value={form.status} onChange={e => set('status', e.target.value)}>
+                {statusDesconhecido && (
+                  <option value={form.status}>⚠️ {form.status} (desconhecido)</option>
+                )}
+                {etapasAtuais.map(e => <option key={e.id} value={e.label}>{e.label}</option>)}
+                {etapasAtuais.length === 0 && (
+                  <option value="">Nenhuma etapa configurada</option>
+                )}
+              </select>
+            </motion.div>
+          </AnimatePresence>
         </div>
         <div>
           <label className={labelClass}>Operador / Mecanico</label>

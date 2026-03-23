@@ -1,28 +1,29 @@
 import { useState } from 'react'
 import { DndContext, DragOverlay, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { KanbanColumn } from './KanbanColumn'
 import { KanbanCard } from './KanbanCard'
 import { staggerContainer } from '@/hooks/useAnimations'
-import { SETORES, corDoSetor } from '@/lib/constants'
+import { SETORES } from '@/lib/constants'
 import { KanbanSkeleton } from '@/components/ui/Skeleton'
 import type { OrdemServico, EtapaKanban } from '@/types'
 
 interface KanbanBoardProps {
   ordens: OrdemServico[]
-  etapas: EtapaKanban[]
+  etapasDoSetor: (setor: string) => EtapaKanban[]
   loading: boolean
   onMove: (osId: string, novoStatus: string) => void
   onEdit: (os: OrdemServico) => void
   onDelete: (id: string) => void
 }
 
-export function KanbanBoard({ ordens, etapas, loading, onMove, onEdit, onDelete }: KanbanBoardProps) {
+export function KanbanBoard({ ordens, etapasDoSetor, loading, onMove, onEdit, onDelete }: KanbanBoardProps) {
   const [setorAtivo, setSetorAtivo] = useState(SETORES[0].nome)
   const [draggingOS, setDraggingOS] = useState<OrdemServico | null>(null)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
   const ordensFiltradas = ordens.filter(o => o.setor === setorAtivo)
+  const etapas = etapasDoSetor(setorAtivo)
 
   const handleDragStart = (event: DragStartEvent) => {
     const os = ordens.find(o => o.id === event.active.id)
@@ -73,24 +74,35 @@ export function KanbanBoard({ ordens, etapas, loading, onMove, onEdit, onDelete 
         })}
       </div>
 
-      {/* Board */}
+      {/* Board - animated per setor */}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-        <motion.div
-          className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin"
-          variants={staggerContainer}
-          initial="hidden"
-          animate="visible"
-        >
-          {etapas.map(etapa => (
-            <KanbanColumn
-              key={etapa.label}
-              etapa={etapa}
-              ordens={ordensFiltradas.filter(o => o.status === etapa.label)}
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
-          ))}
-        </motion.div>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={setorAtivo}
+            className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+            exit={{ opacity: 0, x: -30, transition: { duration: 0.15 } }}
+          >
+            {etapas.length === 0 ? (
+              <div className="flex-1 text-center py-16 text-dark-muted font-body">
+                <p className="text-lg mb-2">Nenhuma etapa configurada para este setor</p>
+                <p className="text-sm">Vá em Configurações → Etapas do Kanban para criar as etapas de "{setorAtivo}"</p>
+              </div>
+            ) : (
+              etapas.map(etapa => (
+                <KanbanColumn
+                  key={etapa.id}
+                  etapa={etapa}
+                  ordens={ordensFiltradas.filter(o => o.status === etapa.label)}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                />
+              ))
+            )}
+          </motion.div>
+        </AnimatePresence>
 
         <DragOverlay dropAnimation={{ duration: 200, easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)' }}>
           {draggingOS ? (

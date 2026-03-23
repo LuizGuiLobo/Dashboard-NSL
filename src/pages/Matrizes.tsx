@@ -5,15 +5,15 @@ import { PageTransition } from '@/components/layout/PageTransition'
 import { staggerContainer, staggerItem } from '@/hooks/useAnimations'
 import { SETORES, corDoSetor } from '@/lib/constants'
 import { diasDesdeEntrada } from '@/lib/utils'
-import { Badge } from '@/components/ui/Badge'
 import type { OrdemServico, EtapaKanban } from '@/types'
 
 interface MatrizesProps {
   ordens: OrdemServico[]
-  etapas: EtapaKanban[]
+  todasEtapas: EtapaKanban[]
+  etapasDoSetor: (setor: string) => EtapaKanban[]
 }
 
-export function Matrizes({ ordens, etapas }: MatrizesProps) {
+export function Matrizes({ ordens, todasEtapas, etapasDoSetor }: MatrizesProps) {
   // Matriz tempo x setor
   const tempoSetor = useMemo(() => {
     return SETORES.map(s => {
@@ -25,14 +25,20 @@ export function Matrizes({ ordens, etapas }: MatrizesProps) {
     })
   }, [ordens])
 
-  // Gargalos por etapa
+  // Gargalos por etapa — use unique labels across all setores
   const gargalos = useMemo(() => {
-    return etapas.map(e => ({
+    const seen = new Set<string>()
+    const etapasUnicas = todasEtapas.filter(e => {
+      if (seen.has(e.label)) return false
+      seen.add(e.label)
+      return true
+    })
+    return etapasUnicas.map(e => ({
       etapa: e.label,
       cor: e.cor,
       count: ordens.filter(o => o.status === e.label).length,
     })).sort((a, b) => b.count - a.count)
-  }, [ordens, etapas])
+  }, [ordens, todasEtapas])
 
   // Eficiencia por operador
   const eficiencia = useMemo(() => {

@@ -18,7 +18,7 @@ export default function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const { ordens, loading: loadingOS, criar, atualizar, excluir } = useOrdens()
-  const { etapas, loading: loadingEtapas, salvar: salvarEtapas } = useEtapas()
+  const { todasEtapas, loading: loadingEtapas, etapasDoSetor, todasEtapasUnicas, salvarSetor, carregar: carregarEtapas } = useEtapas()
   const { campos, loading: loadingCampos, salvar: salvarCampos } = useCampos()
   const { operadores, loading: loadingOps, salvar: salvarOperadores } = useOperadores()
 
@@ -55,30 +55,30 @@ export default function App() {
               <AnimatePresence mode="wait">
                 <Routes>
                   <Route path="/" element={
-                    <Dashboard ordens={ordens} etapas={etapas} loading={loading} />
+                    <Dashboard ordens={ordens} todasEtapas={todasEtapas} etapasDoSetor={etapasDoSetor} todasEtapasUnicas={todasEtapasUnicas} loading={loading} />
                   } />
                   <Route path="/kanban" element={
                     <Kanban
-                      ordens={ordens} etapas={etapas} campos={campos} operadores={operadores}
+                      ordens={ordens} etapasDoSetor={etapasDoSetor} todasEtapas={todasEtapas} campos={campos} operadores={operadores}
                       loading={loading}
                       onCriar={criar} onAtualizar={atualizar} onExcluir={excluir}
                     />
                   } />
                   <Route path="/ordens" element={
                     <OrdensServico
-                      ordens={ordens} etapas={etapas} campos={campos} operadores={operadores}
+                      ordens={ordens} todasEtapas={todasEtapas} etapasDoSetor={etapasDoSetor} campos={campos} operadores={operadores}
                       loading={loading}
                       onCriar={criar} onAtualizar={atualizar} onExcluir={excluir}
                     />
                   } />
                   <Route path="/agenda" element={<Agenda />} />
                   <Route path="/matrizes" element={
-                    <Matrizes ordens={ordens} etapas={etapas} />
+                    <Matrizes ordens={ordens} todasEtapas={todasEtapas} etapasDoSetor={etapasDoSetor} />
                   } />
                   <Route path="/config" element={
                     <Config
-                      etapas={etapas} campos={campos} operadores={operadores} ordens={ordens}
-                      onSalvarEtapas={salvarEtapas} onSalvarCampos={salvarCampos} onSalvarOperadores={salvarOperadores}
+                      todasEtapas={todasEtapas} etapasDoSetor={etapasDoSetor} campos={campos} operadores={operadores} ordens={ordens}
+                      onSalvarEtapasSetor={salvarSetor} onSalvarCampos={salvarCampos} onSalvarOperadores={salvarOperadores}
                     />
                   } />
                 </Routes>
