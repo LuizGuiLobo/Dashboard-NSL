@@ -7,7 +7,7 @@
 // ══════════════════════════════════════════
 // CONFIGURADOR DE ETAPAS DO KANBAN
 // ══════════════════════════════════════════
-const CORES_ETAPA = ['#3b82f6','#f59e0b','#ef4444','#10b981','#8b5cf6','#64748b','#ec4899','#06b6d4','#f97316','#84cc16'];
+const CORES_ETAPA = ['#3b82f6','#c8962a','#ef4444','#10b981','#8b5cf6','#64748b','#ec4899','#06b6d4','#f97316','#84cc16'];
 
 function renderEtapasConfig(){
   const lista=document.getElementById('lista-etapas-config');
