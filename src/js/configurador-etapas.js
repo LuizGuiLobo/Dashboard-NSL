@@ -45,24 +45,27 @@ function adicionarEtapa(){
 }
 
 async function salvarEtapas(){
+  const setor = setorEtapasConfig;
   setBtnLoading('btn-salvar-etapas',true);
-  const { error:del } = await sb.from('etapas_kanban').delete().neq('id','00000000-0000-0000-0000-000000000000');
-  if(del){ toast('Erro ao salvar etapas','err'); setBtnLoading('btn-salvar-etapas',false,'💾 Salvar Etapas'); return; }
+  // Deleta SOMENTE as etapas do setor atual
+  const { error:del } = await sb.from('etapas_kanban').delete().eq('setor', setor);
+  if(del){ toast('Erro ao salvar etapas: '+del.message,'err'); setBtnLoading('btn-salvar-etapas',false,`💾 Salvar Etapas — ${setor}`); return; }
   if(etapasTemp.length){
     const rows=etapasTemp.map((e,i)=>({
-      etapa_id: e.id||('etapa_'+i+'_'+Date.now()),
+      etapa_id: e.id||(`${setor.toLowerCase().replace(/\s+/g,'_')}_${i}_${Date.now()}`),
       label: e.label,
       cor: e.cor||'#64748b',
-      ordem: i+1
+      ordem: i+1,
+      setor: setor  // CRÍTICO: incluir o setor em cada row
     }));
     const { error:ins } = await sb.from('etapas_kanban').insert(rows);
-    if(ins){ toast('Erro ao inserir etapas','err'); setBtnLoading('btn-salvar-etapas',false,'💾 Salvar Etapas'); return; }
+    if(ins){ toast('Erro ao inserir etapas: '+ins.message,'err'); setBtnLoading('btn-salvar-etapas',false,`💾 Salvar Etapas — ${setor}`); return; }
   }
   await carregarEtapas();
-  setBtnLoading('btn-salvar-etapas',false,'💾 Salvar Etapas');
+  setBtnLoading('btn-salvar-etapas',false,`💾 Salvar Etapas — ${setor}`);
   fecharConfig();
   renderKanban(); renderDashboard();
-  toast('✓ Etapas do Kanban atualizadas!');
+  toast(`✓ Etapas de ${setor} atualizadas!`);
 }
 
 function renderCamposConfig(){

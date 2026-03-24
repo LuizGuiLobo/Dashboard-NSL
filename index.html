@@ -276,7 +276,7 @@ textarea.inp{resize:vertical;}
     <div class="form-group"><div class="lbl">Nome do Cliente <span style="color:var(--accent4)">*</span></div><input class="inp" id="m-cliente" placeholder="Nome completo ou empresa"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="form-group"><div class="lbl">Setor</div>
-        <select class="inp" id="m-setor" onchange="atualizarOperadores('m-operador',this.value);mostrarVinculo(this.value)">
+        <select class="inp" id="m-setor" onchange="atualizarOperadores('m-operador',this.value);mostrarVinculo(this.value);atualizarStatusPorSetor('m-status',this.value)">
           <option>Bomba Injetora</option><option>Bomba de Alta</option>
           <option>Injetores Mecânicos</option><option>Injetores Eletrônicos</option>
           <option>Veículo Diesel</option><option>Turbinas</option>
@@ -321,7 +321,7 @@ textarea.inp{resize:vertical;}
     <div class="form-group"><div class="lbl">Cliente <span style="color:var(--accent4)">*</span></div><input class="inp" id="e-cliente"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="form-group"><div class="lbl">Setor</div>
-        <select class="inp" id="e-setor" onchange="atualizarOperadores('e-operador',this.value);mostrarVinculoEditar(this.value)">
+        <select class="inp" id="e-setor" onchange="atualizarOperadores('e-operador',this.value);mostrarVinculoEditar(this.value);atualizarStatusPorSetor('e-status',this.value)">
           <option>Bomba Injetora</option><option>Bomba de Alta</option>
           <option>Injetores Mecânicos</option><option>Injetores Eletrônicos</option>
           <option>Veículo Diesel</option><option>Turbinas</option>
@@ -398,12 +398,20 @@ textarea.inp{resize:vertical;}
 
     <!-- ABA ETAPAS -->
     <div id="cfg-aba-etapas" style="display:none">
-      <div class="alert alert-i" style="margin-bottom:12px"><div>💡</div><div>Renomeie, reordene, adicione ou remova as colunas do <strong>Kanban</strong>.</div></div>
+      <div class="alert alert-i" style="margin-bottom:12px"><div>💡</div><div>Renomeie, reordene, adicione ou remova as colunas do <strong>Kanban</strong>. Cada setor tem etapas independentes.</div></div>
+      <div class="form-group" style="margin-bottom:12px">
+        <div class="lbl">Setor</div>
+        <select class="inp" id="cfg-setor-etapas" onchange="selecionarSetorEtapas(this.value)">
+          <option>Bomba Injetora</option><option>Bomba de Alta</option>
+          <option>Injetores Mecânicos</option><option>Injetores Eletrônicos</option>
+          <option>Veículo Diesel</option><option>Turbinas</option>
+        </select>
+      </div>
       <div id="lista-etapas-config"></div>
       <button class="btn btn-ghost" onclick="adicionarEtapa()" style="width:100%;margin-top:8px;margin-bottom:14px">+ Adicionar etapa</button>
       <div style="display:flex;gap:10px;justify-content:flex-end">
         <button class="btn btn-ghost" onclick="fecharConfig()">Cancelar</button>
-        <button class="btn btn-primary" id="btn-salvar-etapas" onclick="salvarEtapas()">💾 Salvar Etapas</button>
+        <button class="btn btn-primary" id="btn-salvar-etapas" onclick="salvarEtapas()">💾 Salvar Etapas — Bomba Injetora</button>
       </div>
     </div>
   </div>
@@ -426,9 +434,10 @@ const SETOR_COLORS = {'Bomba Injetora':'#3b82f6','Bomba de Alta':'#f59e0b','Inje
 
 let osData = [];
 let camposConfig = [];
-let etapasKanban = [];
+let etapasKanban = {}; // map: { setor: [{id, label, cor, dbId}] }
 let operadoresDB = []; // operadores cadastrados por setor
 let setorAtivo = SETORES[0];
+let setorEtapasConfig = SETORES[0]; // setor selecionado no configurador de etapas
 let dragId = null;
 let tipoEntrada = 'veiculo';
 let camposTemp = [];
@@ -575,22 +584,40 @@ function mapRow(r){
 async function carregarEtapas(){
   const { data, error } = await sb.from('etapas_kanban').select('*').order('ordem');
   if(error) throw new Error(error?.message || String(error));
-  etapasKanban = (data||[]).map(r=>({ id:r.etapa_id, label:r.label, cor:r.cor||'#64748b', dbId:r.id }));
-  // Atualizar select de status nos modais dinamicamente
+  // Rebuild map por setor
+  etapasKanban = {};
+  SETORES.forEach(s => { etapasKanban[s] = []; });
+  (data||[]).forEach(r => {
+    if(r.setor && etapasKanban[r.setor] !== undefined){
+      etapasKanban[r.setor].push({ id:r.etapa_id, label:r.label, cor:r.cor||'#64748b', dbId:r.id });
+    }
+  });
   atualizarSelectsStatus();
 }
 
+// Atualiza select de status para um setor específico
+function atualizarStatusPorSetor(selectId, setor){
+  const el = document.getElementById(selectId);
+  if(!el) return;
+  const val = el.value;
+  const opts = (etapasKanban[setor]||[]).map(e=>`<option>${e.label}</option>`).join('');
+  el.innerHTML = opts || '<option>Diagnóstico</option>';
+  if(val) el.value = val;
+}
+
 function atualizarSelectsStatus(){
-  const opts = etapasKanban.map(e=>`<option>${e.label}</option>`).join('');
-  ['m-status','e-status'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el){ const val=el.value; el.innerHTML=opts; if(val) el.value=val; }
-  });
-  // Filtro no dashboard
-  const filtro=document.getElementById('dash-filtro');
+  // m-status usa o setor selecionado no modal nova-OS (ou setorAtivo)
+  const mSetor = document.getElementById('m-setor')?.value || setorAtivo;
+  atualizarStatusPorSetor('m-status', mSetor);
+  // e-status usa o setor selecionado no modal editar-OS
+  const eSetor = document.getElementById('e-setor')?.value || setorAtivo;
+  atualizarStatusPorSetor('e-status', eSetor);
+  // Filtro no dashboard — todas as etapas únicas
+  const allLabels = [...new Set(Object.values(etapasKanban).flat().map(e=>e.label))];
+  const filtro = document.getElementById('dash-filtro');
   if(filtro){
     const val=filtro.value;
-    filtro.innerHTML=`<option value="">Todos os status</option>`+etapasKanban.map(e=>`<option>${e.label}</option>`).join('');
+    filtro.innerHTML=`<option value="">Todos os status</option>`+allLabels.map(l=>`<option>${l}</option>`).join('');
     if(val) filtro.value=val;
   }
 }
@@ -609,14 +636,16 @@ function showTab(id,el){
 // DASHBOARD
 // ══════════════════════════════════════════
 function renderDashboard(){
-  // Etapas dinâmicas: última = "pronta", penúltima pode ser "aguardando retirada"
-  const etapas = etapasKanban.map(e=>e.label);
-  const ultimasDuas = etapas.slice(-2); // considera as 2 últimas como "concluídas"
-  const etapaAprovacao = etapas.find(e=>e.toLowerCase().includes('aprovação')||e.toLowerCase().includes('aprovacao'))||'';
+  // Considera as 2 últimas etapas do setor de cada OS como "concluídas"
+  const ultimasDuasDoSetor = (setor) => (etapasKanban[setor]||[]).slice(-2).map(e=>e.label);
+  const isOSDone = (os) => ultimasDuasDoSetor(os.setor).includes(os.status);
+  // "Aprovação" — busca em qualquer setor
+  const allStages = Object.values(etapasKanban).flat();
+  const etapaAprovacao = allStages.find(e=>e.label.toLowerCase().includes('aprovação')||e.label.toLowerCase().includes('aprovacao'))?.label||'';
 
-  document.getElementById('kpi-abertas').textContent=osData.filter(o=>!ultimasDuas.includes(o.status)).length;
+  document.getElementById('kpi-abertas').textContent=osData.filter(o=>!isOSDone(o)).length;
   document.getElementById('kpi-aprovacao').textContent=etapaAprovacao?osData.filter(o=>o.status===etapaAprovacao).length:'—';
-  document.getElementById('kpi-prontas').textContent=osData.filter(o=>ultimasDuas.includes(o.status)).length;
+  document.getElementById('kpi-prontas').textContent=osData.filter(o=>isOSDone(o)).length;
   document.getElementById('kpi-total').textContent=osData.length;
 
   document.getElementById('dash-setores').innerHTML=SETORES.map(s=>{
@@ -659,7 +688,7 @@ function renderDashTable(){
       <td style="color:var(--muted);font-size:12px">${os.modelo||'—'}</td>
       <td style="font-size:11px;color:${SETOR_COLORS[os.setor]||'var(--muted)'}">${os.setor}</td>
       <td style="font-size:12px;color:var(--accent2)">${os.operador||'—'}</td>
-      <td><span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;background:${(etapasKanban.find(e=>e.label===os.status)?.cor||'#64748b')}22;color:${etapasKanban.find(e=>e.label===os.status)?.cor||'var(--muted)'}">●&nbsp;${os.status}</span></td>
+      <td><span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;background:${((etapasKanban[os.setor]||[]).find(e=>e.label===os.status)?.cor||'#64748b')}22;color:${(etapasKanban[os.setor]||[]).find(e=>e.label===os.status)?.cor||'var(--muted)'}">●&nbsp;${os.status}</span></td>
       <td style="font-family:var(--fm);color:${diasColor(d)};font-weight:700">${d}d</td>
       ${extraTds}
       <td style="white-space:nowrap">
@@ -689,7 +718,7 @@ function renderKanban(){
   const board=document.getElementById('kanbanBoard');
   const osDoSetor=osData.filter(o=>o.setor===setorAtivo);
   const corSetor=SETOR_COLORS[setorAtivo];
-  const etapas=etapasKanban.length?etapasKanban:[{id:'diagnostico',label:'Diagnóstico',cor:'#3b82f6'}];
+  const etapas=(etapasKanban[setorAtivo]||[]).length?etapasKanban[setorAtivo]:[{id:'diagnostico',label:'Diagnóstico',cor:'#3b82f6'}];
   board.innerHTML=etapas.map(etapa=>{
     const cards=osDoSetor.filter(o=>o.status===etapa.label);
     return `<div class="kanban-col" data-status="${etapa.label}">
@@ -716,7 +745,7 @@ function kanbanCard(os, cor){
   const d=calcDias(os.dataEntrada);
   const dc=diasColor(d);
   const isPeca=os.tipo==='peca'||os.placa==='PEÇA';
-  const etapas=etapasKanban.length?etapasKanban:[{label:'Diagnóstico'}];
+  const etapas=(etapasKanban[os.setor]||[]).length?etapasKanban[os.setor]:[{label:'Diagnóstico'}];
   const idx=etapas.findIndex(e=>e.label===os.status);
   const podePrev=idx>0, podeNext=idx<etapas.length-1;
   let extrasHtml='';
@@ -748,7 +777,7 @@ function kanbanCard(os, cor){
 async function moverStatus(id,dir){
   const os=osData.find(o=>o.id===id);
   if(!os) return;
-  const etapas=etapasKanban.length?etapasKanban:[{label:'Diagnóstico'}];
+  const etapas=(etapasKanban[os.setor]||[]).length?etapasKanban[os.setor]:[{label:'Diagnóstico'}];
   const idx=etapas.findIndex(e=>e.label===os.status)+dir;
   if(idx<0||idx>=etapas.length) return;
   const novoStatus=etapas[idx].label;
@@ -829,6 +858,7 @@ function abrirModal(){
   document.getElementById('m-setor').value=setor;
   setTipo('veiculo');
   atualizarOperadores('m-operador', setor);
+  atualizarStatusPorSetor('m-status', setor);
   mostrarVinculo(setor);
   renderCamposExtrasForm('form',null);
 }
@@ -901,6 +931,7 @@ function abrirEditar(id){
   document.getElementById('e-cliente').value=os.cliente;
   document.getElementById('e-modelo').value=os.modelo||'';
   document.getElementById('e-setor').value=os.setor;
+  atualizarStatusPorSetor('e-status', os.setor);
   document.getElementById('e-status').value=os.status;
   document.getElementById('e-obs').value=os.obs||'';
   document.getElementById('e-placa-row').style.display=isPeca?'none':'grid';
@@ -1002,13 +1033,27 @@ async function deletarOS(id){
 // ══════════════════════════════════════════
 function abrirConfig(aba='campos'){
   camposTemp=JSON.parse(JSON.stringify(camposConfig));
-  etapasTemp=JSON.parse(JSON.stringify(etapasKanban));
+  setorEtapasConfig=setorAtivo;
+  etapasTemp=JSON.parse(JSON.stringify(etapasKanban[setorEtapasConfig]||[]));
   renderCamposConfig();
   renderEtapasConfig();
+  // Sincronizar selector de setor na aba etapas
+  const sel=document.getElementById('cfg-setor-etapas');
+  if(sel) sel.value=setorEtapasConfig;
+  const btn=document.getElementById('btn-salvar-etapas');
+  if(btn) btn.textContent=`💾 Salvar Etapas — ${setorEtapasConfig}`;
   mostrarCfgAba(aba);
   document.getElementById('modalConfig').style.display='flex';
 }
 function fecharConfig(){ document.getElementById('modalConfig').style.display='none'; }
+
+function selecionarSetorEtapas(setor){
+  setorEtapasConfig=setor;
+  etapasTemp=JSON.parse(JSON.stringify(etapasKanban[setor]||[]));
+  renderEtapasConfig();
+  const btn=document.getElementById('btn-salvar-etapas');
+  if(btn) btn.textContent=`💾 Salvar Etapas — ${setor}`;
+}
 
 function mostrarCfgAba(aba){
   ['campos','etapas','operadores'].forEach(a=>{
@@ -1061,24 +1106,27 @@ function adicionarEtapa(){
 }
 
 async function salvarEtapas(){
+  const setor = setorEtapasConfig;
   setBtnLoading('btn-salvar-etapas',true);
-  const { error:del } = await sb.from('etapas_kanban').delete().neq('id','00000000-0000-0000-0000-000000000000');
-  if(del){ toast('Erro ao salvar etapas','err'); setBtnLoading('btn-salvar-etapas',false,'💾 Salvar Etapas'); return; }
+  // Deleta SOMENTE as etapas do setor atual
+  const { error:del } = await sb.from('etapas_kanban').delete().eq('setor', setor);
+  if(del){ toast('Erro ao salvar etapas: '+del.message,'err'); setBtnLoading('btn-salvar-etapas',false,`💾 Salvar Etapas — ${setor}`); return; }
   if(etapasTemp.length){
     const rows=etapasTemp.map((e,i)=>({
-      etapa_id: e.id||('etapa_'+i+'_'+Date.now()),
+      etapa_id: e.id||(`${setor.toLowerCase().replace(/\s+/g,'_')}_${i}_${Date.now()}`),
       label: e.label,
       cor: e.cor||'#64748b',
-      ordem: i+1
+      ordem: i+1,
+      setor: setor  // CRÍTICO: incluir o setor em cada row
     }));
     const { error:ins } = await sb.from('etapas_kanban').insert(rows);
-    if(ins){ toast('Erro ao inserir etapas','err'); setBtnLoading('btn-salvar-etapas',false,'💾 Salvar Etapas'); return; }
+    if(ins){ toast('Erro ao inserir etapas: '+ins.message,'err'); setBtnLoading('btn-salvar-etapas',false,`💾 Salvar Etapas — ${setor}`); return; }
   }
   await carregarEtapas();
-  setBtnLoading('btn-salvar-etapas',false,'💾 Salvar Etapas');
+  setBtnLoading('btn-salvar-etapas',false,`💾 Salvar Etapas — ${setor}`);
   fecharConfig();
   renderKanban(); renderDashboard();
-  toast('✓ Etapas do Kanban atualizadas!');
+  toast(`✓ Etapas de ${setor} atualizadas!`);
 }
 
 function renderCamposConfig(){

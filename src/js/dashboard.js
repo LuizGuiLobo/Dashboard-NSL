@@ -8,14 +8,16 @@
 // DASHBOARD
 // ══════════════════════════════════════════
 function renderDashboard(){
-  // Etapas dinâmicas: última = "pronta", penúltima pode ser "aguardando retirada"
-  const etapas = etapasKanban.map(e=>e.label);
-  const ultimasDuas = etapas.slice(-2); // considera as 2 últimas como "concluídas"
-  const etapaAprovacao = etapas.find(e=>e.toLowerCase().includes('aprovação')||e.toLowerCase().includes('aprovacao'))||'';
+  // Considera as 2 últimas etapas do setor de cada OS como "concluídas"
+  const ultimasDuasDoSetor = (setor) => (etapasKanban[setor]||[]).slice(-2).map(e=>e.label);
+  const isOSDone = (os) => ultimasDuasDoSetor(os.setor).includes(os.status);
+  // "Aprovação" — busca em qualquer setor
+  const allStages = Object.values(etapasKanban).flat();
+  const etapaAprovacao = allStages.find(e=>e.label.toLowerCase().includes('aprovação')||e.label.toLowerCase().includes('aprovacao'))?.label||'';
 
-  document.getElementById('kpi-abertas').textContent=osData.filter(o=>!ultimasDuas.includes(o.status)).length;
+  document.getElementById('kpi-abertas').textContent=osData.filter(o=>!isOSDone(o)).length;
   document.getElementById('kpi-aprovacao').textContent=etapaAprovacao?osData.filter(o=>o.status===etapaAprovacao).length:'—';
-  document.getElementById('kpi-prontas').textContent=osData.filter(o=>ultimasDuas.includes(o.status)).length;
+  document.getElementById('kpi-prontas').textContent=osData.filter(o=>isOSDone(o)).length;
   document.getElementById('kpi-total').textContent=osData.length;
 
   document.getElementById('dash-setores').innerHTML=SETORES.map(s=>{
@@ -58,7 +60,7 @@ function renderDashTable(){
       <td style="color:var(--muted);font-size:12px">${os.modelo||'—'}</td>
       <td style="font-size:11px;color:${SETOR_COLORS[os.setor]||'var(--muted)'}">${os.setor}</td>
       <td style="font-size:12px;color:var(--accent2)">${os.operador||'—'}</td>
-      <td><span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;background:${(etapasKanban.find(e=>e.label===os.status)?.cor||'#64748b')}22;color:${etapasKanban.find(e=>e.label===os.status)?.cor||'var(--muted)'}">●&nbsp;${os.status}</span></td>
+      <td><span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;background:${((etapasKanban[os.setor]||[]).find(e=>e.label===os.status)?.cor||'#64748b')}22;color:${(etapasKanban[os.setor]||[]).find(e=>e.label===os.status)?.cor||'var(--muted)'}">●&nbsp;${os.status}</span></td>
       <td style="font-family:var(--fm);color:${diasColor(d)};font-weight:700">${d}d</td>
       ${extraTds}
       <td style="white-space:nowrap">

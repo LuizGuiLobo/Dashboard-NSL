@@ -12,9 +12,10 @@ const SETOR_COLORS = {'Bomba Injetora':'#3b82f6','Bomba de Alta':'#f59e0b','Inje
 
 let osData = [];
 let camposConfig = [];
-let etapasKanban = [];
+let etapasKanban = {}; // map: { setor: [{id, label, cor, dbId}] }
 let operadoresDB = []; // operadores cadastrados por setor
 let setorAtivo = SETORES[0];
+let setorEtapasConfig = SETORES[0]; // setor selecionado no configurador de etapas
 let dragId = null;
 let tipoEntrada = 'veiculo';
 let camposTemp = [];

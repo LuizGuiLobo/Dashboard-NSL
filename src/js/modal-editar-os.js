@@ -17,6 +17,7 @@ function abrirEditar(id){
   document.getElementById('e-cliente').value=os.cliente;
   document.getElementById('e-modelo').value=os.modelo||'';
   document.getElementById('e-setor').value=os.setor;
+  atualizarStatusPorSetor('e-status', os.setor);
   document.getElementById('e-status').value=os.status;
   document.getElementById('e-obs').value=os.obs||'';
   document.getElementById('e-placa-row').style.display=isPeca?'none':'grid';
