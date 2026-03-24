@@ -111,22 +111,40 @@ function mapRow(r){
 async function carregarEtapas(){
   const { data, error } = await sb.from('etapas_kanban').select('*').order('ordem');
   if(error) throw new Error(error?.message || String(error));
-  etapasKanban = (data||[]).map(r=>({ id:r.etapa_id, label:r.label, cor:r.cor||'#64748b', dbId:r.id }));
-  // Atualizar select de status nos modais dinamicamente
+  // Rebuild map por setor
+  etapasKanban = {};
+  SETORES.forEach(s => { etapasKanban[s] = []; });
+  (data||[]).forEach(r => {
+    if(r.setor && etapasKanban[r.setor] !== undefined){
+      etapasKanban[r.setor].push({ id:r.etapa_id, label:r.label, cor:r.cor||'#64748b', dbId:r.id });
+    }
+  });
   atualizarSelectsStatus();
 }
 
+// Atualiza select de status para um setor específico
+function atualizarStatusPorSetor(selectId, setor){
+  const el = document.getElementById(selectId);
+  if(!el) return;
+  const val = el.value;
+  const opts = (etapasKanban[setor]||[]).map(e=>`<option>${e.label}</option>`).join('');
+  el.innerHTML = opts || '<option>Diagnóstico</option>';
+  if(val) el.value = val;
+}
+
 function atualizarSelectsStatus(){
-  const opts = etapasKanban.map(e=>`<option>${e.label}</option>`).join('');
-  ['m-status','e-status'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el){ const val=el.value; el.innerHTML=opts; if(val) el.value=val; }
-  });
-  // Filtro no dashboard
-  const filtro=document.getElementById('dash-filtro');
+  // m-status usa o setor selecionado no modal nova-OS (ou setorAtivo)
+  const mSetor = document.getElementById('m-setor')?.value || setorAtivo;
+  atualizarStatusPorSetor('m-status', mSetor);
+  // e-status usa o setor selecionado no modal editar-OS
+  const eSetor = document.getElementById('e-setor')?.value || setorAtivo;
+  atualizarStatusPorSetor('e-status', eSetor);
+  // Filtro no dashboard — todas as etapas únicas
+  const allLabels = [...new Set(Object.values(etapasKanban).flat().map(e=>e.label))];
+  const filtro = document.getElementById('dash-filtro');
   if(filtro){
     const val=filtro.value;
-    filtro.innerHTML=`<option value="">Todos os status</option>`+etapasKanban.map(e=>`<option>${e.label}</option>`).join('');
+    filtro.innerHTML=`<option value="">Todos os status</option>`+allLabels.map(l=>`<option>${l}</option>`).join('');
     if(val) filtro.value=val;
   }
 }

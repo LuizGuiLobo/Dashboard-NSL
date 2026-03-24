@@ -4,72 +4,76 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Nova São Luiz Diesel — Gestão</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
-  --bg:#0a0c10;--surface:#111419;--surface2:#191d24;--border:#252a33;
-  --accent:#f59e0b;--accent2:#3b82f6;--accent3:#10b981;--accent4:#ef4444;--accent5:#8b5cf6;
-  --text:#e2e8f0;--muted:#64748b;
-  --fd:'Bebas Neue',sans-serif;--fb:'DM Sans',sans-serif;--fm:'JetBrains Mono',monospace;
+  --bg:#1a1a1a;--surface:#222222;--surface2:#1e1e1e;--border:#333333;
+  --accent:#c8962a;--accent-hover:#daa832;--accent-dark:#a67b1e;--border-hover:#444444;
+  --accent2:#3b82f6;--accent3:#10b981;--accent4:#ef4444;--accent5:#8b5cf6;
+  --text:#ffffff;--muted:#777777;
+  --fd:'Montserrat',sans-serif;--fb:'Inter',sans-serif;--fm:'JetBrains Mono',monospace;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--bg);color:var(--text);font-family:var(--fb);min-height:100vh;overflow-x:hidden;}
-header{border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:rgba(10,12,16,0.96);backdrop-filter:blur(12px);z-index:200;}
-.logo{font-family:var(--fd);font-size:20px;letter-spacing:2px;color:var(--accent);}
-.logo span{color:var(--text);}
+header{border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:rgba(17,17,17,0.96);backdrop-filter:blur(12px);z-index:200;}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-img{height:44px;width:44px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid rgba(200,150,42,.35);}
+.logo-text{font-family:var(--fd);font-size:18px;letter-spacing:2px;font-weight:700;color:var(--accent);}
+.logo-text span{color:var(--text);}
 .header-right{display:flex;align-items:center;gap:10px;}
 .date-badge{font-family:var(--fm);font-size:11px;color:var(--muted);background:var(--surface);padding:5px 11px;border-radius:4px;border:1px solid var(--border);}
 .sync-badge{font-family:var(--fm);font-size:10px;padding:4px 10px;border-radius:4px;border:1px solid;transition:all .3s;}
 .sync-ok{color:var(--accent3);border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.08);}
 .sync-err{color:var(--accent4);border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.08);}
-.sync-load{color:var(--accent);border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.08);}
+.sync-load{color:var(--accent);border-color:rgba(200,150,42,.3);background:rgba(200,150,42,.08);}
 nav{display:flex;gap:2px;padding:0 28px;border-bottom:1px solid var(--border);overflow-x:auto;background:var(--bg);}
 .tab{padding:12px 18px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s;}
 .tab:hover{color:var(--text);}
 .tab.active{color:var(--accent);border-bottom-color:var(--accent);}
 main{padding:24px 28px;max-width:1500px;margin:0 auto;}
 .section{display:none;}.section.active{display:block;}
-.sec-title{font-family:var(--fd);font-size:26px;letter-spacing:1px;margin-bottom:18px;display:flex;align-items:center;gap:12px;}
+.sec-title{font-family:var(--fd);font-size:22px;letter-spacing:2px;font-weight:800;text-transform:uppercase;margin-bottom:18px;display:flex;align-items:center;gap:12px;}
 .sec-title::after{content:'';flex:1;height:1px;background:var(--border);}
 .block-title{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px;transition:border-color .3s;}
+.card:hover{border-color:var(--accent);}
 .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
 .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:22px;}
-.card-label{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
-.card-value{font-family:var(--fd);font-size:40px;line-height:1;margin-bottom:3px;}
+.card-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.card-value{font-family:var(--fd);font-size:40px;font-weight:700;line-height:1;margin-bottom:3px;}
 .card-sub{font-size:11px;color:var(--muted);}
 .kpi-y .card-value{color:var(--accent);}
 .kpi-g .card-value{color:var(--accent3);}
 .kpi-b .card-value{color:var(--accent2);}
 .kpi-r .card-value{color:var(--accent4);}
-.pill{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;padding:2px 9px;border-radius:4px;}
 .pill::before{content:'●';font-size:7px;}
-.pill-y{background:rgba(245,158,11,.12);color:var(--accent);}
+.pill-y{background:rgba(200,150,42,.12);color:var(--accent);}
 .pill-g{background:rgba(16,185,129,.12);color:var(--accent3);}
 .pill-b{background:rgba(59,130,246,.12);color:var(--accent2);}
 .pill-r{background:rgba(239,68,68,.12);color:var(--accent4);}
 .pill-p{background:rgba(139,92,246,.12);color:var(--accent5);}
-.pill-gz{background:rgba(100,116,139,.12);color:var(--muted);}
+.pill-gz{background:rgba(119,119,119,.12);color:var(--muted);}
 .prog-wrap{margin-bottom:12px;}
 .prog-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;}
 .prog-label span:last-child{color:var(--muted);font-family:var(--fm);font-size:11px;}
 .prog-track{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;}
 .prog-fill{height:100%;border-radius:3px;}
 table{width:100%;border-collapse:collapse;font-size:13px;}
-th{text-align:left;font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);padding:7px 11px;border-bottom:1px solid var(--border);}
-td{padding:11px 11px;border-bottom:1px solid rgba(37,42,51,.5);color:var(--text);}
+th{text-align:left;font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);padding:7px 11px;border-bottom:1px solid var(--border);background:var(--surface2);}
+td{padding:11px 11px;border-bottom:1px solid rgba(51,51,51,.5);color:var(--text);}
 tr:last-child td{border-bottom:none;}
-tr:hover td{background:rgba(255,255,255,.02);}
+tr:hover td{background:rgba(200,150,42,.05);}
 .alert{display:flex;gap:10px;padding:11px 14px;border-radius:6px;margin-bottom:10px;font-size:12px;align-items:flex-start;}
-.alert-w{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);}
+.alert-w{background:rgba(200,150,42,.08);border:1px solid rgba(200,150,42,.2);}
 .alert-d{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);}
 .alert-i{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);}
 /* KANBAN */
 .kanban-wrapper{display:flex;gap:10px;overflow-x:auto;padding-bottom:12px;}
 .kanban-col{min-width:210px;max-width:225px;flex-shrink:0;background:var(--surface2);border:1px solid var(--border);border-radius:8px;display:flex;flex-direction:column;}
 .kanban-col-header{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
-.kanban-col-title{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+.kanban-col-title{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;}
 .kanban-count{font-family:var(--fm);font-size:11px;background:var(--surface);padding:2px 7px;border-radius:10px;color:var(--muted);}
 .kanban-body{padding:8px;flex:1;min-height:80px;}
 .kanban-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 11px;margin-bottom:8px;cursor:grab;transition:border-color .15s,transform .1s;}
@@ -89,31 +93,34 @@ tr:hover td{background:rgba(255,255,255,.02);}
 .setor-tab.active{color:#000;border-color:transparent;}
 /* INPUTS */
 .inp{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:5px;font-size:13px;font-family:var(--fb);}
-.inp:focus{outline:none;border-color:var(--accent);}
+.inp:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(200,150,42,.2);}
 .inp-mono{font-family:var(--fm);letter-spacing:2px;text-transform:uppercase;}
 .lbl{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
 .form-group{margin-bottom:12px;}
 select.inp option{background:var(--surface2);}
 textarea.inp{resize:vertical;}
 /* MODAL */
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:999;align-items:center;justify-content:center;padding:16px;}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:999;align-items:center;justify-content:center;padding:16px;}
 .modal-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:26px;width:100%;max-width:580px;max-height:90vh;overflow-y:auto;}
-.modal-title{font-family:var(--fd);font-size:22px;letter-spacing:1px;color:var(--accent);margin-bottom:20px;}
-.btn{padding:9px 20px;border-radius:5px;cursor:pointer;font-size:13px;font-weight:600;border:none;transition:opacity .15s;}
-.btn:hover{opacity:.85;}
+.modal-title{font-family:var(--fd);font-size:20px;letter-spacing:2px;font-weight:800;text-transform:uppercase;color:var(--accent);margin-bottom:20px;}
+.btn{padding:9px 20px;border-radius:5px;cursor:pointer;font-size:13px;font-weight:600;border:none;transition:all .2s;}
+.btn:hover{opacity:.9;}
 .btn:disabled{opacity:.4;cursor:not-allowed;}
-.btn-primary{background:var(--accent);color:#000;}
-.btn-ghost{background:var(--surface2);color:var(--muted);border:1px solid var(--border);}
+.btn-primary{background:var(--accent);color:#111;}
+.btn-primary:hover:not(:disabled){background:var(--accent-hover);}
+.btn-ghost{background:transparent;color:var(--accent);border:1px solid var(--accent);}
+.btn-ghost:hover:not(:disabled){background:var(--accent);color:#111;}
 .btn-danger{background:rgba(239,68,68,.15);color:var(--accent4);border:1px solid rgba(239,68,68,.25);}
+.btn-danger:hover:not(:disabled){background:rgba(239,68,68,.3);}
 .btn-sm{padding:4px 10px;font-size:11px;}
 /* LOADING SPINNER */
-.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(245,158,11,.3);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(200,150,42,.3);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
 @keyframes spin{to{transform:rotate(360deg)}}
 /* TOAST */
 .toast{position:fixed;bottom:24px;right:24px;padding:12px 18px;border-radius:7px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none;}
 .toast.show{opacity:1;transform:translateY(0);}
-.toast-ok{background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);color:var(--accent3);}
-.toast-err{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:var(--accent4);}
+.toast-ok{background:rgba(16,185,129,.15);border-left:3px solid var(--accent3);color:var(--accent3);}
+.toast-err{background:rgba(239,68,68,.15);border-left:3px solid var(--accent4);color:var(--accent4);}
 /* CONFIG */
 .campo-config{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;margin-bottom:6px;}
 .campo-config input{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:4px;font-size:12px;}
@@ -122,13 +129,18 @@ textarea.inp{resize:vertical;}
 .req-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;cursor:pointer;white-space:nowrap;}
 .req-on{background:rgba(239,68,68,.15);color:var(--accent4);border:1px solid rgba(239,68,68,.25);}
 .req-off{background:var(--surface);color:var(--muted);border:1px solid var(--border);}
+/* NSL FOOTER MINI */
+.nsl-footer{font-size:10px;color:var(--muted);text-align:center;padding:8px 0;border-top:1px solid var(--border);margin-top:auto;letter-spacing:.5px;}
 @media(max-width:800px){.grid-4{grid-template-columns:repeat(2,1fr);}.grid-2{grid-template-columns:1fr;}main{padding:16px;}}
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo">NOVA SÃO LUIZ <span>DIESEL</span></div>
+  <div class="logo">
+    <img src="assets/logo.png" class="logo-img" alt="Nova São Luiz Diesel">
+    <div class="logo-text">NOVA SÃO LUIZ <span>DIESEL</span></div>
+  </div>
   <div class="header-right">
     <div class="date-badge" id="dateDisplay">—</div>
     <div class="sync-badge sync-load" id="syncBadge">⟳ Conectando...</div>
@@ -211,8 +223,8 @@ textarea.inp{resize:vertical;}
     <table style="border-collapse:collapse">
       <thead><tr><th style="border:1px solid var(--border);background:var(--surface2)"></th><th style="border:1px solid var(--border);background:var(--surface2);padding:10px 14px">🔴 URGENTE</th><th style="border:1px solid var(--border);background:var(--surface2);padding:10px 14px">🟡 NÃO URGENTE</th></tr></thead>
       <tbody>
-        <tr><td style="border:1px solid var(--border);background:var(--surface2);padding:10px 14px;font-weight:700">⬆ ALTO IMPACTO</td><td style="border:1px solid var(--border);background:rgba(239,68,68,.1);padding:10px 14px;color:#ef4444;font-weight:700">FAZER AGORA<br><span style="font-size:11px;font-weight:400;color:var(--text)">Cliente parado, pátio cheio, OS aprovada há 3+ dias sem iniciar</span></td><td style="border:1px solid var(--border);background:rgba(245,158,11,.08);padding:10px 14px;color:var(--accent);font-weight:700">PLANEJAR<br><span style="font-size:11px;font-weight:400;color:var(--text)">Telhado, equipamentos novos, treinamento técnico</span></td></tr>
-        <tr><td style="border:1px solid var(--border);background:var(--surface2);padding:10px 14px;font-weight:700">⬇ BAIXO IMPACTO</td><td style="border:1px solid var(--border);background:rgba(245,158,11,.08);padding:10px 14px;color:var(--accent);font-weight:700">DELEGAR<br><span style="font-size:11px;font-weight:400;color:var(--text)">Limpeza geral, organização de estoque, cadastros</span></td><td style="border:1px solid var(--border);background:rgba(16,185,129,.07);padding:10px 14px;color:var(--accent3);font-weight:700">ELIMINAR<br><span style="font-size:11px;font-weight:400;color:var(--text)">Reuniões sem resultado, tarefas sem impacto claro</span></td></tr>
+        <tr><td style="border:1px solid var(--border);background:var(--surface2);padding:10px 14px;font-weight:700">⬆ ALTO IMPACTO</td><td style="border:1px solid var(--border);background:rgba(239,68,68,.1);padding:10px 14px;color:#ef4444;font-weight:700">FAZER AGORA<br><span style="font-size:11px;font-weight:400;color:var(--text)">Cliente parado, pátio cheio, OS aprovada há 3+ dias sem iniciar</span></td><td style="border:1px solid var(--border);background:rgba(200,150,42,.08);padding:10px 14px;color:var(--accent);font-weight:700">PLANEJAR<br><span style="font-size:11px;font-weight:400;color:var(--text)">Telhado, equipamentos novos, treinamento técnico</span></td></tr>
+        <tr><td style="border:1px solid var(--border);background:var(--surface2);padding:10px 14px;font-weight:700">⬇ BAIXO IMPACTO</td><td style="border:1px solid var(--border);background:rgba(200,150,42,.08);padding:10px 14px;color:var(--accent);font-weight:700">DELEGAR<br><span style="font-size:11px;font-weight:400;color:var(--text)">Limpeza geral, organização de estoque, cadastros</span></td><td style="border:1px solid var(--border);background:rgba(16,185,129,.07);padding:10px 14px;color:var(--accent3);font-weight:700">ELIMINAR<br><span style="font-size:11px;font-weight:400;color:var(--text)">Reuniões sem resultado, tarefas sem impacto claro</span></td></tr>
       </tbody>
     </table>
   </div>
@@ -276,7 +288,7 @@ textarea.inp{resize:vertical;}
     <div class="form-group"><div class="lbl">Nome do Cliente <span style="color:var(--accent4)">*</span></div><input class="inp" id="m-cliente" placeholder="Nome completo ou empresa"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="form-group"><div class="lbl">Setor</div>
-        <select class="inp" id="m-setor" onchange="atualizarOperadores('m-operador',this.value);mostrarVinculo(this.value)">
+        <select class="inp" id="m-setor" onchange="atualizarOperadores('m-operador',this.value);mostrarVinculo(this.value);atualizarStatusPorSetor('m-status',this.value)">
           <option>Bomba Injetora</option><option>Bomba de Alta</option>
           <option>Injetores Mecânicos</option><option>Injetores Eletrônicos</option>
           <option>Veículo Diesel</option><option>Turbinas</option>
@@ -321,7 +333,7 @@ textarea.inp{resize:vertical;}
     <div class="form-group"><div class="lbl">Cliente <span style="color:var(--accent4)">*</span></div><input class="inp" id="e-cliente"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="form-group"><div class="lbl">Setor</div>
-        <select class="inp" id="e-setor" onchange="atualizarOperadores('e-operador',this.value);mostrarVinculoEditar(this.value)">
+        <select class="inp" id="e-setor" onchange="atualizarOperadores('e-operador',this.value);mostrarVinculoEditar(this.value);atualizarStatusPorSetor('e-status',this.value)">
           <option>Bomba Injetora</option><option>Bomba de Alta</option>
           <option>Injetores Mecânicos</option><option>Injetores Eletrônicos</option>
           <option>Veículo Diesel</option><option>Turbinas</option>
@@ -398,12 +410,20 @@ textarea.inp{resize:vertical;}
 
     <!-- ABA ETAPAS -->
     <div id="cfg-aba-etapas" style="display:none">
-      <div class="alert alert-i" style="margin-bottom:12px"><div>💡</div><div>Renomeie, reordene, adicione ou remova as colunas do <strong>Kanban</strong>.</div></div>
+      <div class="alert alert-i" style="margin-bottom:12px"><div>💡</div><div>Renomeie, reordene, adicione ou remova as colunas do <strong>Kanban</strong>. Cada setor tem etapas independentes.</div></div>
+      <div class="form-group" style="margin-bottom:12px">
+        <div class="lbl">Setor</div>
+        <select class="inp" id="cfg-setor-etapas" onchange="selecionarSetorEtapas(this.value)">
+          <option>Bomba Injetora</option><option>Bomba de Alta</option>
+          <option>Injetores Mecânicos</option><option>Injetores Eletrônicos</option>
+          <option>Veículo Diesel</option><option>Turbinas</option>
+        </select>
+      </div>
       <div id="lista-etapas-config"></div>
       <button class="btn btn-ghost" onclick="adicionarEtapa()" style="width:100%;margin-top:8px;margin-bottom:14px">+ Adicionar etapa</button>
       <div style="display:flex;gap:10px;justify-content:flex-end">
         <button class="btn btn-ghost" onclick="fecharConfig()">Cancelar</button>
-        <button class="btn btn-primary" id="btn-salvar-etapas" onclick="salvarEtapas()">💾 Salvar Etapas</button>
+        <button class="btn btn-primary" id="btn-salvar-etapas" onclick="salvarEtapas()">💾 Salvar Etapas — Bomba Injetora</button>
       </div>
     </div>
   </div>
@@ -422,13 +442,14 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // ══════════════════════════════════════════
 const SETORES = ['Bomba Injetora','Bomba de Alta','Injetores Mecânicos','Injetores Eletrônicos','Veículo Diesel','Turbinas'];
 // STATUS_LIST e STATUS_COL removidos — etapas agora são dinâmicas via etapasKanban
-const SETOR_COLORS = {'Bomba Injetora':'#3b82f6','Bomba de Alta':'#f59e0b','Injetores Mecânicos':'#10b981','Injetores Eletrônicos':'#8b5cf6','Veículo Diesel':'#ef4444','Turbinas':'#06b6d4'};
+const SETOR_COLORS = {'Bomba Injetora':'#3b82f6','Bomba de Alta':'#e8a317','Injetores Mecânicos':'#10b981','Injetores Eletrônicos':'#8b5cf6','Veículo Diesel':'#ef4444','Turbinas':'#06b6d4'};
 
 let osData = [];
 let camposConfig = [];
-let etapasKanban = [];
+let etapasKanban = {}; // map: { setor: [{id, label, cor, dbId}] }
 let operadoresDB = []; // operadores cadastrados por setor
 let setorAtivo = SETORES[0];
+let setorEtapasConfig = SETORES[0]; // setor selecionado no configurador de etapas
 let dragId = null;
 let tipoEntrada = 'veiculo';
 let camposTemp = [];
@@ -575,22 +596,40 @@ function mapRow(r){
 async function carregarEtapas(){
   const { data, error } = await sb.from('etapas_kanban').select('*').order('ordem');
   if(error) throw new Error(error?.message || String(error));
-  etapasKanban = (data||[]).map(r=>({ id:r.etapa_id, label:r.label, cor:r.cor||'#64748b', dbId:r.id }));
-  // Atualizar select de status nos modais dinamicamente
+  // Rebuild map por setor
+  etapasKanban = {};
+  SETORES.forEach(s => { etapasKanban[s] = []; });
+  (data||[]).forEach(r => {
+    if(r.setor && etapasKanban[r.setor] !== undefined){
+      etapasKanban[r.setor].push({ id:r.etapa_id, label:r.label, cor:r.cor||'#64748b', dbId:r.id });
+    }
+  });
   atualizarSelectsStatus();
 }
 
+// Atualiza select de status para um setor específico
+function atualizarStatusPorSetor(selectId, setor){
+  const el = document.getElementById(selectId);
+  if(!el) return;
+  const val = el.value;
+  const opts = (etapasKanban[setor]||[]).map(e=>`<option>${e.label}</option>`).join('');
+  el.innerHTML = opts || '<option>Diagnóstico</option>';
+  if(val) el.value = val;
+}
+
 function atualizarSelectsStatus(){
-  const opts = etapasKanban.map(e=>`<option>${e.label}</option>`).join('');
-  ['m-status','e-status'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el){ const val=el.value; el.innerHTML=opts; if(val) el.value=val; }
-  });
-  // Filtro no dashboard
-  const filtro=document.getElementById('dash-filtro');
+  // m-status usa o setor selecionado no modal nova-OS (ou setorAtivo)
+  const mSetor = document.getElementById('m-setor')?.value || setorAtivo;
+  atualizarStatusPorSetor('m-status', mSetor);
+  // e-status usa o setor selecionado no modal editar-OS
+  const eSetor = document.getElementById('e-setor')?.value || setorAtivo;
+  atualizarStatusPorSetor('e-status', eSetor);
+  // Filtro no dashboard — todas as etapas únicas
+  const allLabels = [...new Set(Object.values(etapasKanban).flat().map(e=>e.label))];
+  const filtro = document.getElementById('dash-filtro');
   if(filtro){
     const val=filtro.value;
-    filtro.innerHTML=`<option value="">Todos os status</option>`+etapasKanban.map(e=>`<option>${e.label}</option>`).join('');
+    filtro.innerHTML=`<option value="">Todos os status</option>`+allLabels.map(l=>`<option>${l}</option>`).join('');
     if(val) filtro.value=val;
   }
 }
@@ -609,14 +648,16 @@ function showTab(id,el){
 // DASHBOARD
 // ══════════════════════════════════════════
 function renderDashboard(){
-  // Etapas dinâmicas: última = "pronta", penúltima pode ser "aguardando retirada"
-  const etapas = etapasKanban.map(e=>e.label);
-  const ultimasDuas = etapas.slice(-2); // considera as 2 últimas como "concluídas"
-  const etapaAprovacao = etapas.find(e=>e.toLowerCase().includes('aprovação')||e.toLowerCase().includes('aprovacao'))||'';
+  // Considera as 2 últimas etapas do setor de cada OS como "concluídas"
+  const ultimasDuasDoSetor = (setor) => (etapasKanban[setor]||[]).slice(-2).map(e=>e.label);
+  const isOSDone = (os) => ultimasDuasDoSetor(os.setor).includes(os.status);
+  // "Aprovação" — busca em qualquer setor
+  const allStages = Object.values(etapasKanban).flat();
+  const etapaAprovacao = allStages.find(e=>e.label.toLowerCase().includes('aprovação')||e.label.toLowerCase().includes('aprovacao'))?.label||'';
 
-  document.getElementById('kpi-abertas').textContent=osData.filter(o=>!ultimasDuas.includes(o.status)).length;
+  document.getElementById('kpi-abertas').textContent=osData.filter(o=>!isOSDone(o)).length;
   document.getElementById('kpi-aprovacao').textContent=etapaAprovacao?osData.filter(o=>o.status===etapaAprovacao).length:'—';
-  document.getElementById('kpi-prontas').textContent=osData.filter(o=>ultimasDuas.includes(o.status)).length;
+  document.getElementById('kpi-prontas').textContent=osData.filter(o=>isOSDone(o)).length;
   document.getElementById('kpi-total').textContent=osData.length;
 
   document.getElementById('dash-setores').innerHTML=SETORES.map(s=>{
@@ -659,7 +700,7 @@ function renderDashTable(){
       <td style="color:var(--muted);font-size:12px">${os.modelo||'—'}</td>
       <td style="font-size:11px;color:${SETOR_COLORS[os.setor]||'var(--muted)'}">${os.setor}</td>
       <td style="font-size:12px;color:var(--accent2)">${os.operador||'—'}</td>
-      <td><span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;background:${(etapasKanban.find(e=>e.label===os.status)?.cor||'#64748b')}22;color:${etapasKanban.find(e=>e.label===os.status)?.cor||'var(--muted)'}">●&nbsp;${os.status}</span></td>
+      <td><span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;background:${((etapasKanban[os.setor]||[]).find(e=>e.label===os.status)?.cor||'#64748b')}22;color:${(etapasKanban[os.setor]||[]).find(e=>e.label===os.status)?.cor||'var(--muted)'}">●&nbsp;${os.status}</span></td>
       <td style="font-family:var(--fm);color:${diasColor(d)};font-weight:700">${d}d</td>
       ${extraTds}
       <td style="white-space:nowrap">
@@ -689,7 +730,7 @@ function renderKanban(){
   const board=document.getElementById('kanbanBoard');
   const osDoSetor=osData.filter(o=>o.setor===setorAtivo);
   const corSetor=SETOR_COLORS[setorAtivo];
-  const etapas=etapasKanban.length?etapasKanban:[{id:'diagnostico',label:'Diagnóstico',cor:'#3b82f6'}];
+  const etapas=(etapasKanban[setorAtivo]||[]).length?etapasKanban[setorAtivo]:[{id:'diagnostico',label:'Diagnóstico',cor:'#3b82f6'}];
   board.innerHTML=etapas.map(etapa=>{
     const cards=osDoSetor.filter(o=>o.status===etapa.label);
     return `<div class="kanban-col" data-status="${etapa.label}">
@@ -716,7 +757,7 @@ function kanbanCard(os, cor){
   const d=calcDias(os.dataEntrada);
   const dc=diasColor(d);
   const isPeca=os.tipo==='peca'||os.placa==='PEÇA';
-  const etapas=etapasKanban.length?etapasKanban:[{label:'Diagnóstico'}];
+  const etapas=(etapasKanban[os.setor]||[]).length?etapasKanban[os.setor]:[{label:'Diagnóstico'}];
   const idx=etapas.findIndex(e=>e.label===os.status);
   const podePrev=idx>0, podeNext=idx<etapas.length-1;
   let extrasHtml='';
@@ -739,8 +780,8 @@ function kanbanCard(os, cor){
     ${extrasHtml}
     ${os.obs?`<div style="font-size:10px;color:var(--muted);margin:5px 0;border-top:1px solid var(--border);padding-top:5px">${os.obs.substring(0,60)}${os.obs.length>60?'…':''}</div>`:''}
     <div style="display:flex;gap:4px;margin-top:6px">
-      <button onclick="moverStatus('${os.id}',-1)" ${!podePrev?'disabled':''} style="flex:1;background:${podePrev?'var(--surface2)':'rgba(37,42,51,.3)'};border:1px solid var(--border);color:${podePrev?'var(--text)':'var(--muted)'};border-radius:4px;cursor:${podePrev?'pointer':'default'};font-size:11px;padding:4px 0">◀ Voltar</button>
-      <button onclick="moverStatus('${os.id}',1)" ${!podeNext?'disabled':''} style="flex:1;background:${podeNext?'rgba(16,185,129,.12)':'rgba(37,42,51,.3)'};border:1px solid ${podeNext?'rgba(16,185,129,.25)':'var(--border)'};color:${podeNext?'var(--accent3)':'var(--muted)'};border-radius:4px;cursor:${podeNext?'pointer':'default'};font-size:11px;padding:4px 0">Avançar ▶</button>
+      <button onclick="moverStatus('${os.id}',-1)" ${!podePrev?'disabled':''} style="flex:1;background:${podePrev?'var(--surface2)':'rgba(51,51,51,.3)'};border:1px solid var(--border);color:${podePrev?'var(--text)':'var(--muted)'};border-radius:4px;cursor:${podePrev?'pointer':'default'};font-size:11px;padding:4px 0">◀ Voltar</button>
+      <button onclick="moverStatus('${os.id}',1)" ${!podeNext?'disabled':''} style="flex:1;background:${podeNext?'rgba(16,185,129,.12)':'rgba(51,51,51,.3)'};border:1px solid ${podeNext?'rgba(16,185,129,.25)':'var(--border)'};color:${podeNext?'var(--accent3)':'var(--muted)'};border-radius:4px;cursor:${podeNext?'pointer':'default'};font-size:11px;padding:4px 0">Avançar ▶</button>
     </div>
   </div>`;
 }
@@ -748,7 +789,7 @@ function kanbanCard(os, cor){
 async function moverStatus(id,dir){
   const os=osData.find(o=>o.id===id);
   if(!os) return;
-  const etapas=etapasKanban.length?etapasKanban:[{label:'Diagnóstico'}];
+  const etapas=(etapasKanban[os.setor]||[]).length?etapasKanban[os.setor]:[{label:'Diagnóstico'}];
   const idx=etapas.findIndex(e=>e.label===os.status)+dir;
   if(idx<0||idx>=etapas.length) return;
   const novoStatus=etapas[idx].label;
@@ -829,6 +870,7 @@ function abrirModal(){
   document.getElementById('m-setor').value=setor;
   setTipo('veiculo');
   atualizarOperadores('m-operador', setor);
+  atualizarStatusPorSetor('m-status', setor);
   mostrarVinculo(setor);
   renderCamposExtrasForm('form',null);
 }
@@ -901,6 +943,7 @@ function abrirEditar(id){
   document.getElementById('e-cliente').value=os.cliente;
   document.getElementById('e-modelo').value=os.modelo||'';
   document.getElementById('e-setor').value=os.setor;
+  atualizarStatusPorSetor('e-status', os.setor);
   document.getElementById('e-status').value=os.status;
   document.getElementById('e-obs').value=os.obs||'';
   document.getElementById('e-placa-row').style.display=isPeca?'none':'grid';
@@ -1002,13 +1045,27 @@ async function deletarOS(id){
 // ══════════════════════════════════════════
 function abrirConfig(aba='campos'){
   camposTemp=JSON.parse(JSON.stringify(camposConfig));
-  etapasTemp=JSON.parse(JSON.stringify(etapasKanban));
+  setorEtapasConfig=setorAtivo;
+  etapasTemp=JSON.parse(JSON.stringify(etapasKanban[setorEtapasConfig]||[]));
   renderCamposConfig();
   renderEtapasConfig();
+  // Sincronizar selector de setor na aba etapas
+  const sel=document.getElementById('cfg-setor-etapas');
+  if(sel) sel.value=setorEtapasConfig;
+  const btn=document.getElementById('btn-salvar-etapas');
+  if(btn) btn.textContent=`💾 Salvar Etapas — ${setorEtapasConfig}`;
   mostrarCfgAba(aba);
   document.getElementById('modalConfig').style.display='flex';
 }
 function fecharConfig(){ document.getElementById('modalConfig').style.display='none'; }
+
+function selecionarSetorEtapas(setor){
+  setorEtapasConfig=setor;
+  etapasTemp=JSON.parse(JSON.stringify(etapasKanban[setor]||[]));
+  renderEtapasConfig();
+  const btn=document.getElementById('btn-salvar-etapas');
+  if(btn) btn.textContent=`💾 Salvar Etapas — ${setor}`;
+}
 
 function mostrarCfgAba(aba){
   ['campos','etapas','operadores'].forEach(a=>{
@@ -1023,7 +1080,7 @@ function mostrarCfgAba(aba){
 // ══════════════════════════════════════════
 // CONFIGURADOR DE ETAPAS DO KANBAN
 // ══════════════════════════════════════════
-const CORES_ETAPA = ['#3b82f6','#f59e0b','#ef4444','#10b981','#8b5cf6','#64748b','#ec4899','#06b6d4','#f97316','#84cc16'];
+const CORES_ETAPA = ['#3b82f6','#c8962a','#ef4444','#10b981','#8b5cf6','#64748b','#ec4899','#06b6d4','#f97316','#84cc16'];
 
 function renderEtapasConfig(){
   const lista=document.getElementById('lista-etapas-config');
@@ -1061,24 +1118,27 @@ function adicionarEtapa(){
 }
 
 async function salvarEtapas(){
+  const setor = setorEtapasConfig;
   setBtnLoading('btn-salvar-etapas',true);
-  const { error:del } = await sb.from('etapas_kanban').delete().neq('id','00000000-0000-0000-0000-000000000000');
-  if(del){ toast('Erro ao salvar etapas','err'); setBtnLoading('btn-salvar-etapas',false,'💾 Salvar Etapas'); return; }
+  // Deleta SOMENTE as etapas do setor atual
+  const { error:del } = await sb.from('etapas_kanban').delete().eq('setor', setor);
+  if(del){ toast('Erro ao salvar etapas: '+del.message,'err'); setBtnLoading('btn-salvar-etapas',false,`💾 Salvar Etapas — ${setor}`); return; }
   if(etapasTemp.length){
     const rows=etapasTemp.map((e,i)=>({
-      etapa_id: e.id||('etapa_'+i+'_'+Date.now()),
+      etapa_id: e.id||(`${setor.toLowerCase().replace(/\s+/g,'_')}_${i}_${Date.now()}`),
       label: e.label,
       cor: e.cor||'#64748b',
-      ordem: i+1
+      ordem: i+1,
+      setor: setor  // CRÍTICO: incluir o setor em cada row
     }));
     const { error:ins } = await sb.from('etapas_kanban').insert(rows);
-    if(ins){ toast('Erro ao inserir etapas','err'); setBtnLoading('btn-salvar-etapas',false,'💾 Salvar Etapas'); return; }
+    if(ins){ toast('Erro ao inserir etapas: '+ins.message,'err'); setBtnLoading('btn-salvar-etapas',false,`💾 Salvar Etapas — ${setor}`); return; }
   }
   await carregarEtapas();
-  setBtnLoading('btn-salvar-etapas',false,'💾 Salvar Etapas');
+  setBtnLoading('btn-salvar-etapas',false,`💾 Salvar Etapas — ${setor}`);
   fecharConfig();
   renderKanban(); renderDashboard();
-  toast('✓ Etapas do Kanban atualizadas!');
+  toast(`✓ Etapas de ${setor} atualizadas!`);
 }
 
 function renderCamposConfig(){

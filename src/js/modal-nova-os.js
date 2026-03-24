@@ -15,6 +15,7 @@ function abrirModal(){
   document.getElementById('m-setor').value=setor;
   setTipo('veiculo');
   atualizarOperadores('m-operador', setor);
+  atualizarStatusPorSetor('m-status', setor);
   mostrarVinculo(setor);
   renderCamposExtrasForm('form',null);
 }

@@ -23,7 +23,7 @@ function renderKanban(){
   const board=document.getElementById('kanbanBoard');
   const osDoSetor=osData.filter(o=>o.setor===setorAtivo);
   const corSetor=SETOR_COLORS[setorAtivo];
-  const etapas=etapasKanban.length?etapasKanban:[{id:'diagnostico',label:'Diagnóstico',cor:'#3b82f6'}];
+  const etapas=(etapasKanban[setorAtivo]||[]).length?etapasKanban[setorAtivo]:[{id:'diagnostico',label:'Diagnóstico',cor:'#3b82f6'}];
   board.innerHTML=etapas.map(etapa=>{
     const cards=osDoSetor.filter(o=>o.status===etapa.label);
     return `<div class="kanban-col" data-status="${etapa.label}">
@@ -50,7 +50,7 @@ function kanbanCard(os, cor){
   const d=calcDias(os.dataEntrada);
   const dc=diasColor(d);
   const isPeca=os.tipo==='peca'||os.placa==='PEÇA';
-  const etapas=etapasKanban.length?etapasKanban:[{label:'Diagnóstico'}];
+  const etapas=(etapasKanban[os.setor]||[]).length?etapasKanban[os.setor]:[{label:'Diagnóstico'}];
   const idx=etapas.findIndex(e=>e.label===os.status);
   const podePrev=idx>0, podeNext=idx<etapas.length-1;
   let extrasHtml='';
@@ -73,8 +73,8 @@ function kanbanCard(os, cor){
     ${extrasHtml}
     ${os.obs?`<div style="font-size:10px;color:var(--muted);margin:5px 0;border-top:1px solid var(--border);padding-top:5px">${os.obs.substring(0,60)}${os.obs.length>60?'…':''}</div>`:''}
     <div style="display:flex;gap:4px;margin-top:6px">
-      <button onclick="moverStatus('${os.id}',-1)" ${!podePrev?'disabled':''} style="flex:1;background:${podePrev?'var(--surface2)':'rgba(37,42,51,.3)'};border:1px solid var(--border);color:${podePrev?'var(--text)':'var(--muted)'};border-radius:4px;cursor:${podePrev?'pointer':'default'};font-size:11px;padding:4px 0">◀ Voltar</button>
-      <button onclick="moverStatus('${os.id}',1)" ${!podeNext?'disabled':''} style="flex:1;background:${podeNext?'rgba(16,185,129,.12)':'rgba(37,42,51,.3)'};border:1px solid ${podeNext?'rgba(16,185,129,.25)':'var(--border)'};color:${podeNext?'var(--accent3)':'var(--muted)'};border-radius:4px;cursor:${podeNext?'pointer':'default'};font-size:11px;padding:4px 0">Avançar ▶</button>
+      <button onclick="moverStatus('${os.id}',-1)" ${!podePrev?'disabled':''} style="flex:1;background:${podePrev?'var(--surface2)':'rgba(51,51,51,.3)'};border:1px solid var(--border);color:${podePrev?'var(--text)':'var(--muted)'};border-radius:4px;cursor:${podePrev?'pointer':'default'};font-size:11px;padding:4px 0">◀ Voltar</button>
+      <button onclick="moverStatus('${os.id}',1)" ${!podeNext?'disabled':''} style="flex:1;background:${podeNext?'rgba(16,185,129,.12)':'rgba(51,51,51,.3)'};border:1px solid ${podeNext?'rgba(16,185,129,.25)':'var(--border)'};color:${podeNext?'var(--accent3)':'var(--muted)'};border-radius:4px;cursor:${podeNext?'pointer':'default'};font-size:11px;padding:4px 0">Avançar ▶</button>
     </div>
   </div>`;
 }
@@ -82,7 +82,7 @@ function kanbanCard(os, cor){
 async function moverStatus(id,dir){
   const os=osData.find(o=>o.id===id);
   if(!os) return;
-  const etapas=etapasKanban.length?etapasKanban:[{label:'Diagnóstico'}];
+  const etapas=(etapasKanban[os.setor]||[]).length?etapasKanban[os.setor]:[{label:'Diagnóstico'}];
   const idx=etapas.findIndex(e=>e.label===os.status)+dir;
   if(idx<0||idx>=etapas.length) return;
   const novoStatus=etapas[idx].label;

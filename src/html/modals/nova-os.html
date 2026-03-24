@@ -32,7 +32,7 @@
     <div class="form-group"><div class="lbl">Nome do Cliente <span style="color:var(--accent4)">*</span></div><input class="inp" id="m-cliente" placeholder="Nome completo ou empresa"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="form-group"><div class="lbl">Setor</div>
-        <select class="inp" id="m-setor" onchange="atualizarOperadores('m-operador',this.value);mostrarVinculo(this.value)">
+        <select class="inp" id="m-setor" onchange="atualizarOperadores('m-operador',this.value);mostrarVinculo(this.value);atualizarStatusPorSetor('m-status',this.value)">
           <option>Bomba Injetora</option><option>Bomba de Alta</option>
           <option>Injetores Mecânicos</option><option>Injetores Eletrônicos</option>
           <option>Veículo Diesel</option><option>Turbinas</option>

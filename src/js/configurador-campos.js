@@ -9,11 +9,25 @@
 // ══════════════════════════════════════════
 function abrirConfig(aba='campos'){
   camposTemp=JSON.parse(JSON.stringify(camposConfig));
-  etapasTemp=JSON.parse(JSON.stringify(etapasKanban));
+  setorEtapasConfig=setorAtivo;
+  etapasTemp=JSON.parse(JSON.stringify(etapasKanban[setorEtapasConfig]||[]));
   renderCamposConfig();
   renderEtapasConfig();
+  // Sincronizar selector de setor na aba etapas
+  const sel=document.getElementById('cfg-setor-etapas');
+  if(sel) sel.value=setorEtapasConfig;
+  const btn=document.getElementById('btn-salvar-etapas');
+  if(btn) btn.textContent=`💾 Salvar Etapas — ${setorEtapasConfig}`;
   mostrarCfgAba(aba);
   document.getElementById('modalConfig').style.display='flex';
+}
+
+function selecionarSetorEtapas(setor){
+  setorEtapasConfig=setor;
+  etapasTemp=JSON.parse(JSON.stringify(etapasKanban[setor]||[]));
+  renderEtapasConfig();
+  const btn=document.getElementById('btn-salvar-etapas');
+  if(btn) btn.textContent=`💾 Salvar Etapas — ${setor}`;
 }
 function fecharConfig(){ document.getElementById('modalConfig').style.display='none'; }
 

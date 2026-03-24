@@ -19,7 +19,7 @@
     <div class="form-group"><div class="lbl">Cliente <span style="color:var(--accent4)">*</span></div><input class="inp" id="e-cliente"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="form-group"><div class="lbl">Setor</div>
-        <select class="inp" id="e-setor" onchange="atualizarOperadores('e-operador',this.value);mostrarVinculoEditar(this.value)">
+        <select class="inp" id="e-setor" onchange="atualizarOperadores('e-operador',this.value);mostrarVinculoEditar(this.value);atualizarStatusPorSetor('e-status',this.value)">
           <option>Bomba Injetora</option><option>Bomba de Alta</option>
           <option>Injetores Mecânicos</option><option>Injetores Eletrônicos</option>
           <option>Veículo Diesel</option><option>Turbinas</option>
