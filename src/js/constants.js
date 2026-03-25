@@ -17,6 +17,7 @@ let operadoresDB = []; // operadores cadastrados por setor
 let setorAtivo = SETORES[0];
 let setorEtapasConfig = SETORES[0]; // setor selecionado no configurador de etapas
 let dragId = null;
+let dragAdicionalId = '';
 let tipoEntrada = 'veiculo';
 let camposTemp = [];
 let etapasTemp = [];

@@ -27,7 +27,7 @@ function renderDashboard(){
   }).join('');
 
   const al=document.getElementById('dash-alertas');
-  const atrasadas=osData.filter(o=>calcDias(o.dataEntrada)>=5&&!ultimasDuas.includes(o.status));
+  const atrasadas=osData.filter(o=>calcDias(o.dataEntrada)>=5&&!ultimasDuasDoSetor(o.setor).includes(o.status));
   const aprvPend=etapaAprovacao?osData.filter(o=>o.status===etapaAprovacao):[];
   let html='';
   atrasadas.forEach(o=>{ html+=`<div class="alert alert-d"><div>🔴</div><div><strong>${o.placa} — ${o.cliente}</strong><br>${calcDias(o.dataEntrada)} dias sem conclusão.</div></div>`; });
@@ -58,7 +58,9 @@ function renderDashTable(){
       <td style="font-family:var(--fm);letter-spacing:2px;font-weight:700">${os.placa}</td>
       <td>${os.cliente}</td>
       <td style="color:var(--muted);font-size:12px">${os.modelo||'—'}</td>
-      <td style="font-size:11px;color:${SETOR_COLORS[os.setor]||'var(--muted)'}">${os.setor}</td>
+      <td style="font-size:11px;color:${SETOR_COLORS[os.setor]||'var(--muted)'}">
+        ${os.setor}${(os.setoresAdicionais||[]).length>0?` <span style="font-size:10px;background:rgba(200,150,42,.12);color:var(--accent);border-radius:3px;padding:1px 5px;font-weight:700">+${os.setoresAdicionais.length}</span>`:''}
+      </td>
       <td style="font-size:12px;color:var(--accent2)">${os.operador||'—'}</td>
       <td><span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;background:${((etapasKanban[os.setor]||[]).find(e=>e.label===os.status)?.cor||'#64748b')}22;color:${(etapasKanban[os.setor]||[]).find(e=>e.label===os.status)?.cor||'var(--muted)'}">●&nbsp;${os.status}</span></td>
       <td style="font-family:var(--fm);color:${diasColor(d)};font-weight:700">${d}d</td>

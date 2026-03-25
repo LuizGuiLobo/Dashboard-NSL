@@ -12,7 +12,9 @@ function renderSetorTabs(){
     <div class="setor-tab ${s===setorAtivo?'active':''}"
       style="${s===setorAtivo?`background:${SETOR_COLORS[s]};color:#000;border-color:${SETOR_COLORS[s]}`:''}"
       onclick="setSetor('${s}')">
-      ${s} <span style="font-family:var(--fm);font-size:10px;margin-left:4px">${osData.filter(o=>o.setor===s).length}</span>
+      ${s} <span style="font-family:var(--fm);font-size:10px;margin-left:4px">${
+        osData.filter(o=>o.setor===s||(o.setoresAdicionais||[]).some(a=>a.setor===s)).length
+      }</span>
     </div>`).join('');
 }
 
@@ -21,11 +23,23 @@ function setSetor(s){ setorAtivo=s; renderSetorTabs(); renderKanban(); }
 function renderKanban(){
   renderSetorTabs();
   const board=document.getElementById('kanbanBoard');
-  const osDoSetor=osData.filter(o=>o.setor===setorAtivo);
   const corSetor=SETOR_COLORS[setorAtivo];
   const etapas=(etapasKanban[setorAtivo]||[]).length?etapasKanban[setorAtivo]:[{id:'diagnostico',label:'Diagnóstico',cor:'#3b82f6'}];
+
+  // Montar lista de OS para este setor, incluindo adicionais
+  const osDoSetor=[];
+  osData.forEach(os=>{
+    if(os.setor===setorAtivo){
+      osDoSetor.push({...os, _statusNesseSetor:os.status, _isAdicional:false, _adicionalId:''});
+    }
+    const adic=(os.setoresAdicionais||[]).find(s=>s.setor===setorAtivo);
+    if(adic){
+      osDoSetor.push({...os, _statusNesseSetor:adic.status, _isAdicional:true, _adicionalId:adic.id});
+    }
+  });
+
   board.innerHTML=etapas.map(etapa=>{
-    const cards=osDoSetor.filter(o=>o.status===etapa.label);
+    const cards=osDoSetor.filter(o=>o._statusNesseSetor===etapa.label);
     return `<div class="kanban-col" data-status="${etapa.label}">
       <div class="kanban-col-header" style="border-top:3px solid ${etapa.cor};border-radius:8px 8px 0 0">
         <div class="kanban-col-title" style="color:${etapa.cor}">${etapa.label}</div>
@@ -40,8 +54,13 @@ function renderKanban(){
       </div>
     </div>`;
   }).join('');
+
   board.querySelectorAll('.kanban-card').forEach(card=>{
-    card.addEventListener('dragstart',e=>{ dragId=card.dataset.id; setTimeout(()=>card.classList.add('dragging'),0); });
+    card.addEventListener('dragstart',e=>{
+      dragId=card.dataset.id;
+      dragAdicionalId=card.dataset.adicionalId||'';
+      setTimeout(()=>card.classList.add('dragging'),0);
+    });
     card.addEventListener('dragend',()=>card.classList.remove('dragging'));
   });
 }
@@ -50,22 +69,43 @@ function kanbanCard(os, cor){
   const d=calcDias(os.dataEntrada);
   const dc=diasColor(d);
   const isPeca=os.tipo==='peca'||os.placa==='PEÇA';
-  const etapas=(etapasKanban[os.setor]||[]).length?etapasKanban[os.setor]:[{label:'Diagnóstico'}];
-  const idx=etapas.findIndex(e=>e.label===os.status);
+  // Etapas do setor ATUAL (setorAtivo) para navegação
+  const etapas=(etapasKanban[setorAtivo]||[]).length?etapasKanban[setorAtivo]:[{label:'Diagnóstico'}];
+  const idx=etapas.findIndex(e=>e.label===os._statusNesseSetor);
   const podePrev=idx>0, podeNext=idx<etapas.length-1;
+  const isAdicStr=os._isAdicional?'true':'false';
+  const adicId=os._adicionalId||'';
+
   let extrasHtml='';
   if(os.extras && camposConfig.length){
     const linhas=camposConfig.filter(c=>os.extras[c.id]).map(c=>`<span style="color:var(--muted)">${c.label}:</span> ${os.extras[c.id]}`);
     if(linhas.length) extrasHtml=`<div class="kc-extras">${linhas.join(' · ')}</div>`;
   }
-  return `<div class="kanban-card" draggable="true" data-id="${os.id}">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin-bottom:4px">
+
+  // Badge de setores conectados
+  const todosSetores=[{setor:os.setor},{...(os.setoresAdicionais||[]).map(s=>({setor:s.setor}))}];
+  const outrosSetores=(os.setoresAdicionais||[]).filter(s=>s.setor!==setorAtivo);
+  const setorPrincipalEOutro=os.setor!==setorAtivo;
+  const isMulti=(os.setoresAdicionais||[]).length>0;
+  let badgeHtml='';
+  if(isMulti){
+    const dots=[
+      `<span title="Setor principal: ${os.setor}" style="width:8px;height:8px;border-radius:50%;background:${SETOR_COLORS[os.setor]||'#64748b'};display:inline-block;${os.setor===setorAtivo?'':'opacity:.6'}"></span>`,
+      ...(os.setoresAdicionais||[]).map(s=>`<span title="${s.setor}" style="width:8px;height:8px;border-radius:50%;background:${SETOR_COLORS[s.setor]||'#64748b'};display:inline-block;${s.setor===setorAtivo?'':'opacity:.6'}"></span>`)
+    ].join('');
+    const label=os._isAdicional?`<span style="font-size:9px;color:var(--accent);font-weight:700">SETOR CONECT.</span>`:'';
+    badgeHtml=`<div style="display:flex;align-items:center;gap:4px;margin-bottom:4px">${label}<div style="display:flex;gap:3px;align-items:center">${dots}</div></div>`;
+  }
+
+  return `<div class="kanban-card" draggable="true" data-id="${os.id}" data-adicional-id="${adicId}">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin-bottom:2px">
       <div class="kc-num">${os.numero}</div>
       <div style="display:flex;gap:4px;flex-shrink:0">
         <button title="Editar" onclick="abrirEditar('${os.id}')" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:3px;cursor:pointer;font-size:11px;padding:2px 6px">✏️</button>
         <button title="Excluir" onclick="deletarOS('${os.id}')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:var(--accent4);border-radius:3px;cursor:pointer;font-size:11px;padding:2px 6px">✕</button>
       </div>
     </div>
+    ${badgeHtml}
     ${isPeca?`<div style="font-size:10px;font-weight:700;color:var(--accent5);margin-bottom:2px">🔩 PEÇA AVULSA</div><div class="kc-placa" style="font-size:12px;letter-spacing:0">${os.modelo}</div>`:`<div class="kc-placa">${os.placa}</div><div class="kc-modelo">${os.modelo||'—'}</div>`}
     <div class="kc-cliente">${os.cliente}</div>
     ${os.operador?`<div style="font-size:10px;color:var(--accent2);margin-bottom:3px">👤 ${os.operador}</div>`:''}
@@ -73,24 +113,37 @@ function kanbanCard(os, cor){
     ${extrasHtml}
     ${os.obs?`<div style="font-size:10px;color:var(--muted);margin:5px 0;border-top:1px solid var(--border);padding-top:5px">${os.obs.substring(0,60)}${os.obs.length>60?'…':''}</div>`:''}
     <div style="display:flex;gap:4px;margin-top:6px">
-      <button onclick="moverStatus('${os.id}',-1)" ${!podePrev?'disabled':''} style="flex:1;background:${podePrev?'var(--surface2)':'rgba(51,51,51,.3)'};border:1px solid var(--border);color:${podePrev?'var(--text)':'var(--muted)'};border-radius:4px;cursor:${podePrev?'pointer':'default'};font-size:11px;padding:4px 0">◀ Voltar</button>
-      <button onclick="moverStatus('${os.id}',1)" ${!podeNext?'disabled':''} style="flex:1;background:${podeNext?'rgba(16,185,129,.12)':'rgba(51,51,51,.3)'};border:1px solid ${podeNext?'rgba(16,185,129,.25)':'var(--border)'};color:${podeNext?'var(--accent3)':'var(--muted)'};border-radius:4px;cursor:${podeNext?'pointer':'default'};font-size:11px;padding:4px 0">Avançar ▶</button>
+      <button onclick="moverStatus('${os.id}',-1,${isAdicStr},'${adicId}')" ${!podePrev?'disabled':''} style="flex:1;background:${podePrev?'var(--surface2)':'rgba(51,51,51,.3)'};border:1px solid var(--border);color:${podePrev?'var(--text)':'var(--muted)'};border-radius:4px;cursor:${podePrev?'pointer':'default'};font-size:11px;padding:4px 0">◀ Voltar</button>
+      <button onclick="moverStatus('${os.id}',1,${isAdicStr},'${adicId}')" ${!podeNext?'disabled':''} style="flex:1;background:${podeNext?'rgba(16,185,129,.12)':'rgba(51,51,51,.3)'};border:1px solid ${podeNext?'rgba(16,185,129,.25)':'var(--border)'};color:${podeNext?'var(--accent3)':'var(--muted)'};border-radius:4px;cursor:${podeNext?'pointer':'default'};font-size:11px;padding:4px 0">Avançar ▶</button>
     </div>
   </div>`;
 }
 
-async function moverStatus(id,dir){
+async function moverStatus(id, dir, isAdicional=false, adicionalId=''){
   const os=osData.find(o=>o.id===id);
   if(!os) return;
-  const etapas=(etapasKanban[os.setor]||[]).length?etapasKanban[os.setor]:[{label:'Diagnóstico'}];
-  const idx=etapas.findIndex(e=>e.label===os.status)+dir;
+  const etapas=(etapasKanban[setorAtivo]||[]).length?etapasKanban[setorAtivo]:[{label:'Diagnóstico'}];
+  const statusAtual=isAdicional
+    ? (os.setoresAdicionais||[]).find(s=>s.id===adicionalId)?.status||''
+    : os.status;
+  const idx=etapas.findIndex(e=>e.label===statusAtual)+dir;
   if(idx<0||idx>=etapas.length) return;
   const novoStatus=etapas[idx].label;
-  os.status=novoStatus;
-  renderKanban(); renderDashboard();
-  const { error } = await sb.from('ordens_servico').update({status:novoStatus}).eq('id',id);
-  if(error){ toast('Erro ao atualizar status','err'); console.error(error?.message || String(error)); }
-  else toast(`✓ ${os.numero} → ${novoStatus}`);
+
+  if(isAdicional){
+    const adic=(os.setoresAdicionais||[]).find(s=>s.id===adicionalId);
+    if(adic) adic.status=novoStatus;
+    renderKanban(); renderDashboard();
+    const { error } = await sb.from('os_setores').update({status:novoStatus}).eq('id',adicionalId);
+    if(error){ toast('Erro ao atualizar status','err'); console.error(error?.message||String(error)); }
+    else toast(`✓ ${os.numero} → ${novoStatus}`);
+  } else {
+    os.status=novoStatus;
+    renderKanban(); renderDashboard();
+    const { error } = await sb.from('ordens_servico').update({status:novoStatus}).eq('id',id);
+    if(error){ toast('Erro ao atualizar status','err'); console.error(error?.message||String(error)); }
+    else toast(`✓ ${os.numero} → ${novoStatus}`);
+  }
 }
 
 function dragOver(e,el){ e.preventDefault(); el.classList.add('drag-active'); }
@@ -100,12 +153,28 @@ async function dropCard(e,novoStatus){
   document.querySelectorAll('.kanban-drop-zone').forEach(z=>z.classList.remove('drag-active'));
   if(!dragId) return;
   const os=osData.find(o=>o.id===dragId);
-  if(os && os.status!==novoStatus){
-    os.status=novoStatus;
-    renderKanban(); renderDashboard();
-    const { error } = await sb.from('ordens_servico').update({status:novoStatus}).eq('id',dragId);
-    if(error){ toast('Erro ao mover OS','err'); console.error(error?.message || String(error)); }
-    else toast(`✓ ${os.numero} → ${novoStatus}`);
+  const isAdicional=!!dragAdicionalId;
+
+  if(os){
+    const statusAtual=isAdicional
+      ? (os.setoresAdicionais||[]).find(s=>s.id===dragAdicionalId)?.status||''
+      : os.status;
+    if(statusAtual!==novoStatus){
+      if(isAdicional){
+        const adic=(os.setoresAdicionais||[]).find(s=>s.id===dragAdicionalId);
+        if(adic) adic.status=novoStatus;
+        renderKanban(); renderDashboard();
+        const { error } = await sb.from('os_setores').update({status:novoStatus}).eq('id',dragAdicionalId);
+        if(error){ toast('Erro ao mover OS','err'); console.error(error?.message||String(error)); }
+        else toast(`✓ ${os.numero} → ${novoStatus}`);
+      } else {
+        os.status=novoStatus;
+        renderKanban(); renderDashboard();
+        const { error } = await sb.from('ordens_servico').update({status:novoStatus}).eq('id',dragId);
+        if(error){ toast('Erro ao mover OS','err'); console.error(error?.message||String(error)); }
+        else toast(`✓ ${os.numero} → ${novoStatus}`);
+      }
+    }
   }
-  dragId=null;
+  dragId=null; dragAdicionalId='';
 }

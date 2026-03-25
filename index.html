@@ -288,7 +288,7 @@ textarea.inp{resize:vertical;}
     <div class="form-group"><div class="lbl">Nome do Cliente <span style="color:var(--accent4)">*</span></div><input class="inp" id="m-cliente" placeholder="Nome completo ou empresa"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="form-group"><div class="lbl">Setor</div>
-        <select class="inp" id="m-setor" onchange="atualizarOperadores('m-operador',this.value);mostrarVinculo(this.value);atualizarStatusPorSetor('m-status',this.value)">
+        <select class="inp" id="m-setor" onchange="atualizarOperadores('m-operador',this.value);mostrarVinculo(this.value);atualizarStatusPorSetor('m-status',this.value);renderSetoresConectadosNova()">
           <option>Bomba Injetora</option><option>Bomba de Alta</option>
           <option>Injetores Mecânicos</option><option>Injetores Eletrônicos</option>
           <option>Veículo Diesel</option><option>Turbinas</option>
@@ -310,6 +310,18 @@ textarea.inp{resize:vertical;}
     </div>
     <div id="campos-extras-form"></div>
     <div class="form-group"><div class="lbl">Observações</div><textarea class="inp" id="m-obs" rows="2" placeholder="Sintoma, peças necessárias..."></textarea></div>
+    <!-- SETORES CONECTADOS -->
+    <div style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div class="lbl" style="margin:0">Setores Conectados</div>
+        <button type="button" id="btn-add-setor-nova" onclick="toggleSetoresConectadosNova()"
+          style="background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:4px;cursor:pointer;font-size:11px;padding:3px 10px;font-weight:600">+ Adicionar</button>
+      </div>
+      <div id="setores-conectados-nova" style="display:none">
+        <div id="setores-conectados-lista-nova" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
+        <div id="setores-conectados-forms-nova"></div>
+      </div>
+    </div>
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px">
       <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
       <button class="btn btn-primary" id="btn-salvar-os" onclick="salvarOS()">Salvar OS</button>
@@ -355,6 +367,18 @@ textarea.inp{resize:vertical;}
     </div>
     <div id="campos-extras-editar"></div>
     <div class="form-group"><div class="lbl">Observações</div><textarea class="inp" id="e-obs" rows="2"></textarea></div>
+    <!-- SETORES CONECTADOS -->
+    <div style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div class="lbl" style="margin:0">Setores Conectados</div>
+        <button type="button" id="btn-add-setor-editar" onclick="toggleSetoresConectadosEditar()"
+          style="background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:4px;cursor:pointer;font-size:11px;padding:3px 10px;font-weight:600">+ Adicionar</button>
+      </div>
+      <div id="setores-conectados-editar" style="display:none">
+        <div id="setores-conectados-lista-editar" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
+        <div id="setores-conectados-forms-editar"></div>
+      </div>
+    </div>
     <div style="display:flex;gap:10px;justify-content:space-between;margin-top:4px;flex-wrap:wrap">
       <button class="btn btn-danger" onclick="deletarOSdoModal()">🗑 Excluir</button>
       <div style="display:flex;gap:10px">
@@ -451,6 +475,7 @@ let operadoresDB = []; // operadores cadastrados por setor
 let setorAtivo = SETORES[0];
 let setorEtapasConfig = SETORES[0]; // setor selecionado no configurador de etapas
 let dragId = null;
+let dragAdicionalId = '';
 let tipoEntrada = 'veiculo';
 let camposTemp = [];
 let etapasTemp = [];
@@ -571,25 +596,30 @@ async function carregarCampos(){
 }
 
 async function carregarOS(){
-  const { data, error } = await sb.from('ordens_servico').select('*').order('criado_em', {ascending:false});
+  const { data, error } = await sb.from('ordens_servico').select('*').order('criado_em',{ascending:false});
   if(error) throw new Error(error?.message || String(error));
-  osData = (data||[]).map(mapRow);
+  const ids = (data||[]).map(r=>r.id);
+  let setoresMap = {};
+  if(ids.length){
+    const { data: setoresData } = await sb.from('os_setores').select('*').in('os_id', ids);
+    (setoresData||[]).forEach(s=>{
+      if(!setoresMap[s.os_id]) setoresMap[s.os_id]=[];
+      setoresMap[s.os_id].push(s);
+    });
+  }
+  osData = (data||[]).map(r=>mapRow(r, setoresMap[r.id]||[]));
 }
 
-function mapRow(r){
+function mapRow(r, setoresAdicionais=[]){
   return {
-    id: r.id,
-    numero: r.numero,
-    tipo: r.tipo,
-    placa: r.placa,
-    cliente: r.cliente,
-    modelo: r.modelo||'',
-    setor: r.setor,
-    status: r.status,
-    dataEntrada: r.data_entrada,
-    obs: r.observacoes||'',
-    operador: r.operador||'',
-    extras: r.extras||{}
+    id: r.id, numero: r.numero, tipo: r.tipo, placa: r.placa,
+    cliente: r.cliente, modelo: r.modelo||'', setor: r.setor,
+    status: r.status, dataEntrada: r.data_entrada, obs: r.observacoes||'',
+    operador: r.operador||'', extras: r.extras||{},
+    setoresAdicionais: (setoresAdicionais||[]).map(s=>({
+      id: s.id, setor: s.setor, status: s.status,
+      operador: s.operador||'', ordem: s.ordem||1, obs: s.observacoes||''
+    }))
   };
 }
 
@@ -667,7 +697,7 @@ function renderDashboard(){
   }).join('');
 
   const al=document.getElementById('dash-alertas');
-  const atrasadas=osData.filter(o=>calcDias(o.dataEntrada)>=5&&!ultimasDuas.includes(o.status));
+  const atrasadas=osData.filter(o=>calcDias(o.dataEntrada)>=5&&!ultimasDuasDoSetor(o.setor).includes(o.status));
   const aprvPend=etapaAprovacao?osData.filter(o=>o.status===etapaAprovacao):[];
   let html='';
   atrasadas.forEach(o=>{ html+=`<div class="alert alert-d"><div>🔴</div><div><strong>${o.placa} — ${o.cliente}</strong><br>${calcDias(o.dataEntrada)} dias sem conclusão.</div></div>`; });
@@ -698,7 +728,9 @@ function renderDashTable(){
       <td style="font-family:var(--fm);letter-spacing:2px;font-weight:700">${os.placa}</td>
       <td>${os.cliente}</td>
       <td style="color:var(--muted);font-size:12px">${os.modelo||'—'}</td>
-      <td style="font-size:11px;color:${SETOR_COLORS[os.setor]||'var(--muted)'}">${os.setor}</td>
+      <td style="font-size:11px;color:${SETOR_COLORS[os.setor]||'var(--muted)'}">
+        ${os.setor}${(os.setoresAdicionais||[]).length>0?` <span style="font-size:10px;background:rgba(200,150,42,.12);color:var(--accent);border-radius:3px;padding:1px 5px;font-weight:700">+${os.setoresAdicionais.length}</span>`:''}
+      </td>
       <td style="font-size:12px;color:var(--accent2)">${os.operador||'—'}</td>
       <td><span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;background:${((etapasKanban[os.setor]||[]).find(e=>e.label===os.status)?.cor||'#64748b')}22;color:${(etapasKanban[os.setor]||[]).find(e=>e.label===os.status)?.cor||'var(--muted)'}">●&nbsp;${os.status}</span></td>
       <td style="font-family:var(--fm);color:${diasColor(d)};font-weight:700">${d}d</td>
@@ -719,7 +751,9 @@ function renderSetorTabs(){
     <div class="setor-tab ${s===setorAtivo?'active':''}"
       style="${s===setorAtivo?`background:${SETOR_COLORS[s]};color:#000;border-color:${SETOR_COLORS[s]}`:''}"
       onclick="setSetor('${s}')">
-      ${s} <span style="font-family:var(--fm);font-size:10px;margin-left:4px">${osData.filter(o=>o.setor===s).length}</span>
+      ${s} <span style="font-family:var(--fm);font-size:10px;margin-left:4px">${
+        osData.filter(o=>o.setor===s||(o.setoresAdicionais||[]).some(a=>a.setor===s)).length
+      }</span>
     </div>`).join('');
 }
 
@@ -728,11 +762,20 @@ function setSetor(s){ setorAtivo=s; renderSetorTabs(); renderKanban(); }
 function renderKanban(){
   renderSetorTabs();
   const board=document.getElementById('kanbanBoard');
-  const osDoSetor=osData.filter(o=>o.setor===setorAtivo);
   const corSetor=SETOR_COLORS[setorAtivo];
   const etapas=(etapasKanban[setorAtivo]||[]).length?etapasKanban[setorAtivo]:[{id:'diagnostico',label:'Diagnóstico',cor:'#3b82f6'}];
+  const osDoSetor=[];
+  osData.forEach(os=>{
+    if(os.setor===setorAtivo){
+      osDoSetor.push({...os, _statusNesseSetor:os.status, _isAdicional:false, _adicionalId:''});
+    }
+    const adic=(os.setoresAdicionais||[]).find(s=>s.setor===setorAtivo);
+    if(adic){
+      osDoSetor.push({...os, _statusNesseSetor:adic.status, _isAdicional:true, _adicionalId:adic.id});
+    }
+  });
   board.innerHTML=etapas.map(etapa=>{
-    const cards=osDoSetor.filter(o=>o.status===etapa.label);
+    const cards=osDoSetor.filter(o=>o._statusNesseSetor===etapa.label);
     return `<div class="kanban-col" data-status="${etapa.label}">
       <div class="kanban-col-header" style="border-top:3px solid ${etapa.cor};border-radius:8px 8px 0 0">
         <div class="kanban-col-title" style="color:${etapa.cor}">${etapa.label}</div>
@@ -748,7 +791,11 @@ function renderKanban(){
     </div>`;
   }).join('');
   board.querySelectorAll('.kanban-card').forEach(card=>{
-    card.addEventListener('dragstart',e=>{ dragId=card.dataset.id; setTimeout(()=>card.classList.add('dragging'),0); });
+    card.addEventListener('dragstart',e=>{
+      dragId=card.dataset.id;
+      dragAdicionalId=card.dataset.adicionalId||'';
+      setTimeout(()=>card.classList.add('dragging'),0);
+    });
     card.addEventListener('dragend',()=>card.classList.remove('dragging'));
   });
 }
@@ -757,22 +804,35 @@ function kanbanCard(os, cor){
   const d=calcDias(os.dataEntrada);
   const dc=diasColor(d);
   const isPeca=os.tipo==='peca'||os.placa==='PEÇA';
-  const etapas=(etapasKanban[os.setor]||[]).length?etapasKanban[os.setor]:[{label:'Diagnóstico'}];
-  const idx=etapas.findIndex(e=>e.label===os.status);
+  const etapas=(etapasKanban[setorAtivo]||[]).length?etapasKanban[setorAtivo]:[{label:'Diagnóstico'}];
+  const idx=etapas.findIndex(e=>e.label===os._statusNesseSetor);
   const podePrev=idx>0, podeNext=idx<etapas.length-1;
+  const isAdicStr=os._isAdicional?'true':'false';
+  const adicId=os._adicionalId||'';
   let extrasHtml='';
   if(os.extras && camposConfig.length){
     const linhas=camposConfig.filter(c=>os.extras[c.id]).map(c=>`<span style="color:var(--muted)">${c.label}:</span> ${os.extras[c.id]}`);
     if(linhas.length) extrasHtml=`<div class="kc-extras">${linhas.join(' · ')}</div>`;
   }
-  return `<div class="kanban-card" draggable="true" data-id="${os.id}">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin-bottom:4px">
+  const isMulti=(os.setoresAdicionais||[]).length>0;
+  let badgeHtml='';
+  if(isMulti){
+    const dots=[
+      `<span title="Setor principal: ${os.setor}" style="width:8px;height:8px;border-radius:50%;background:${SETOR_COLORS[os.setor]||'#64748b'};display:inline-block;${os.setor===setorAtivo?'':'opacity:.6'}"></span>`,
+      ...(os.setoresAdicionais||[]).map(s=>`<span title="${s.setor}" style="width:8px;height:8px;border-radius:50%;background:${SETOR_COLORS[s.setor]||'#64748b'};display:inline-block;${s.setor===setorAtivo?'':'opacity:.6'}"></span>`)
+    ].join('');
+    const label=os._isAdicional?`<span style="font-size:9px;color:var(--accent);font-weight:700">SETOR CONECT.</span>`:'';
+    badgeHtml=`<div style="display:flex;align-items:center;gap:4px;margin-bottom:4px">${label}<div style="display:flex;gap:3px;align-items:center">${dots}</div></div>`;
+  }
+  return `<div class="kanban-card" draggable="true" data-id="${os.id}" data-adicional-id="${adicId}">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin-bottom:2px">
       <div class="kc-num">${os.numero}</div>
       <div style="display:flex;gap:4px;flex-shrink:0">
         <button title="Editar" onclick="abrirEditar('${os.id}')" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:3px;cursor:pointer;font-size:11px;padding:2px 6px">✏️</button>
         <button title="Excluir" onclick="deletarOS('${os.id}')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:var(--accent4);border-radius:3px;cursor:pointer;font-size:11px;padding:2px 6px">✕</button>
       </div>
     </div>
+    ${badgeHtml}
     ${isPeca?`<div style="font-size:10px;font-weight:700;color:var(--accent5);margin-bottom:2px">🔩 PEÇA AVULSA</div><div class="kc-placa" style="font-size:12px;letter-spacing:0">${os.modelo}</div>`:`<div class="kc-placa">${os.placa}</div><div class="kc-modelo">${os.modelo||'—'}</div>`}
     <div class="kc-cliente">${os.cliente}</div>
     ${os.operador?`<div style="font-size:10px;color:var(--accent2);margin-bottom:3px">👤 ${os.operador}</div>`:''}
@@ -780,24 +840,36 @@ function kanbanCard(os, cor){
     ${extrasHtml}
     ${os.obs?`<div style="font-size:10px;color:var(--muted);margin:5px 0;border-top:1px solid var(--border);padding-top:5px">${os.obs.substring(0,60)}${os.obs.length>60?'…':''}</div>`:''}
     <div style="display:flex;gap:4px;margin-top:6px">
-      <button onclick="moverStatus('${os.id}',-1)" ${!podePrev?'disabled':''} style="flex:1;background:${podePrev?'var(--surface2)':'rgba(51,51,51,.3)'};border:1px solid var(--border);color:${podePrev?'var(--text)':'var(--muted)'};border-radius:4px;cursor:${podePrev?'pointer':'default'};font-size:11px;padding:4px 0">◀ Voltar</button>
-      <button onclick="moverStatus('${os.id}',1)" ${!podeNext?'disabled':''} style="flex:1;background:${podeNext?'rgba(16,185,129,.12)':'rgba(51,51,51,.3)'};border:1px solid ${podeNext?'rgba(16,185,129,.25)':'var(--border)'};color:${podeNext?'var(--accent3)':'var(--muted)'};border-radius:4px;cursor:${podeNext?'pointer':'default'};font-size:11px;padding:4px 0">Avançar ▶</button>
+      <button onclick="moverStatus('${os.id}',-1,${isAdicStr},'${adicId}')" ${!podePrev?'disabled':''} style="flex:1;background:${podePrev?'var(--surface2)':'rgba(51,51,51,.3)'};border:1px solid var(--border);color:${podePrev?'var(--text)':'var(--muted)'};border-radius:4px;cursor:${podePrev?'pointer':'default'};font-size:11px;padding:4px 0">◀ Voltar</button>
+      <button onclick="moverStatus('${os.id}',1,${isAdicStr},'${adicId}')" ${!podeNext?'disabled':''} style="flex:1;background:${podeNext?'rgba(16,185,129,.12)':'rgba(51,51,51,.3)'};border:1px solid ${podeNext?'rgba(16,185,129,.25)':'var(--border)'};color:${podeNext?'var(--accent3)':'var(--muted)'};border-radius:4px;cursor:${podeNext?'pointer':'default'};font-size:11px;padding:4px 0">Avançar ▶</button>
     </div>
   </div>`;
 }
 
-async function moverStatus(id,dir){
+async function moverStatus(id, dir, isAdicional=false, adicionalId=''){
   const os=osData.find(o=>o.id===id);
   if(!os) return;
-  const etapas=(etapasKanban[os.setor]||[]).length?etapasKanban[os.setor]:[{label:'Diagnóstico'}];
-  const idx=etapas.findIndex(e=>e.label===os.status)+dir;
+  const etapas=(etapasKanban[setorAtivo]||[]).length?etapasKanban[setorAtivo]:[{label:'Diagnóstico'}];
+  const statusAtual=isAdicional
+    ? (os.setoresAdicionais||[]).find(s=>s.id===adicionalId)?.status||''
+    : os.status;
+  const idx=etapas.findIndex(e=>e.label===statusAtual)+dir;
   if(idx<0||idx>=etapas.length) return;
   const novoStatus=etapas[idx].label;
-  os.status=novoStatus;
-  renderKanban(); renderDashboard();
-  const { error } = await sb.from('ordens_servico').update({status:novoStatus}).eq('id',id);
-  if(error){ toast('Erro ao atualizar status','err'); console.error(error?.message || String(error)); }
-  else toast(`✓ ${os.numero} → ${novoStatus}`);
+  if(isAdicional){
+    const adic=(os.setoresAdicionais||[]).find(s=>s.id===adicionalId);
+    if(adic) adic.status=novoStatus;
+    renderKanban(); renderDashboard();
+    const { error } = await sb.from('os_setores').update({status:novoStatus}).eq('id',adicionalId);
+    if(error){ toast('Erro ao atualizar status','err'); console.error(error?.message||String(error)); }
+    else toast(`✓ ${os.numero} → ${novoStatus}`);
+  } else {
+    os.status=novoStatus;
+    renderKanban(); renderDashboard();
+    const { error } = await sb.from('ordens_servico').update({status:novoStatus}).eq('id',id);
+    if(error){ toast('Erro ao atualizar status','err'); console.error(error?.message||String(error)); }
+    else toast(`✓ ${os.numero} → ${novoStatus}`);
+  }
 }
 
 function dragOver(e,el){ e.preventDefault(); el.classList.add('drag-active'); }
@@ -807,14 +879,29 @@ async function dropCard(e,novoStatus){
   document.querySelectorAll('.kanban-drop-zone').forEach(z=>z.classList.remove('drag-active'));
   if(!dragId) return;
   const os=osData.find(o=>o.id===dragId);
-  if(os && os.status!==novoStatus){
-    os.status=novoStatus;
-    renderKanban(); renderDashboard();
-    const { error } = await sb.from('ordens_servico').update({status:novoStatus}).eq('id',dragId);
-    if(error){ toast('Erro ao mover OS','err'); console.error(error?.message || String(error)); }
-    else toast(`✓ ${os.numero} → ${novoStatus}`);
+  const isAdicional=!!dragAdicionalId;
+  if(os){
+    const statusAtual=isAdicional
+      ? (os.setoresAdicionais||[]).find(s=>s.id===dragAdicionalId)?.status||''
+      : os.status;
+    if(statusAtual!==novoStatus){
+      if(isAdicional){
+        const adic=(os.setoresAdicionais||[]).find(s=>s.id===dragAdicionalId);
+        if(adic) adic.status=novoStatus;
+        renderKanban(); renderDashboard();
+        const { error } = await sb.from('os_setores').update({status:novoStatus}).eq('id',dragAdicionalId);
+        if(error){ toast('Erro ao mover OS','err'); console.error(error?.message||String(error)); }
+        else toast(`✓ ${os.numero} → ${novoStatus}`);
+      } else {
+        os.status=novoStatus;
+        renderKanban(); renderDashboard();
+        const { error } = await sb.from('ordens_servico').update({status:novoStatus}).eq('id',dragId);
+        if(error){ toast('Erro ao mover OS','err'); console.error(error?.message||String(error)); }
+        else toast(`✓ ${os.numero} → ${novoStatus}`);
+      }
+    }
   }
-  dragId=null;
+  dragId=null; dragAdicionalId='';
 }
 
 // ══════════════════════════════════════════
@@ -873,6 +960,9 @@ function abrirModal(){
   atualizarStatusPorSetor('m-status', setor);
   mostrarVinculo(setor);
   renderCamposExtrasForm('form',null);
+  document.getElementById('setores-conectados-nova').style.display='none';
+  document.getElementById('btn-add-setor-nova').textContent='+ Adicionar';
+  renderSetoresConectadosNova();
 }
 
 function fecharModal(){
@@ -889,6 +979,96 @@ function setTipo(tipo){
   const bV=document.getElementById('tipo-btn-veiculo'), bP=document.getElementById('tipo-btn-peca');
   bV.style.cssText=`flex:1;padding:8px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:700;background:${isV?'var(--accent)':'var(--surface2)'};color:${isV?'#000':'var(--muted)'};border:${isV?'none':'1px solid var(--border)'}`;
   bP.style.cssText=`flex:1;padding:8px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600;background:${isV?'var(--surface2)':'var(--accent5)'};color:${isV?'var(--muted)':'#fff'};border:${isV?'1px solid var(--border)':'none'}`;
+}
+
+// ── SETORES CONECTADOS — NOVA OS ──
+function toggleSetoresConectadosNova(){
+  const wrap=document.getElementById('setores-conectados-nova');
+  const btn=document.getElementById('btn-add-setor-nova');
+  const visible=wrap.style.display!=='none';
+  wrap.style.display=visible?'none':'block';
+  btn.textContent=visible?'+ Adicionar':'− Fechar';
+  if(!visible) renderSetoresConectadosNova();
+}
+
+function renderSetoresConectadosNova(){
+  const setorPrincipal=document.getElementById('m-setor')?.value||'';
+  const disponiveis=SETORES.filter(s=>s!==setorPrincipal);
+  const lista=document.getElementById('setores-conectados-lista-nova');
+  if(!lista) return;
+  const selecionados=getSetoresConectadosSelecionados('nova');
+  lista.innerHTML=disponiveis.map(s=>{
+    const cor=SETOR_COLORS[s]||'#64748b';
+    const ativo=selecionados.includes(s);
+    return `<div onclick="toggleSetorConectado('${s}','nova')"
+      style="display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:4px;border:1px solid ${ativo?cor:'var(--border)'};background:${ativo?cor+'22':'var(--surface2)'};cursor:pointer;font-size:11px;font-weight:600;color:${ativo?cor:'var(--muted)'};transition:all .15s"
+      data-setor-pill="${s}">
+      <span style="width:7px;height:7px;border-radius:50%;background:${cor};display:inline-block"></span>${s}
+    </div>`;
+  }).join('');
+  renderSetoresConectadosForms('nova', selecionados);
+}
+
+function getSetoresConectadosSelecionados(ctx){
+  const forms=document.getElementById(`setores-conectados-forms-${ctx}`);
+  if(!forms) return [];
+  return Array.from(forms.querySelectorAll('[data-setor-form]')).map(el=>el.dataset.setorForm);
+}
+
+function toggleSetorConectado(setor, ctx){
+  const selecionados=getSetoresConectadosSelecionados(ctx);
+  if(selecionados.includes(setor)){
+    renderSetoresConectadosForms(ctx, selecionados.filter(s=>s!==setor));
+  } else {
+    renderSetoresConectadosForms(ctx, [...selecionados, setor]);
+  }
+  if(ctx==='nova') renderSetoresConectadosNova();
+  else renderSetoresConectadosEditar();
+}
+
+function renderSetoresConectadosForms(ctx, selecionados){
+  const forms=document.getElementById(`setores-conectados-forms-${ctx}`);
+  if(!forms) return;
+  const existingData={};
+  forms.querySelectorAll('[data-setor-form]').forEach(el=>{
+    const s=el.dataset.setorForm;
+    const status=el.querySelector(`[data-sc-status="${s}"]`)?.value||'';
+    const op=el.querySelector(`[data-sc-op="${s}"]`)?.value||'';
+    existingData[s]={status, op};
+  });
+  forms.innerHTML=selecionados.map(s=>{
+    const cor=SETOR_COLORS[s]||'#64748b';
+    const prev=existingData[s]||{};
+    const etapasOpts=(etapasKanban[s]||[]).map(e=>`<option ${prev.status===e.label?'selected':''}>${e.label}</option>`).join('')||'<option>Diagnóstico</option>';
+    const opsOpts='<option value="">— Selecionar —</option>'+operadoresDB.filter(o=>o.setor===s).map(o=>`<option ${prev.op===o.nome?'selected':''}>${o.nome}</option>`).join('');
+    return `<div data-setor-form="${s}" style="background:var(--surface2);border:1px solid ${cor}44;border-radius:6px;padding:10px 12px;margin-bottom:6px">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+        <span style="width:8px;height:8px;border-radius:50%;background:${cor};display:inline-block"></span>
+        <span style="font-size:11px;font-weight:700;color:${cor}">${s}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><div class="lbl" style="font-size:9px">Status Inicial</div>
+          <select class="inp" style="font-size:12px;padding:5px 8px" data-sc-status="${s}">${etapasOpts}</select>
+        </div>
+        <div><div class="lbl" style="font-size:9px">Operador</div>
+          <select class="inp" style="font-size:12px;padding:5px 8px" data-sc-op="${s}">${opsOpts}</select>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function getSetoresConectados(ctx){
+  const forms=document.getElementById(`setores-conectados-forms-${ctx}`);
+  if(!forms) return [];
+  return Array.from(forms.querySelectorAll('[data-setor-form]')).map(el=>{
+    const s=el.dataset.setorForm;
+    return {
+      setor: s,
+      status: el.querySelector(`[data-sc-status="${s}"]`)?.value||'Diagnóstico',
+      operador: el.querySelector(`[data-sc-op="${s}"]`)?.value||''
+    };
+  });
 }
 
 async function salvarOS(){
@@ -911,6 +1091,7 @@ async function salvarOS(){
   const extras=getCamposExtrasValores('form');
   const operador=(document.getElementById('m-operador')?.value||'').trim();
   const vinculoId=document.getElementById('m-vinculo')?.value||'';
+  const setoresConectados=getSetoresConectados('nova');
   const payload={
     numero:numOS, tipo:tipoEntrada, placa, cliente, modelo,
     setor:document.getElementById('m-setor').value,
@@ -923,8 +1104,17 @@ async function salvarOS(){
   const { data, error } = await sb.from('ordens_servico').insert([payload]).select().single();
   setBtnLoading('btn-salvar-os',false,'Salvar OS');
   if(error){ toast('Erro ao salvar OS: '+error.message,'err'); return; }
+  if(setoresConectados.length){
+    const { error: erS } = await sb.from('os_setores').insert(
+      setoresConectados.map((s,i)=>({os_id:data.id, setor:s.setor, status:s.status, operador:s.operador, ordem:i+1}))
+    );
+    if(erS) console.warn('Setores conectados:', erS.message);
+  }
   if(vinculoId) await salvarVinculo(data.id, vinculoId);
-  osData.unshift(mapRow(data));
+  osData.unshift(mapRow(data, setoresConectados.map((s,i)=>({
+    id:'temp-'+i, os_id:data.id, setor:s.setor, status:s.status,
+    operador:s.operador, ordem:i+1, observacoes:''
+  }))));
   fecharModal();
   renderKanban(); renderDashboard();
   toast(`✓ OS ${numOS} criada!`);
@@ -950,11 +1140,9 @@ function abrirEditar(id){
   if(!isPeca) document.getElementById('e-placa').value=os.placa;
   renderCamposExtrasForm('editar',os.extras||{});
   atualizarOperadores('e-operador', os.setor);
-  // Setar operador atual
   const selOp=document.getElementById('e-operador');
   if(selOp && os.operador) selOp.value=os.operador;
   mostrarVinculoEditar(os.setor);
-  // Carregar vinculos existentes
   carregarVinculos(os.id).then(vinculos=>{
     const lista=document.getElementById('e-vinculos-lista');
     if(!lista) return;
@@ -970,19 +1158,79 @@ function abrirEditar(id){
       </div>`;
     }).join('');
   });
+  // Setores conectados
+  const temAdicionais=(os.setoresAdicionais||[]).length>0;
+  const wrap=document.getElementById('setores-conectados-editar');
+  const btn=document.getElementById('btn-add-setor-editar');
+  wrap.style.display=temAdicionais?'block':'none';
+  btn.textContent=temAdicionais?'− Fechar':'+ Adicionar';
+  renderSetoresConectadosEditar(os.setoresAdicionais||[]);
   document.getElementById('modalEditar').style.display='flex';
 }
 
 function fecharEditar(){ document.getElementById('modalEditar').style.display='none'; }
 
+// ── SETORES CONECTADOS — EDITAR OS ──
+function toggleSetoresConectadosEditar(){
+  const wrap=document.getElementById('setores-conectados-editar');
+  const btn=document.getElementById('btn-add-setor-editar');
+  const visible=wrap.style.display!=='none';
+  wrap.style.display=visible?'none':'block';
+  btn.textContent=visible?'+ Adicionar':'− Fechar';
+  if(!visible) renderSetoresConectadosEditar();
+}
+
+function renderSetoresConectadosEditar(preload){
+  const setorPrincipal=document.getElementById('e-setor')?.value||'';
+  const disponiveis=SETORES.filter(s=>s!==setorPrincipal);
+  const lista=document.getElementById('setores-conectados-lista-editar');
+  if(!lista) return;
+  if(preload!==undefined){
+    const forms=document.getElementById('setores-conectados-forms-editar');
+    if(forms && preload.length){
+      const selecionados=preload.map(s=>s.setor);
+      const existingData={};
+      preload.forEach(s=>{ existingData[s.setor]={status:s.status, op:s.operador}; });
+      forms.innerHTML=selecionados.map(s=>{
+        const cor=SETOR_COLORS[s]||'#64748b';
+        const prev=existingData[s]||{};
+        const etapasOpts=(etapasKanban[s]||[]).map(e=>`<option ${prev.status===e.label?'selected':''}>${e.label}</option>`).join('')||'<option>Diagnóstico</option>';
+        const opsOpts='<option value="">— Selecionar —</option>'+operadoresDB.filter(o=>o.setor===s).map(o=>`<option ${prev.op===o.nome?'selected':''}>${o.nome}</option>`).join('');
+        return `<div data-setor-form="${s}" style="background:var(--surface2);border:1px solid ${cor}44;border-radius:6px;padding:10px 12px;margin-bottom:6px">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+            <span style="width:8px;height:8px;border-radius:50%;background:${cor};display:inline-block"></span>
+            <span style="font-size:11px;font-weight:700;color:${cor}">${s}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div><div class="lbl" style="font-size:9px">Status</div>
+              <select class="inp" style="font-size:12px;padding:5px 8px" data-sc-status="${s}">${etapasOpts}</select>
+            </div>
+            <div><div class="lbl" style="font-size:9px">Operador</div>
+              <select class="inp" style="font-size:12px;padding:5px 8px" data-sc-op="${s}">${opsOpts}</select>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+  const selecionados=getSetoresConectadosSelecionados('editar');
+  lista.innerHTML=disponiveis.map(s=>{
+    const cor=SETOR_COLORS[s]||'#64748b';
+    const ativo=selecionados.includes(s);
+    return `<div onclick="toggleSetorConectado('${s}','editar')"
+      style="display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:4px;border:1px solid ${ativo?cor:'var(--border)'};background:${ativo?cor+'22':'var(--surface2)'};cursor:pointer;font-size:11px;font-weight:600;color:${ativo?cor:'var(--muted)'};transition:all .15s"
+      data-setor-pill="${s}">
+      <span style="width:7px;height:7px;border-radius:50%;background:${cor};display:inline-block"></span>${s}
+    </div>`;
+  }).join('');
+}
+
 async function salvarEdicao(){
   const id=document.getElementById('e-id').value;
   const os=osData.find(o=>o.id===id);
   if(!os) return;
-  // Validar Nº OS
   const novoNumero=document.getElementById('e-num').value.trim();
   if(!novoNumero){ alert('Nº OS é obrigatório.'); document.getElementById('e-num').focus(); return; }
-  // Verificar duplicata (ignorar a própria OS)
   if(osData.find(o=>o.numero===novoNumero && o.id!==id)){
     alert(`Nº OS "${novoNumero}" já existe em outra OS.`); document.getElementById('e-num').focus(); return;
   }
@@ -1004,16 +1252,26 @@ async function salvarEdicao(){
   os.obs=document.getElementById('e-obs').value.trim();
   os.extras=getCamposExtrasValores('editar');
   os.operador=(document.getElementById('e-operador')?.value||'').trim();
+  const setoresConectados=getSetoresConectados('editar');
   const payload={
-    numero:os.numero,
-    placa:os.placa, cliente:os.cliente, modelo:os.modelo,
+    numero:os.numero, placa:os.placa, cliente:os.cliente, modelo:os.modelo,
     setor:os.setor, status:os.status, data_entrada:os.dataEntrada,
     observacoes:os.obs, operador:os.operador, extras:os.extras
   };
   setBtnLoading('btn-salvar-edicao',true);
   const { error } = await sb.from('ordens_servico').update(payload).eq('id',id);
+  if(error){ setBtnLoading('btn-salvar-edicao',false,'💾 Salvar'); toast('Erro ao salvar: '+error.message,'err'); return; }
+  await sb.from('os_setores').delete().eq('os_id',id);
+  if(setoresConectados.length){
+    const { error: erS } = await sb.from('os_setores').insert(
+      setoresConectados.map((s,i)=>({os_id:id, setor:s.setor, status:s.status, operador:s.operador, ordem:i+1}))
+    );
+    if(erS) console.warn('Setores conectados:', erS.message);
+  }
+  os.setoresAdicionais=setoresConectados.map((s,i)=>({
+    id:'', setor:s.setor, status:s.status, operador:s.operador, ordem:i+1, obs:''
+  }));
   setBtnLoading('btn-salvar-edicao',false,'💾 Salvar');
-  if(error){ toast('Erro ao salvar: '+error.message,'err'); return; }
   fecharEditar();
   renderKanban(); renderDashboard();
   toast(`✓ OS ${os.numero} atualizada!`);

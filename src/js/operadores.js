@@ -52,7 +52,6 @@ async function carregarVinculos(osId){
     .select('os_destino, os_origem, tipo_vinculo')
     .or(`os_origem.eq.${osId},os_destino.eq.${osId}`);
   if(!data||!data.length) return [];
-  // Buscar dados das OS vinculadas
   const outrosIds = data.map(v=> v.os_origem===osId ? v.os_destino : v.os_origem);
   const { data:oss } = await sb.from('ordens_servico').select('id,numero,cliente,setor,status').in('id', outrosIds);
   return (oss||[]);
@@ -88,10 +87,20 @@ async function carregarCampos(){
 async function carregarOS(){
   const { data, error } = await sb.from('ordens_servico').select('*').order('criado_em', {ascending:false});
   if(error) throw new Error(error?.message || String(error));
-  osData = (data||[]).map(mapRow);
+  // Batch load dos setores adicionais
+  const ids = (data||[]).map(r=>r.id);
+  let setoresMap = {};
+  if(ids.length){
+    const { data: setoresData } = await sb.from('os_setores').select('*').in('os_id', ids);
+    (setoresData||[]).forEach(s=>{
+      if(!setoresMap[s.os_id]) setoresMap[s.os_id]=[];
+      setoresMap[s.os_id].push(s);
+    });
+  }
+  osData = (data||[]).map(r=>mapRow(r, setoresMap[r.id]||[]));
 }
 
-function mapRow(r){
+function mapRow(r, setoresAdicionais=[]){
   return {
     id: r.id,
     numero: r.numero,
@@ -104,14 +113,21 @@ function mapRow(r){
     dataEntrada: r.data_entrada,
     obs: r.observacoes||'',
     operador: r.operador||'',
-    extras: r.extras||{}
+    extras: r.extras||{},
+    setoresAdicionais: (setoresAdicionais||[]).map(s=>({
+      id: s.id,
+      setor: s.setor,
+      status: s.status,
+      operador: s.operador||'',
+      ordem: s.ordem||1,
+      obs: s.observacoes||''
+    }))
   };
 }
 
 async function carregarEtapas(){
   const { data, error } = await sb.from('etapas_kanban').select('*').order('ordem');
   if(error) throw new Error(error?.message || String(error));
-  // Rebuild map por setor
   etapasKanban = {};
   SETORES.forEach(s => { etapasKanban[s] = []; });
   (data||[]).forEach(r => {
@@ -133,13 +149,10 @@ function atualizarStatusPorSetor(selectId, setor){
 }
 
 function atualizarSelectsStatus(){
-  // m-status usa o setor selecionado no modal nova-OS (ou setorAtivo)
   const mSetor = document.getElementById('m-setor')?.value || setorAtivo;
   atualizarStatusPorSetor('m-status', mSetor);
-  // e-status usa o setor selecionado no modal editar-OS
   const eSetor = document.getElementById('e-setor')?.value || setorAtivo;
   atualizarStatusPorSetor('e-status', eSetor);
-  // Filtro no dashboard — todas as etapas únicas
   const allLabels = [...new Set(Object.values(etapasKanban).flat().map(e=>e.label))];
   const filtro = document.getElementById('dash-filtro');
   if(filtro){
