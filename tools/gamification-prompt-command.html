@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gamification Prompt Command — Claude Code</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff;
+    --bg-secondary: #f5f4f0;
+    --bg-tertiary: #eeede9;
+    --text-primary: #1a1a18;
+    --text-secondary: #6b6a66;
+    --border: rgba(0,0,0,0.12);
+    --border-hover: rgba(0,0,0,0.22);
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --font: system-ui, -apple-system, sans-serif;
+    --font-mono: 'Fira Mono', 'Cascadia Code', monospace;
+    --accent: #7F77DD;
+    --accent-light: #EEEDFE;
+    --accent-mid: #AFA9EC;
+    --accent-dark: #3C3489;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a;
+      --bg-secondary: #242422;
+      --bg-tertiary: #2c2c2a;
+      --text-primary: #f0efe9;
+      --text-secondary: #9a9890;
+      --border: rgba(255,255,255,0.1);
+      --border-hover: rgba(255,255,255,0.2);
+      --accent-light: #26215C;
+      --accent-mid: #534AB7;
+      --accent-dark: #CECBF6;
+    }
+  }
+  body {
+    font-family: var(--font);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    background: var(--bg);
+    border-radius: 16px;
+    border: 0.5px solid var(--border);
+    padding: 2rem;
+  }
+  .header { margin-bottom: 1.75rem; }
+  .badges { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  .badge {
+    font-size: 11px; font-weight: 500; padding: 3px 10px;
+    border-radius: 999px; letter-spacing: 0.05em;
+  }
+  .badge-purple { background: #EEEDFE; color: #3C3489; }
+  .badge-teal   { background: #E1F5EE; color: #085041; }
+  @media (prefers-color-scheme: dark) {
+    .badge-purple { background: #26215C; color: #CECBF6; }
+    .badge-teal   { background: #04342C; color: #9FE1CB; }
+  }
+  .title   { font-size: 20px; font-weight: 500; color: var(--text-primary); }
+  .subtitle{ font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+  .section { margin-bottom: 1.5rem; }
+  .section-label {
+    font-size: 11px; font-weight: 500; color: var(--text-secondary);
+    letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px;
+  }
+  /* Pills */
+  .mechanic-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pill {
+    font-size: 12px; padding: 4px 12px; border-radius: 999px;
+    font-weight: 500; cursor: pointer; border: 1.5px solid transparent;
+    transition: all 0.15s; user-select: none;
+  }
+  .pill.blue   { background: #E6F1FB; color: #0C447C; }
+  .pill.teal   { background: #E1F5EE; color: #085041; }
+  .pill.amber  { background: #FAEEDA; color: #633806; }
+  .pill.coral  { background: #FAECE7; color: #712B13; }
+  .pill.green  { background: #EAF3DE; color: #27500A; }
+  .pill.pink   { background: #FBEAF0; color: #72243E; }
+  .pill.active { outline: 2px solid currentColor; outline-offset: 1px; }
+  @media (prefers-color-scheme: dark) {
+    .pill.blue   { background: #042C53; color: #B5D4F4; }
+    .pill.teal   { background: #04342C; color: #9FE1CB; }
+    .pill.amber  { background: #412402; color: #FAC775; }
+    .pill.coral  { background: #4A1B0C; color: #F5C4B3; }
+    .pill.green  { background: #173404; color: #C0DD97; }
+    .pill.pink   { background: #4B1528; color: #F4C0D1; }
+  }
+  /* Tabs */
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tab {
+    background: var(--bg-secondary); border: 0.5px solid var(--border);
+    border-radius: var(--radius-md); padding: 6px 14px; font-size: 12px;
+    cursor: pointer; color: var(--text-secondary); transition: all 0.15s;
+    white-space: nowrap; user-select: none;
+  }
+  .tab:hover { background: var(--bg-tertiary); }
+  .tab.active {
+    background: #EEEDFE; border-color: #AFA9EC;
+    color: #3C3489; font-weight: 500;
+  }
+  @media (prefers-color-scheme: dark) {
+    .tab.active { background: #26215C; border-color: #534AB7; color: #CECBF6; }
+  }
+  /* Prompt box */
+  .prompt-box {
+    background: var(--bg-secondary); border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg); padding: 1.25rem 1.25rem 1.25rem 1.25rem;
+    position: relative;
+  }
+  .prompt-text {
+    font-family: var(--font-mono); font-size: 12px; color: var(--text-primary);
+    line-height: 1.8; white-space: pre-wrap; word-break: break-word;
+    max-height: 420px; overflow-y: auto; padding-right: 4px;
+  }
+  .prompt-text::-webkit-scrollbar { width: 4px; }
+  .prompt-text::-webkit-scrollbar-track { background: transparent; }
+  .prompt-text::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+  .copy-btn {
+    position: absolute; top: 10px; right: 10px;
+    background: var(--bg); border: 0.5px solid var(--border-hover);
+    border-radius: var(--radius-md); padding: 5px 14px;
+    font-size: 12px; cursor: pointer; color: var(--text-secondary);
+    transition: all 0.15s; font-family: var(--font);
+  }
+  .copy-btn:hover { background: var(--bg-tertiary); }
+  .copy-btn.copied { color: #0F6E56; border-color: #1D9E75; }
+  /* Action buttons */
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 1rem; }
+  .action-btn {
+    background: #EEEDFE; border: 0.5px solid #AFA9EC;
+    border-radius: var(--radius-md); padding: 8px 16px;
+    font-size: 12px; cursor: pointer; color: #3C3489;
+    font-weight: 500; transition: background 0.15s;
+    font-family: var(--font);
+  }
+  .action-btn:hover { background: #CECBF6; }
+  @media (prefers-color-scheme: dark) {
+    .action-btn { background: #26215C; border-color: #534AB7; color: #CECBF6; }
+    .action-btn:hover { background: #3C3489; }
+  }
+  /* Divider */
+  .divider { height: 0.5px; background: var(--border); margin: 1.5rem 0; }
+  /* Footer */
+  .footer { font-size: 11px; color: var(--text-secondary); text-align: center; margin-top: 1.5rem; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="badges">
+      <span class="badge badge-purple">CLAUDE CODE</span>
+      <span class="badge badge-teal">GAMIFICATION</span>
+    </div>
+    <div class="title">Prompt de Gamificação com Dopamina Loop</div>
+    <div class="subtitle">Selecione os módulos e copie o prompt para o Claude Code</div>
+  </div>
+  <div class="section">
+    <div class="section-label">Mecanismos de recompensa — selecione para incluir</div>
+    <div class="mechanic-pills" id="pills">
+      <span class="pill blue active"  data-key="xp">XP & Níveis</span>
+      <span class="pill teal active"  data-key="streak">Streaks diários</span>
+      <span class="pill amber active" data-key="badges">Badges & troféus</span>
+      <span class="pill coral active" data-key="leaderboard">Ranking social</span>
+      <span class="pill green active" data-key="missions">Missões rápidas</span>
+      <span class="pill pink active"  data-key="lootbox">Loot boxes</span>
+      <span class="pill blue"         data-key="combo">Combo multiplier</span>
+      <span class="pill teal"         data-key="prestige">Sistema prestígio</span>
+      <span class="pill amber"        data-key="notify">Push dopamina</span>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-label">Tipo de sistema</div>
+    <div class="tabs" id="tabs">
+      <div class="tab active" data-type="fullstack">Full-stack (Next.js + Supabase)</div>
+      <div class="tab" data-type="frontend">Frontend only (React)</div>
+      <div class="tab" data-type="backend">Backend API (Node/Python)</div>
+      <div class="tab" data-type="mobile">Mobile (React Native)</div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-label">Prompt gerado — copie e cole no Claude Code</div>
+    <div class="prompt-box">
+      <button class="copy-btn" id="copyBtn" onclick="copyPrompt()">Copiar</button>
+      <div class="prompt-text" id="promptOutput"></div>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="action-btn" onclick="copyWith('Me explica cada mecanismo de dopamina deste sistema e como ele retém usuários')">Como retém usuários</button>
+    <button class="action-btn" onclick="copyWith('Adiciona sistema de notificações push com timing de dopamina variável ao prompt de gamificação')">+ Push notifications</button>
+    <button class="action-btn" onclick="copyWith('Cria um schema SQL completo para o sistema de gamificação no Supabase')">Schema SQL</button>
+  </div>
+  <div class="divider"></div>
+  <div class="footer">Gerado via Claude · gamification_prompt_command.html</div>
+</div>
+<script>
+const MECHANICS = {
+  xp:          { label: 'XP & Níveis',        desc: 'Sistema de pontos de experiência com progressão de nível, barra de XP animada e celebração de level-up com confetti' },
+  streak:      { label: 'Streaks diários',     desc: 'Contagem de dias consecutivos com flame visual, risco de perda (loss aversion), proteção de streak como item premium e notificação de "não quebre sua sequência"' },
+  badges:      { label: 'Badges & troféus',    desc: 'Coleção de conquistas desbloqueáveis com raridade (comum/raro/épico/lendário), animação de unlock com partículas e showcase no perfil' },
+  leaderboard: { label: 'Ranking social',      desc: 'Leaderboard semanal/mensal com comparação próxima (você está a 50 pts do 3° lugar), rivalidade entre amigos e reset semanal que zera e gera ansiedade' },
+  missions:    { label: 'Missões rápidas',     desc: 'Daily quests com timer de 24h, missões de 5 minutos com recompensa imediata, barra de progresso visível e notificação "faltam 2 missões para completar hoje"' },
+  lootbox:     { label: 'Loot boxes',          desc: 'Recompensas de intervalo variável (VR schedules) com animação de abertura, probabilidades visíveis, itens exclusivos e caixas gratuitas diárias para criar hábito de retorno' },
+  combo:       { label: 'Combo multiplier',    desc: 'Multiplicador de XP por ações consecutivas rápidas, visual de "x2 x3 x4 COMBO!" com efeito sonoro e perda do combo após inatividade para urgência' },
+  prestige:    { label: 'Sistema prestígio',   desc: 'Reset voluntário de nível com badge exclusivo de prestígio, mantendo coleção de conquistas — cria rejogabilidade e status de longo prazo' },
+  notify:      { label: 'Push dopamina',       desc: 'Notificações em horários de pico de uso (variable ratio), mensagens de "Seu amigo te ultrapassou no ranking", "Sua streak termina em 2h" e recompensas surpresa' },
+};
+const STACKS = {
+  fullstack: 'Next.js 14 (App Router) + TypeScript + Supabase (PostgreSQL + Realtime) + Zustand para estado global + Framer Motion para animações',
+  frontend:  'React 18 + TypeScript + Vite + Zustand + Framer Motion + localStorage/IndexedDB para persistência',
+  backend:   'Node.js + TypeScript + Prisma ORM + PostgreSQL + Redis (filas e cache) + REST API com WebSockets para eventos em tempo real',
+  mobile:    'React Native + Expo + TypeScript + Supabase + Reanimated 3 para animações nativas de alta performance',
+};
+let activeKeys = new Set(['xp','streak','badges','leaderboard','missions','lootbox']);
+let activeType = 'fullstack';
+function buildPrompt() {
+  const mechs = [...activeKeys].map(k => MECHANICS[k]);
+  const stack = STACKS[activeType];
+  const mechList = mechs.map(m => `  - **${m.label}**: ${m.desc}`).join('\n');
+  return `# Sistema de Gamificação com Mecanismos de Dopamina
+# Stack: ${stack}
+## Contexto
+Implemente um sistema de gamificação completo baseado em ciência comportamental e
+mecanismos de recompensa de redes sociais (TikTok, Instagram, Duolingo, Bereal).
+O objetivo é maximizar retenção, engagement e retorno diário do usuário usando
+loops dopaminérgicos comprovados.
+## Princípios psicológicos obrigatórios
+- **Variable Ratio Reinforcement**: recompensas imprevisíveis retêm mais que fixas
+- **Loss Aversion**: medo de perder streak > prazer de ganhar XP (2:1 ratio)
+- **Social Comparison**: mostrar progresso relativo a amigos próximos
+- **Progress Visibility**: barras de progresso sempre visíveis, nunca 100%
+- **Near-Miss Effect**: "faltam só 50 XP para o próximo nível"
+- **Sunk Cost**: quanto mais o usuário investe, mais difícil abandonar
+## Módulos a implementar
+${mechList}
+## Requisitos técnicos obrigatórios
+### Banco de dados
+\`\`\`sql
+-- Tabelas principais necessárias:
+-- users_gamification (xp, level, streak_count, last_active, prestige_level)
+-- achievements (id, name, rarity, xp_reward, unlock_condition)
+-- user_achievements (user_id, achievement_id, unlocked_at)
+-- daily_missions (id, description, xp_reward, type, resets_at)
+-- user_missions (user_id, mission_id, progress, completed_at)
+-- leaderboard_snapshots (user_id, score, rank, period, created_at)
+\`\`\`
+### Funções core
+1. \`awardXP(userId, amount, reason, multiplier?)\` — adiciona XP, verifica level-up, dispara eventos
+2. \`checkAndUpdateStreak(userId)\` — roda diariamente, aplica loss aversion em notificações
+3. \`rollLootbox(userId, boxType)\` — VR schedule com weighted random, registra no log
+4. \`calculateLeaderboardRank(userId)\` — rank relativo com vizinhos ±5 posições
+5. \`generateDailyMissions(userId)\` — missions personalizadas baseadas em comportamento
+### Animações e feedback imediato (CRÍTICO para dopamina)
+- XP gain: número flutuante +XP com easing de cubic-bezier
+- Level up: tela de celebração com confetti por 3s, som opcional
+- Badge unlock: reveal animation com partículas, haptic feedback mobile
+- Streak fire: animação de chama pulsante, vermelho quando em risco
+- Loot reveal: caixa com shake + abertura gradual de 1.5s, glow por raridade
+### Tempo real
+- Leaderboard atualiza via WebSocket/Supabase Realtime
+- Notificações in-app para "amigo te ultrapassou" instantâneas
+- Missão completa por outro usuário aparece como social proof
+### Componentes React necessários
+- <XPBar /> — barra animada com label de XP atual/necessário e nível
+- <StreakCounter /> — contador de dias com chama e estado de risco
+- <BadgeGrid /> — grid com badges bloqueados em grayscale + unlock animation
+- <MissionList /> — lista de daily missions com timer e barra de progresso
+- <Leaderboard /> — ranking com highlight do usuário atual e vizinhos
+- <LootboxOpener /> — componente de abertura com animação completa
+- <LevelUpModal /> — modal de celebração bloqueante com recompensas
+### UX anti-abandono
+- Onboarding: recompensa imediata nos primeiros 60 segundos (badge de "Iniciante")
+- First session XP boost: 2x XP nas primeiras 3 sessões
+- Re-engagement: após 2 dias inativo, notificação com recompensa garantida
+- Streak shield: 1 proteção grátis por semana para não quebrar streak
+## Entregáveis esperados
+1. Schema SQL completo com índices e funções RPC
+2. Hooks React (useGamification, useStreak, useMissions)
+3. Todos os componentes com animações Framer Motion
+4. Lógica de notificações (push + in-app)
+5. Dashboard admin para ver métricas de engagement
+6. Testes unitários para lógica de XP e streak
+## Padrão de código
+- TypeScript strict mode
+- Componentes com Storybook stories
+- Comentários explicando o mecanismo psicológico de cada feature
+- Performance: animações em 60fps, sem jank em mobile
+Comece pela estrutura de arquivos e depois implemente módulo por módulo.
+Pergunte se precisar de clareza sobre algum mecanismo antes de começar.`;
+}
+function renderPrompt() {
+  document.getElementById('promptOutput').textContent = buildPrompt();
+}
+function copyPrompt() {
+  navigator.clipboard.writeText(buildPrompt()).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = 'Copiado!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copiar'; btn.classList.remove('copied'); }, 2000);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = buildPrompt();
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = 'Copiado!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copiar'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+function copyWith(extra) {
+  navigator.clipboard.writeText(extra + '\n\n---\n\n' + buildPrompt()).then(() => {
+    alert('Prompt + contexto copiado!');
+  });
+}
+document.getElementById('pills').addEventListener('click', e => {
+  const pill = e.target.closest('[data-key]');
+  if (!pill) return;
+  const key = pill.dataset.key;
+  if (activeKeys.has(key)) { activeKeys.delete(key); pill.classList.remove('active'); }
+  else { activeKeys.add(key); pill.classList.add('active'); }
+  renderPrompt();
+});
+document.getElementById('tabs').addEventListener('click', e => {
+  const tab = e.target.closest('[data-type]');
+  if (!tab) return;
+  activeType = tab.dataset.type;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  renderPrompt();
+});
+renderPrompt();
+</script>
+</body>
+</html>
