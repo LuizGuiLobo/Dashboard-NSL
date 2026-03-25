@@ -1,0 +1,23 @@
+<!-- ══════════════════════════════════════════════
+     SEÇÃO: HEADER
+     Claude Code: claude src/html/sections/header.html
+══════════════════════════════════════════════ -->
+
+<header>
+  <div class="logo">
+    <img src="assets/logo.png" class="logo-img" alt="Nova São Luiz Diesel">
+    <div class="logo-text">NOVA SÃO LUIZ <span>DIESEL</span></div>
+  </div>
+  <div class="header-right">
+    <div class="date-badge" id="dateDisplay">—</div>
+    <div class="sync-badge sync-load" id="syncBadge">⟳ Conectando...</div>
+  </div>
+</header>
+
+<nav>
+  <div class="tab active" onclick="showTab('dashboard',this)">📊 Dashboard</div>
+  <div class="tab" onclick="showTab('kanban',this)">🗂 Kanban</div>
+  <div class="tab" onclick="showTab('agenda',this)">📅 Agenda</div>
+  <div class="tab" onclick="showTab('matrizes',this)">📐 Matrizes</div>
+  <div class="tab" onclick="abrirConfig('campos')" style="margin-left:auto">⚙️ Config</div>
+</nav>

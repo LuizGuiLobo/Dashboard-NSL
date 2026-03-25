@@ -1,0 +1,64 @@
+<!-- ══════════════════════════════════════════════
+     MODAL: EDITAR-OS
+     Claude Code: claude src/html/modals/editar-os.html
+══════════════════════════════════════════════ -->
+
+<!-- MODAL EDITAR OS -->
+<div class="modal-bg" id="modalEditar" onclick="if(event.target===this)fecharEditar()">
+  <div class="modal-box">
+    <div class="modal-title">EDITAR OS</div>
+    <input type="hidden" id="e-id">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group"><div class="lbl">Nº OS <span style="color:var(--accent4)">*</span></div><input class="inp inp-mono" id="e-num" placeholder="Ex: 1234"></div>
+      <div class="form-group"><div class="lbl">Data Entrada</div><input class="inp" id="e-data" type="date"></div>
+    </div>
+    <div id="e-placa-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group"><div class="lbl">Placa <span style="color:var(--accent4)">*</span></div><input class="inp inp-mono" id="e-placa" maxlength="8"></div>
+      <div class="form-group"><div class="lbl">Modelo / Tipo</div><input class="inp" id="e-modelo"></div>
+    </div>
+    <div class="form-group"><div class="lbl">Cliente <span style="color:var(--accent4)">*</span></div><input class="inp" id="e-cliente"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group">
+        <div class="lbl">Setor Principal</div>
+        <select class="inp" id="e-setor" onchange="atualizarOperadores('e-operador',this.value);mostrarVinculoEditar(this.value);atualizarStatusPorSetor('e-status',this.value);renderSetoresConectadosEditar()">
+          <option>Bomba Injetora</option><option>Bomba de Alta</option>
+          <option>Injetores Mecânicos</option><option>Injetores Eletrônicos</option>
+          <option>Veículo Diesel</option><option>Turbinas</option>
+        </select>
+      </div>
+      <div class="form-group"><div class="lbl">Status / Etapa</div>
+        <select class="inp" id="e-status"><option>Diagnóstico</option></select>
+      </div>
+    </div>
+    <!-- SETORES CONECTADOS -->
+    <div class="form-group">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div class="lbl" style="margin-bottom:0">🔗 Setores Conectados</div>
+        <button type="button" class="btn btn-sm btn-ghost" onclick="toggleSetoresConectadosEditar()" id="btn-add-setor-editar">+ Adicionar</button>
+      </div>
+      <div id="setores-conectados-editar" style="display:none">
+        <div id="setores-conectados-lista-editar" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
+        <div id="setores-conectados-forms-editar"></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group">
+        <div class="lbl">Operador / Mecânico</div>
+        <select class="inp" id="e-operador"><option value="">— Selecionar —</option></select>
+      </div>
+      <div class="form-group" id="e-vinculo-row" style="display:none">
+        <div class="lbl">🔗 OS Vinculadas</div>
+        <div id="e-vinculos-lista" style="font-size:12px;color:var(--muted);padding-top:6px">—</div>
+      </div>
+    </div>
+    <div id="campos-extras-editar"></div>
+    <div class="form-group"><div class="lbl">Observações</div><textarea class="inp" id="e-obs" rows="2"></textarea></div>
+    <div style="display:flex;gap:10px;justify-content:space-between;margin-top:4px;flex-wrap:wrap">
+      <button class="btn btn-danger" onclick="deletarOSdoModal()">🗑 Excluir</button>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost" onclick="fecharEditar()">Cancelar</button>
+        <button class="btn btn-primary" id="btn-salvar-edicao" onclick="salvarEdicao()">💾 Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>

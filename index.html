@@ -1,16 +1,1513 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nova São Luiz Diesel — Gestão</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-  </head>
-  <body class="antialiased">
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nova São Luiz Diesel — Gestão</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#1a1a1a;--surface:#222222;--surface2:#1e1e1e;--border:#333333;
+  --accent:#c8962a;--accent-hover:#daa832;--accent-dark:#a67b1e;--border-hover:#444444;
+  --accent2:#3b82f6;--accent3:#10b981;--accent4:#ef4444;--accent5:#8b5cf6;
+  --text:#ffffff;--muted:#777777;
+  --fd:'Montserrat',sans-serif;--fb:'Inter',sans-serif;--fm:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:var(--fb);min-height:100vh;overflow-x:hidden;}
+header{border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:rgba(17,17,17,0.96);backdrop-filter:blur(12px);z-index:200;}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-img{height:44px;width:44px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid rgba(200,150,42,.35);}
+.logo-text{font-family:var(--fd);font-size:18px;letter-spacing:2px;font-weight:700;color:var(--accent);}
+.logo-text span{color:var(--text);}
+.header-right{display:flex;align-items:center;gap:10px;}
+.date-badge{font-family:var(--fm);font-size:11px;color:var(--muted);background:var(--surface);padding:5px 11px;border-radius:4px;border:1px solid var(--border);}
+.sync-badge{font-family:var(--fm);font-size:10px;padding:4px 10px;border-radius:4px;border:1px solid;transition:all .3s;}
+.sync-ok{color:var(--accent3);border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.08);}
+.sync-err{color:var(--accent4);border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.08);}
+.sync-load{color:var(--accent);border-color:rgba(200,150,42,.3);background:rgba(200,150,42,.08);}
+nav{display:flex;gap:2px;padding:0 28px;border-bottom:1px solid var(--border);overflow-x:auto;background:var(--bg);}
+.tab{padding:12px 18px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+main{padding:24px 28px;max-width:1500px;margin:0 auto;}
+.section{display:none;}.section.active{display:block;}
+.sec-title{font-family:var(--fd);font-size:22px;letter-spacing:2px;font-weight:800;text-transform:uppercase;margin-bottom:18px;display:flex;align-items:center;gap:12px;}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.block-title{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px;transition:border-color .3s;}
+.card:hover{border-color:var(--accent);}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:22px;}
+.card-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.card-value{font-family:var(--fd);font-size:40px;font-weight:700;line-height:1;margin-bottom:3px;}
+.card-sub{font-size:11px;color:var(--muted);}
+.kpi-y .card-value{color:var(--accent);}
+.kpi-g .card-value{color:var(--accent3);}
+.kpi-b .card-value{color:var(--accent2);}
+.kpi-r .card-value{color:var(--accent4);}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;padding:2px 9px;border-radius:4px;}
+.pill::before{content:'●';font-size:7px;}
+.pill-y{background:rgba(200,150,42,.12);color:var(--accent);}
+.pill-g{background:rgba(16,185,129,.12);color:var(--accent3);}
+.pill-b{background:rgba(59,130,246,.12);color:var(--accent2);}
+.pill-r{background:rgba(239,68,68,.12);color:var(--accent4);}
+.pill-p{background:rgba(139,92,246,.12);color:var(--accent5);}
+.pill-gz{background:rgba(119,119,119,.12);color:var(--muted);}
+.prog-wrap{margin-bottom:12px;}
+.prog-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;}
+.prog-label span:last-child{color:var(--muted);font-family:var(--fm);font-size:11px;}
+.prog-track{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:3px;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);padding:7px 11px;border-bottom:1px solid var(--border);background:var(--surface2);}
+td{padding:11px 11px;border-bottom:1px solid rgba(51,51,51,.5);color:var(--text);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(200,150,42,.05);}
+.alert{display:flex;gap:10px;padding:11px 14px;border-radius:6px;margin-bottom:10px;font-size:12px;align-items:flex-start;}
+.alert-w{background:rgba(200,150,42,.08);border:1px solid rgba(200,150,42,.2);}
+.alert-d{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);}
+.alert-i{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);}
+/* KANBAN */
+.kanban-wrapper{display:flex;gap:10px;overflow-x:auto;padding-bottom:12px;}
+.kanban-col{min-width:210px;max-width:225px;flex-shrink:0;background:var(--surface2);border:1px solid var(--border);border-radius:8px;display:flex;flex-direction:column;}
+.kanban-col-header{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.kanban-col-title{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;}
+.kanban-count{font-family:var(--fm);font-size:11px;background:var(--surface);padding:2px 7px;border-radius:10px;color:var(--muted);}
+.kanban-body{padding:8px;flex:1;min-height:80px;}
+.kanban-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 11px;margin-bottom:8px;cursor:grab;transition:border-color .15s,transform .1s;}
+.kanban-card:hover{border-color:var(--accent);transform:translateY(-1px);}
+.kanban-card.dragging{opacity:.4;transform:scale(.97);}
+.kc-num{font-family:var(--fm);font-size:10px;color:var(--accent);font-weight:700;margin-bottom:3px;}
+.kc-placa{font-family:var(--fm);font-size:13px;font-weight:700;letter-spacing:2px;margin-bottom:2px;}
+.kc-cliente{font-size:12px;font-weight:500;margin-bottom:4px;}
+.kc-modelo{font-size:11px;color:var(--muted);margin-bottom:4px;}
+.kc-dias{font-family:var(--fm);font-size:10px;font-weight:700;}
+.kc-extras{font-size:10px;color:var(--muted);margin-top:5px;border-top:1px solid var(--border);padding-top:5px;line-height:1.6;}
+.kanban-drop-zone{min-height:40px;border:2px dashed transparent;border-radius:5px;transition:border-color .15s;}
+.kanban-drop-zone.drag-active{border-color:var(--accent2);background:rgba(59,130,246,.04);}
+.setor-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+.setor-tab{padding:7px 14px;font-size:12px;font-weight:600;border-radius:5px;border:1px solid var(--border);cursor:pointer;color:var(--muted);background:var(--surface);transition:all .2s;}
+.setor-tab:hover{color:var(--text);}
+.setor-tab.active{color:#000;border-color:transparent;}
+/* INPUTS */
+.inp{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:5px;font-size:13px;font-family:var(--fb);}
+.inp:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(200,150,42,.2);}
+.inp-mono{font-family:var(--fm);letter-spacing:2px;text-transform:uppercase;}
+.lbl{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+.form-group{margin-bottom:12px;}
+select.inp option{background:var(--surface2);}
+textarea.inp{resize:vertical;}
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:999;align-items:center;justify-content:center;padding:16px;}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:26px;width:100%;max-width:580px;max-height:90vh;overflow-y:auto;}
+.modal-title{font-family:var(--fd);font-size:20px;letter-spacing:2px;font-weight:800;text-transform:uppercase;color:var(--accent);margin-bottom:20px;}
+.btn{padding:9px 20px;border-radius:5px;cursor:pointer;font-size:13px;font-weight:600;border:none;transition:all .2s;}
+.btn:hover{opacity:.9;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn-primary{background:var(--accent);color:#111;}
+.btn-primary:hover:not(:disabled){background:var(--accent-hover);}
+.btn-ghost{background:transparent;color:var(--accent);border:1px solid var(--accent);}
+.btn-ghost:hover:not(:disabled){background:var(--accent);color:#111;}
+.btn-danger{background:rgba(239,68,68,.15);color:var(--accent4);border:1px solid rgba(239,68,68,.25);}
+.btn-danger:hover:not(:disabled){background:rgba(239,68,68,.3);}
+.btn-sm{padding:4px 10px;font-size:11px;}
+/* LOADING SPINNER */
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(200,150,42,.3);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;padding:12px 18px;border-radius:7px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast-ok{background:rgba(16,185,129,.15);border-left:3px solid var(--accent3);color:var(--accent3);}
+.toast-err{background:rgba(239,68,68,.15);border-left:3px solid var(--accent4);color:var(--accent4);}
+/* CONFIG */
+.campo-config{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;margin-bottom:6px;}
+.campo-config input{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:4px;font-size:12px;}
+.campo-config input:focus{outline:none;border-color:var(--accent);}
+.campo-config select{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:4px;font-size:11px;}
+.req-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;cursor:pointer;white-space:nowrap;}
+.req-on{background:rgba(239,68,68,.15);color:var(--accent4);border:1px solid rgba(239,68,68,.25);}
+.req-off{background:var(--surface);color:var(--muted);border:1px solid var(--border);}
+/* NSL FOOTER MINI */
+.nsl-footer{font-size:10px;color:var(--muted);text-align:center;padding:8px 0;border-top:1px solid var(--border);margin-top:auto;letter-spacing:.5px;}
+@media(max-width:800px){.grid-4{grid-template-columns:repeat(2,1fr);}.grid-2{grid-template-columns:1fr;}main{padding:16px;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <img src="assets/logo.png" class="logo-img" alt="Nova São Luiz Diesel">
+    <div class="logo-text">NOVA SÃO LUIZ <span>DIESEL</span></div>
+  </div>
+  <div class="header-right">
+    <div class="date-badge" id="dateDisplay">—</div>
+    <div class="sync-badge sync-load" id="syncBadge">⟳ Conectando...</div>
+  </div>
+</header>
+
+<nav>
+  <div class="tab active" onclick="showTab('dashboard',this)">📊 Dashboard</div>
+  <div class="tab" onclick="showTab('kanban',this)">🗂 Kanban</div>
+  <div class="tab" onclick="showTab('agenda',this)">📅 Agenda</div>
+  <div class="tab" onclick="showTab('matrizes',this)">📐 Matrizes</div>
+  <div class="tab" onclick="abrirConfig('campos')" style="margin-left:auto">⚙️ Config</div>
+</nav>
+
+<main>
+
+<!-- DASHBOARD -->
+<section id="dashboard" class="section active">
+  <h2 class="sec-title">Dashboard Geral</h2>
+  <div class="grid-4">
+    <div class="card kpi-y"><div class="card-label">OS em Aberto</div><div class="card-value" id="kpi-abertas">—</div><div class="card-sub">em andamento</div></div>
+    <div class="card kpi-r"><div class="card-label">Aguard. Aprovação</div><div class="card-value" id="kpi-aprovacao">—</div><div class="card-sub">Meta: máx 3</div></div>
+    <div class="card kpi-g"><div class="card-label">Prontas</div><div class="card-value" id="kpi-prontas">—</div><div class="card-sub">p/ retirada</div></div>
+    <div class="card kpi-b"><div class="card-label">Total no Sistema</div><div class="card-value" id="kpi-total">—</div><div class="card-sub">todas as OS</div></div>
+  </div>
+  <div class="grid-2">
+    <div class="card"><div class="block-title">OS por Setor</div><div id="dash-setores"><div style="color:var(--muted);font-size:13px">Carregando...</div></div></div>
+    <div class="card"><div class="block-title">Alertas</div><div id="dash-alertas"><div style="color:var(--muted);font-size:13px">Carregando...</div></div></div>
+  </div>
+  <div class="card">
+    <div class="block-title">Todas as OS</div>
+    <div style="margin-bottom:12px;display:flex;gap:10px;flex-wrap:wrap">
+      <input class="inp" id="dash-search" placeholder="🔍 Buscar por qualquer campo..." oninput="renderDashTable()" style="flex:1;min-width:200px">
+      <select class="inp" id="dash-filtro" onchange="renderDashTable()" style="width:auto">
+        <option value="">Todos os status</option>
+      </select>
+      <button class="btn btn-primary" onclick="abrirModal()">+ Nova OS</button>
+    </div>
+    <div style="overflow-x:auto"><table><thead id="dash-thead"></thead><tbody id="dash-tbody"><tr><td colspan="10" style="text-align:center;color:var(--muted);padding:28px"><span class="spinner"></span>Carregando OS...</td></tr></tbody></table></div>
+  </div>
+</section>
+
+<!-- KANBAN -->
+<section id="kanban" class="section">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+    <h2 class="sec-title" style="margin:0;flex:1">Kanban por Setor</h2>
+    <button class="btn btn-primary" onclick="abrirModal()">+ Nova OS</button>
+  </div>
+  <div class="setor-tabs" id="setorTabs"></div>
+  <div class="kanban-wrapper" id="kanbanBoard"></div>
+</section>
+
+<!-- AGENDA -->
+<section id="agenda" class="section">
+  <h2 class="sec-title">Agenda de Reuniões</h2>
+  <div class="alert alert-i" style="margin-bottom:20px"><div>💡</div><div>Reuniões <strong>curtas e em pé</strong> — máx 20 min. Cada líder fala 3 min com dados na mão.</div></div>
+  <div class="grid-2">
+    <div>
+      <div class="block-title" style="margin-bottom:14px">⚡ Semanais</div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:6px;padding:14px 16px;margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong>☀️ Daily de Abertura</strong><span style="font-family:var(--fm);font-size:10px;color:var(--muted)">Seg–Sex · 07:30 · 10 min</span></div><div style="font-size:12px;color:var(--muted)">• OS que entram hoje · Travamentos · Prioridade do dia</div></div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent2);border-radius:6px;padding:14px 16px;margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong>📋 Revisão de OS</strong><span style="font-family:var(--fm);font-size:10px;color:var(--muted)">Segunda · 08:00 · 20 min</span></div><div style="font-size:12px;color:var(--muted)">• OS travadas · Aprovações pendentes · Peças no fornecedor</div></div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent3);border-radius:6px;padding:14px 16px;margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong>🔧 Revisão Técnica por Setor</strong><span style="font-family:var(--fm);font-size:10px;color:var(--muted)">Quarta · 08:00 · 20 min</span></div><div style="font-size:12px;color:var(--muted)">• Um responsável por setor apresenta status das OS</div></div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent5);border-radius:6px;padding:14px 16px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong>💰 Fechamento Semanal</strong><span style="font-family:var(--fm);font-size:10px;color:var(--muted)">Sexta · 17:00 · 15 min</span></div><div style="font-size:12px;color:var(--muted)">• OS faturadas · Compras · Contas a receber · Meta vs realizado</div></div>
+    </div>
+    <div>
+      <div class="block-title" style="margin-bottom:14px">📅 Mensais</div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:6px;padding:14px 16px;margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong>🎯 Planejamento do Mês</strong><span style="font-family:var(--fm);font-size:10px;color:var(--muted)">Dia 1 · 08:00 · 30 min</span></div><div style="font-size:12px;color:var(--muted)">• Meta de OS por setor · Faturamento · Peças · Investimentos</div></div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent4);border-radius:6px;padding:14px 16px;margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong>📦 Compras e Fornecedores</strong><span style="font-family:var(--fm);font-size:10px;color:var(--muted)">Dia 8 · 08:30 · 25 min</span></div><div style="font-size:12px;color:var(--muted)">• Peças em falta · Fornecedores · Cotações · Estoque de giro</div></div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent2);border-radius:6px;padding:14px 16px;margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong>📈 Análise de Desempenho</strong><span style="font-family:var(--fm);font-size:10px;color:var(--muted)">Dia 15 · 08:00 · 30 min</span></div><div style="font-size:12px;color:var(--muted)">• % da meta por setor · OS em atraso · Pátio parado</div></div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent3);border-radius:6px;padding:14px 16px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong>✅ Fechamento + Retrospectiva</strong><span style="font-family:var(--fm);font-size:10px;color:var(--muted)">Último dia útil · 17:00 · 45 min</span></div><div style="font-size:12px;color:var(--muted)">• OS concluídas vs meta · 1 melhoria de processo</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- MATRIZES -->
+<section id="matrizes" class="section">
+  <h2 class="sec-title">Matrizes de Análise</h2>
+  <div class="card" style="margin-bottom:18px">
+    <div class="block-title">📐 Urgência × Impacto</div>
+    <table style="border-collapse:collapse">
+      <thead><tr><th style="border:1px solid var(--border);background:var(--surface2)"></th><th style="border:1px solid var(--border);background:var(--surface2);padding:10px 14px">🔴 URGENTE</th><th style="border:1px solid var(--border);background:var(--surface2);padding:10px 14px">🟡 NÃO URGENTE</th></tr></thead>
+      <tbody>
+        <tr><td style="border:1px solid var(--border);background:var(--surface2);padding:10px 14px;font-weight:700">⬆ ALTO IMPACTO</td><td style="border:1px solid var(--border);background:rgba(239,68,68,.1);padding:10px 14px;color:#ef4444;font-weight:700">FAZER AGORA<br><span style="font-size:11px;font-weight:400;color:var(--text)">Cliente parado, pátio cheio, OS aprovada há 3+ dias sem iniciar</span></td><td style="border:1px solid var(--border);background:rgba(200,150,42,.08);padding:10px 14px;color:var(--accent);font-weight:700">PLANEJAR<br><span style="font-size:11px;font-weight:400;color:var(--text)">Telhado, equipamentos novos, treinamento técnico</span></td></tr>
+        <tr><td style="border:1px solid var(--border);background:var(--surface2);padding:10px 14px;font-weight:700">⬇ BAIXO IMPACTO</td><td style="border:1px solid var(--border);background:rgba(200,150,42,.08);padding:10px 14px;color:var(--accent);font-weight:700">DELEGAR<br><span style="font-size:11px;font-weight:400;color:var(--text)">Limpeza geral, organização de estoque, cadastros</span></td><td style="border:1px solid var(--border);background:rgba(16,185,129,.07);padding:10px 14px;color:var(--accent3);font-weight:700">ELIMINAR<br><span style="font-size:11px;font-weight:400;color:var(--text)">Reuniões sem resultado, tarefas sem impacto claro</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card" style="margin-bottom:18px">
+    <div class="block-title">🔍 Gargalos por Etapa</div>
+    <table><thead><tr><th>Etapa</th><th>Risco</th><th>Causa Raiz</th><th>Ação</th></tr></thead>
+      <tbody>
+        <tr><td>Aguardando Aprovação</td><td><span class="pill pill-r">ALTO</span></td><td>Cliente não responde</td><td>Ligar 24h → 48h → notificar por escrito</td></tr>
+        <tr><td>Aguardando Peça</td><td><span class="pill pill-r">ALTO</span></td><td>Fornecedor atrasado</td><td>2 fornecedores alternativos por item crítico</td></tr>
+        <tr><td>Limpeza Ultrassônica</td><td><span class="pill pill-y">MÉDIO</span></td><td>Fila acumulada</td><td>Limitar a 3 OS simultâneas nessa etapa</td></tr>
+        <tr><td>Calibração em Bancada</td><td><span class="pill pill-y">MÉDIO</span></td><td>Equipamento ocupado</td><td>Agendar slots por setor (manhã/tarde)</td></tr>
+        <tr><td>Entrega ao Cliente</td><td><span class="pill pill-g">BAIXO</span></td><td>Cliente não vem buscar</td><td>Cobrar diária de pátio após 3 dias pronto</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <div class="block-title">🏗 Telhado & Infraestrutura</div>
+    <div class="alert alert-w" style="margin-bottom:12px"><div>⚠️</div><div>Telhado impacta produtividade, qualidade e segurança.</div></div>
+    <table><thead><tr><th>Item</th><th>Impacto</th><th>Urgência</th><th>Custo Est.</th><th>Decisão</th></tr></thead>
+      <tbody>
+        <tr><td>Goteiras sobre bancadas</td><td style="color:var(--accent4);font-weight:700">CRÍTICO</td><td style="color:var(--accent4)">IMEDIATO</td><td>R$ 3–8k</td><td><span class="pill pill-r">Fazer agora</span></td></tr>
+        <tr><td>Estrutura comprometida</td><td style="color:var(--accent4);font-weight:700">CRÍTICO</td><td style="color:var(--accent4)">URGENTE</td><td>R$ 15–40k</td><td><span class="pill pill-r">Orçar esta semana</span></td></tr>
+        <tr><td>Forro / isolamento</td><td style="color:var(--accent)">MÉDIO</td><td>3–6 meses</td><td>R$ 8–20k</td><td><span class="pill pill-y">Planejar</span></td></tr>
+        <tr><td>Calha + drenagem</td><td style="color:var(--accent)">MÉDIO</td><td>1–3 meses</td><td>R$ 2–5k</td><td><span class="pill pill-y">Incluir no orçamento</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+</main>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- MODAL NOVA OS -->
+<div class="modal-bg" id="modalBg" onclick="if(event.target===this)fecharModal()">
+  <div class="modal-box">
+    <div class="modal-title">NOVA ORDEM DE SERVIÇO</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group">
+        <div class="lbl">Nº OS <span style="color:var(--muted);font-size:9px;font-weight:400;letter-spacing:0;text-transform:none">← do Oficina Inteligente</span></div>
+        <input class="inp inp-mono" id="m-num" placeholder="Ex: 1234">
+      </div>
+      <div class="form-group"><div class="lbl">Data Entrada</div><input class="inp" id="m-data" type="date"></div>
+    </div>
+    <div class="form-group">
+      <div class="lbl">Tipo de Entrada</div>
+      <div style="display:flex;gap:8px">
+        <button type="button" id="tipo-btn-veiculo" onclick="setTipo('veiculo')" style="flex:1;padding:8px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:700;background:var(--accent);color:#000;border:none">🚛 Veículo / Máquina</button>
+        <button type="button" id="tipo-btn-peca" onclick="setTipo('peca')" style="flex:1;padding:8px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600;background:var(--surface2);color:var(--muted);border:1px solid var(--border)">🔩 Peça Avulsa</button>
+      </div>
+    </div>
+    <div id="campo-veiculo" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group"><div class="lbl">Placa <span style="color:var(--accent4)">*</span></div><input class="inp inp-mono" id="m-placa" placeholder="ABC-1234" maxlength="8"></div>
+      <div class="form-group"><div class="lbl">Modelo / Tipo</div><input class="inp" id="m-modelo" placeholder="Scania, Trator, Máquina..."></div>
+    </div>
+    <div id="campo-peca" style="display:none" class="form-group">
+      <div class="lbl">Descrição da Peça <span style="color:var(--accent4)">*</span></div>
+      <input class="inp" id="m-peca" placeholder="Ex: Bomba injetora Scania série 5...">
+    </div>
+    <div class="form-group"><div class="lbl">Nome do Cliente <span style="color:var(--accent4)">*</span></div><input class="inp" id="m-cliente" placeholder="Nome completo ou empresa"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group"><div class="lbl">Setor</div>
+        <select class="inp" id="m-setor" onchange="atualizarOperadores('m-operador',this.value);mostrarVinculo(this.value);atualizarStatusPorSetor('m-status',this.value);renderSetoresConectadosNova()">
+          <option>Bomba Injetora</option><option>Bomba de Alta</option>
+          <option>Injetores Mecânicos</option><option>Injetores Eletrônicos</option>
+          <option>Veículo Diesel</option><option>Turbinas</option>
+        </select>
+      </div>
+      <div class="form-group"><div class="lbl">Status Inicial</div>
+        <select class="inp" id="m-status"><option>Diagnóstico</option></select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group">
+        <div class="lbl">Operador / Mecânico</div>
+        <select class="inp" id="m-operador"><option value="">— Selecionar —</option></select>
+      </div>
+      <div class="form-group" id="m-vinculo-row" style="display:none">
+        <div class="lbl">🔗 Vincular a OS (Pátio → Setor)</div>
+        <select class="inp" id="m-vinculo"><option value="">Sem vínculo</option></select>
+      </div>
+    </div>
+    <div id="campos-extras-form"></div>
+    <div class="form-group"><div class="lbl">Observações</div><textarea class="inp" id="m-obs" rows="2" placeholder="Sintoma, peças necessárias..."></textarea></div>
+    <!-- SETORES CONECTADOS -->
+    <div style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div class="lbl" style="margin:0">Setores Conectados</div>
+        <button type="button" id="btn-add-setor-nova" onclick="toggleSetoresConectadosNova()"
+          style="background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:4px;cursor:pointer;font-size:11px;padding:3px 10px;font-weight:600">+ Adicionar</button>
+      </div>
+      <div id="setores-conectados-nova" style="display:none">
+        <div id="setores-conectados-lista-nova" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
+        <div id="setores-conectados-forms-nova"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px">
+      <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-primary" id="btn-salvar-os" onclick="salvarOS()">Salvar OS</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR OS -->
+<div class="modal-bg" id="modalEditar" onclick="if(event.target===this)fecharEditar()">
+  <div class="modal-box">
+    <div class="modal-title">EDITAR OS</div>
+    <input type="hidden" id="e-id">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group"><div class="lbl">Nº OS <span style="color:var(--accent4)">*</span></div><input class="inp inp-mono" id="e-num" placeholder="Ex: 1234"></div>
+      <div class="form-group"><div class="lbl">Data Entrada</div><input class="inp" id="e-data" type="date"></div>
+    </div>
+    <div id="e-placa-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group"><div class="lbl">Placa <span style="color:var(--accent4)">*</span></div><input class="inp inp-mono" id="e-placa" maxlength="8"></div>
+      <div class="form-group"><div class="lbl">Modelo / Tipo</div><input class="inp" id="e-modelo"></div>
+    </div>
+    <div class="form-group"><div class="lbl">Cliente <span style="color:var(--accent4)">*</span></div><input class="inp" id="e-cliente"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group"><div class="lbl">Setor</div>
+        <select class="inp" id="e-setor" onchange="atualizarOperadores('e-operador',this.value);mostrarVinculoEditar(this.value);atualizarStatusPorSetor('e-status',this.value)">
+          <option>Bomba Injetora</option><option>Bomba de Alta</option>
+          <option>Injetores Mecânicos</option><option>Injetores Eletrônicos</option>
+          <option>Veículo Diesel</option><option>Turbinas</option>
+        </select>
+      </div>
+      <div class="form-group"><div class="lbl">Status / Etapa</div>
+        <select class="inp" id="e-status"><option>Diagnóstico</option></select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group">
+        <div class="lbl">Operador / Mecânico</div>
+        <select class="inp" id="e-operador"><option value="">— Selecionar —</option></select>
+      </div>
+      <div class="form-group" id="e-vinculo-row" style="display:none">
+        <div class="lbl">🔗 OS Vinculadas</div>
+        <div id="e-vinculos-lista" style="font-size:12px;color:var(--muted);padding-top:6px">—</div>
+      </div>
+    </div>
+    <div id="campos-extras-editar"></div>
+    <div class="form-group"><div class="lbl">Observações</div><textarea class="inp" id="e-obs" rows="2"></textarea></div>
+    <!-- SETORES CONECTADOS -->
+    <div style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div class="lbl" style="margin:0">Setores Conectados</div>
+        <button type="button" id="btn-add-setor-editar" onclick="toggleSetoresConectadosEditar()"
+          style="background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:4px;cursor:pointer;font-size:11px;padding:3px 10px;font-weight:600">+ Adicionar</button>
+      </div>
+      <div id="setores-conectados-editar" style="display:none">
+        <div id="setores-conectados-lista-editar" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
+        <div id="setores-conectados-forms-editar"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:space-between;margin-top:4px;flex-wrap:wrap">
+      <button class="btn btn-danger" onclick="deletarOSdoModal()">🗑 Excluir</button>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost" onclick="fecharEditar()">Cancelar</button>
+        <button class="btn btn-primary" id="btn-salvar-edicao" onclick="salvarEdicao()">💾 Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIG -->
+<div class="modal-bg" id="modalConfig" onclick="if(event.target===this)fecharConfig()">
+  <div class="modal-box" style="max-width:660px">
+    <div class="modal-title">⚙️ CONFIGURAÇÕES</div>
+
+    <!-- Abas internas -->
+    <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:16px">
+      <div id="cfg-tab-campos" onclick="mostrarCfgAba('campos')"
+        style="padding:8px 18px;font-size:12px;font-weight:700;cursor:pointer;border-bottom:2px solid var(--accent);color:var(--accent)">
+        📋 Campos do Formulário
+      </div>
+      <div id="cfg-tab-etapas" onclick="mostrarCfgAba('etapas')"
+        style="padding:8px 18px;font-size:12px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:var(--muted)">
+        🗂 Etapas do Kanban
+      </div>
+      <div id="cfg-tab-operadores" onclick="mostrarCfgAba('operadores')"
+        style="padding:8px 18px;font-size:12px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:var(--muted)">
+        👤 Operadores
+      </div>
+    </div>
+
+    <!-- ABA CAMPOS -->
+    <div id="cfg-aba-campos">
+      <div class="alert alert-i" style="margin-bottom:12px"><div>💡</div><div>Adicione os campos do <strong>Oficina Inteligente</strong>.</div></div>
+      <div id="lista-campos-config"></div>
+      <button class="btn btn-ghost" onclick="adicionarCampo()" style="width:100%;margin-top:8px;margin-bottom:14px">+ Adicionar campo</button>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="fecharConfig()">Cancelar</button>
+        <button class="btn btn-primary" id="btn-salvar-config" onclick="salvarConfig()">💾 Salvar Campos</button>
+      </div>
+    </div>
+
+    <!-- ABA OPERADORES -->
+    <div id="cfg-aba-operadores" style="display:none">
+      <div class="alert alert-i" style="margin-bottom:12px"><div>💡</div><div>Cadastre os mecânicos de cada setor. Eles aparecerão no formulário de OS.</div></div>
+      <div id="lista-operadores-config"></div>
+      <button class="btn btn-ghost" onclick="adicionarOperadorTemp()" style="width:100%;margin-top:8px;margin-bottom:14px">+ Adicionar operador</button>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="fecharConfig()">Cancelar</button>
+        <button class="btn btn-primary" id="btn-salvar-operadores" onclick="salvarOperadoresConfig()">💾 Salvar Operadores</button>
+      </div>
+    </div>
+
+    <!-- ABA ETAPAS -->
+    <div id="cfg-aba-etapas" style="display:none">
+      <div class="alert alert-i" style="margin-bottom:12px"><div>💡</div><div>Renomeie, reordene, adicione ou remova as colunas do <strong>Kanban</strong>. Cada setor tem etapas independentes.</div></div>
+      <div class="form-group" style="margin-bottom:12px">
+        <div class="lbl">Setor</div>
+        <select class="inp" id="cfg-setor-etapas" onchange="selecionarSetorEtapas(this.value)">
+          <option>Bomba Injetora</option><option>Bomba de Alta</option>
+          <option>Injetores Mecânicos</option><option>Injetores Eletrônicos</option>
+          <option>Veículo Diesel</option><option>Turbinas</option>
+        </select>
+      </div>
+      <div id="lista-etapas-config"></div>
+      <button class="btn btn-ghost" onclick="adicionarEtapa()" style="width:100%;margin-top:8px;margin-bottom:14px">+ Adicionar etapa</button>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="fecharConfig()">Cancelar</button>
+        <button class="btn btn-primary" id="btn-salvar-etapas" onclick="salvarEtapas()">💾 Salvar Etapas — Bomba Injetora</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// SUPABASE CONFIG
+// ══════════════════════════════════════════
+const SUPABASE_URL = 'https://yfnfcdxmirvfhzphuigy.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmbmZjZHhtaXJ2Zmh6cGh1aWd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MTI1MzAsImV4cCI6MjA4ODk4ODUzMH0.RsZrKMsXtPuih_jyP_Q3eXX9yIuI_qGcY7U9QFqo2aI';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ══════════════════════════════════════════
+// CONSTANTES
+// ══════════════════════════════════════════
+const SETORES = ['Bomba Injetora','Bomba de Alta','Injetores Mecânicos','Injetores Eletrônicos','Veículo Diesel','Turbinas'];
+// STATUS_LIST e STATUS_COL removidos — etapas agora são dinâmicas via etapasKanban
+const SETOR_COLORS = {'Bomba Injetora':'#3b82f6','Bomba de Alta':'#e8a317','Injetores Mecânicos':'#10b981','Injetores Eletrônicos':'#8b5cf6','Veículo Diesel':'#ef4444','Turbinas':'#06b6d4'};
+
+let osData = [];
+let camposConfig = [];
+let etapasKanban = {}; // map: { setor: [{id, label, cor, dbId}] }
+let operadoresDB = []; // operadores cadastrados por setor
+let setorAtivo = SETORES[0];
+let setorEtapasConfig = SETORES[0]; // setor selecionado no configurador de etapas
+let dragId = null;
+let dragAdicionalId = '';
+let tipoEntrada = 'veiculo';
+let camposTemp = [];
+let etapasTemp = [];
+
+// ══════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════
+function calcDias(d){ if(!d) return 0; return Math.floor((new Date()-new Date(d))/86400000); }
+function diasColor(d){ return d>=7?'var(--accent4)':d>=4?'var(--accent)':'var(--muted)'; }
+
+function toast(msg, tipo='ok'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.className=`toast toast-${tipo} show`;
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+function setSyncBadge(estado){
+  const b=document.getElementById('syncBadge');
+  if(estado==='ok'){ b.textContent='✓ Supabase'; b.className='sync-badge sync-ok'; }
+  else if(estado==='err'){ b.textContent='✗ Offline'; b.className='sync-badge sync-err'; }
+  else { b.textContent='⟳ Sincronizando...'; b.className='sync-badge sync-load'; }
+}
+
+function setBtnLoading(btnId, loading, label=''){
+  const b=document.getElementById(btnId);
+  if(!b) return;
+  b.disabled=loading;
+  b.innerHTML=loading?`<span class="spinner"></span>Salvando...`:label||b.dataset.label||b.textContent;
+  if(!loading && label) b.dataset.label=label;
+}
+
+// ══════════════════════════════════════════
+// INICIALIZAÇÃO
+// ══════════════════════════════════════════
+document.getElementById('dateDisplay').textContent = new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+
+// ══════════════════════════════════════════
+// OPERADORES
+// ══════════════════════════════════════════
+async function carregarOperadores(){
+  const { data, error } = await sb.from('operadores').select('*').eq('ativo',true).order('nome');
+  if(error){ console.warn('Operadores:', error.message); return; }
+  operadoresDB = data||[];
+}
+
+function atualizarOperadores(selectId, setor){
+  const sel = document.getElementById(selectId);
+  if(!sel) return;
+  const val = sel.value;
+  const ops = operadoresDB.filter(o=>o.setor===setor);
+  sel.innerHTML = '<option value="">— Selecionar —</option>' +
+    ops.map(o=>`<option value="${o.nome}" ${val===o.nome?'selected':''}>${o.nome}</option>`).join('');
+}
+
+function mostrarVinculo(setor){
+  const row = document.getElementById('m-vinculo-row');
+  if(!row) return;
+  const mostra = ['Veículo Diesel','Turbinas'].includes(setor);
+  row.style.display = mostra ? 'block' : 'none';
+  if(mostra) popularSelectVinculo('m-vinculo');
+}
+
+function mostrarVinculoEditar(setor){
+  const row = document.getElementById('e-vinculo-row');
+  if(!row) return;
+  row.style.display = ['Veículo Diesel','Turbinas'].includes(setor) ? 'block' : 'none';
+}
+
+function popularSelectVinculo(selectId){
+  const sel = document.getElementById(selectId);
+  if(!sel) return;
+  sel.innerHTML = '<option value="">Sem vínculo</option>' +
+    osData.map(o=>`<option value="${o.id}">${o.numero} — ${o.cliente} (${o.setor})</option>`).join('');
+}
+
+async function salvarVinculo(osOrigemId, osDestinoId){
+  if(!osDestinoId) return;
+  await sb.from('os_vinculos').insert({ os_origem:osOrigemId, os_destino:osDestinoId, tipo_vinculo:'relacionada' });
+}
+
+async function carregarVinculos(osId){
+  const { data } = await sb.from('os_vinculos')
+    .select('os_destino, os_origem, tipo_vinculo')
+    .or(`os_origem.eq.${osId},os_destino.eq.${osId}`);
+  if(!data||!data.length) return [];
+  // Buscar dados das OS vinculadas
+  const outrosIds = data.map(v=> v.os_origem===osId ? v.os_destino : v.os_origem);
+  const { data:oss } = await sb.from('ordens_servico').select('id,numero,cliente,setor,status').in('id', outrosIds);
+  return (oss||[]);
+}
+
+async function init(){
+  setSyncBadge('load');
+  try {
+    await Promise.all([carregarCampos(), carregarOS(), carregarEtapas(), carregarOperadores()]);
+    setSyncBadge('ok');
+    renderDashboard();
+  } catch(e){
+    setSyncBadge('err');
+    const msg = e?.message || (typeof e === 'string' ? e : JSON.stringify(e));
+    toast('Erro ao conectar: '+msg,'err');
+    console.error('Init error:', msg);
+  }
+}
+
+async function carregarCampos(){
+  const { data, error } = await sb.from('campos_config').select('*').order('ordem');
+  if(error) throw new Error(error?.message || String(error));
+  camposConfig = (data||[]).map(r=>({
+    id: r.campo_id,
+    label: r.label,
+    tipo: r.tipo,
+    opcoes: r.opcoes||[],
+    obrigatorio: r.obrigatorio||false,
+    dbId: r.id
+  }));
+}
+
+async function carregarOS(){
+  const { data, error } = await sb.from('ordens_servico').select('*').order('criado_em',{ascending:false});
+  if(error) throw new Error(error?.message || String(error));
+  const ids = (data||[]).map(r=>r.id);
+  let setoresMap = {};
+  if(ids.length){
+    const { data: setoresData } = await sb.from('os_setores').select('*').in('os_id', ids);
+    (setoresData||[]).forEach(s=>{
+      if(!setoresMap[s.os_id]) setoresMap[s.os_id]=[];
+      setoresMap[s.os_id].push(s);
+    });
+  }
+  osData = (data||[]).map(r=>mapRow(r, setoresMap[r.id]||[]));
+}
+
+function mapRow(r, setoresAdicionais=[]){
+  return {
+    id: r.id, numero: r.numero, tipo: r.tipo, placa: r.placa,
+    cliente: r.cliente, modelo: r.modelo||'', setor: r.setor,
+    status: r.status, dataEntrada: r.data_entrada, obs: r.observacoes||'',
+    operador: r.operador||'', extras: r.extras||{},
+    setoresAdicionais: (setoresAdicionais||[]).map(s=>({
+      id: s.id, setor: s.setor, status: s.status,
+      operador: s.operador||'', ordem: s.ordem||1, obs: s.observacoes||''
+    }))
+  };
+}
+
+async function carregarEtapas(){
+  const { data, error } = await sb.from('etapas_kanban').select('*').order('ordem');
+  if(error) throw new Error(error?.message || String(error));
+  // Rebuild map por setor
+  etapasKanban = {};
+  SETORES.forEach(s => { etapasKanban[s] = []; });
+  (data||[]).forEach(r => {
+    if(r.setor && etapasKanban[r.setor] !== undefined){
+      etapasKanban[r.setor].push({ id:r.etapa_id, label:r.label, cor:r.cor||'#64748b', dbId:r.id });
+    }
+  });
+  atualizarSelectsStatus();
+}
+
+// Atualiza select de status para um setor específico
+function atualizarStatusPorSetor(selectId, setor){
+  const el = document.getElementById(selectId);
+  if(!el) return;
+  const val = el.value;
+  const opts = (etapasKanban[setor]||[]).map(e=>`<option>${e.label}</option>`).join('');
+  el.innerHTML = opts || '<option>Diagnóstico</option>';
+  if(val) el.value = val;
+}
+
+function atualizarSelectsStatus(){
+  // m-status usa o setor selecionado no modal nova-OS (ou setorAtivo)
+  const mSetor = document.getElementById('m-setor')?.value || setorAtivo;
+  atualizarStatusPorSetor('m-status', mSetor);
+  // e-status usa o setor selecionado no modal editar-OS
+  const eSetor = document.getElementById('e-setor')?.value || setorAtivo;
+  atualizarStatusPorSetor('e-status', eSetor);
+  // Filtro no dashboard — todas as etapas únicas
+  const allLabels = [...new Set(Object.values(etapasKanban).flat().map(e=>e.label))];
+  const filtro = document.getElementById('dash-filtro');
+  if(filtro){
+    const val=filtro.value;
+    filtro.innerHTML=`<option value="">Todos os status</option>`+allLabels.map(l=>`<option>${l}</option>`).join('');
+    if(val) filtro.value=val;
+  }
+}
+
+
+function showTab(id,el){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+  if(id==='kanban') renderKanban();
+  if(id==='dashboard') renderDashboard();
+}
+
+// ══════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════
+function renderDashboard(){
+  // Considera as 2 últimas etapas do setor de cada OS como "concluídas"
+  const ultimasDuasDoSetor = (setor) => (etapasKanban[setor]||[]).slice(-2).map(e=>e.label);
+  const isOSDone = (os) => ultimasDuasDoSetor(os.setor).includes(os.status);
+  // "Aprovação" — busca em qualquer setor
+  const allStages = Object.values(etapasKanban).flat();
+  const etapaAprovacao = allStages.find(e=>e.label.toLowerCase().includes('aprovação')||e.label.toLowerCase().includes('aprovacao'))?.label||'';
+
+  document.getElementById('kpi-abertas').textContent=osData.filter(o=>!isOSDone(o)).length;
+  document.getElementById('kpi-aprovacao').textContent=etapaAprovacao?osData.filter(o=>o.status===etapaAprovacao).length:'—';
+  document.getElementById('kpi-prontas').textContent=osData.filter(o=>isOSDone(o)).length;
+  document.getElementById('kpi-total').textContent=osData.length;
+
+  document.getElementById('dash-setores').innerHTML=SETORES.map(s=>{
+    const n=osData.filter(o=>o.setor===s).length;
+    const pct=osData.length?Math.round(n/osData.length*100):0;
+    return `<div class="prog-wrap"><div class="prog-label"><span style="color:${SETOR_COLORS[s]}">${s}</span><span>${n} OS</span></div><div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:${SETOR_COLORS[s]}"></div></div></div>`;
+  }).join('');
+
+  const al=document.getElementById('dash-alertas');
+  const atrasadas=osData.filter(o=>calcDias(o.dataEntrada)>=5&&!ultimasDuasDoSetor(o.setor).includes(o.status));
+  const aprvPend=etapaAprovacao?osData.filter(o=>o.status===etapaAprovacao):[];
+  let html='';
+  atrasadas.forEach(o=>{ html+=`<div class="alert alert-d"><div>🔴</div><div><strong>${o.placa} — ${o.cliente}</strong><br>${calcDias(o.dataEntrada)} dias sem conclusão.</div></div>`; });
+  if(aprvPend.length>3) html+=`<div class="alert alert-w"><div>⚠️</div><div><strong>${aprvPend.length} OS aguardando aprovação</strong> — meta máxima é 3.</div></div>`;
+  if(!html) html='<div style="color:var(--muted);font-size:13px">✅ Sem alertas no momento.</div>';
+  al.innerHTML=html;
+  renderDashTable();
+}
+
+function renderDashTable(){
+  const q=(document.getElementById('dash-search')?.value||'').toLowerCase();
+  const f=document.getElementById('dash-filtro')?.value||'';
+  const thead=document.getElementById('dash-thead');
+  const extraThs=camposConfig.map(c=>`<th>${c.label}</th>`).join('');
+  thead.innerHTML=`<tr><th>Nº OS</th><th>Placa</th><th>Cliente</th><th>Veículo/Peça</th><th>Setor</th><th>Operador</th><th>Status</th><th>Dias</th>${extraThs}<th></th></tr>`;
+  const lista=osData.filter(o=>{
+    const vals=Object.values(o.extras||{}).join(' ').toLowerCase();
+    const m=(o.placa+o.cliente+o.numero+(o.modelo||'')+vals).toLowerCase().includes(q);
+    return m&&(!f||o.status===f);
+  });
+  const tb=document.getElementById('dash-tbody');
+  if(!lista.length){tb.innerHTML=`<tr><td colspan="20" style="text-align:center;color:var(--muted);padding:28px">Nenhuma OS encontrada.</td></tr>`;return;}
+  tb.innerHTML=lista.map(os=>{
+    const d=calcDias(os.dataEntrada);
+    const extraTds=camposConfig.map(c=>`<td style="color:var(--muted);font-size:12px">${os.extras?.[c.id]||'—'}</td>`).join('');
+    return `<tr>
+      <td style="font-family:var(--fm);color:var(--accent);font-weight:700">${os.numero}</td>
+      <td style="font-family:var(--fm);letter-spacing:2px;font-weight:700">${os.placa}</td>
+      <td>${os.cliente}</td>
+      <td style="color:var(--muted);font-size:12px">${os.modelo||'—'}</td>
+      <td style="font-size:11px;color:${SETOR_COLORS[os.setor]||'var(--muted)'}">
+        ${os.setor}${(os.setoresAdicionais||[]).length>0?` <span style="font-size:10px;background:rgba(200,150,42,.12);color:var(--accent);border-radius:3px;padding:1px 5px;font-weight:700">+${os.setoresAdicionais.length}</span>`:''}
+      </td>
+      <td style="font-size:12px;color:var(--accent2)">${os.operador||'—'}</td>
+      <td><span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;background:${((etapasKanban[os.setor]||[]).find(e=>e.label===os.status)?.cor||'#64748b')}22;color:${(etapasKanban[os.setor]||[]).find(e=>e.label===os.status)?.cor||'var(--muted)'}">●&nbsp;${os.status}</span></td>
+      <td style="font-family:var(--fm);color:${diasColor(d)};font-weight:700">${d}d</td>
+      ${extraTds}
+      <td style="white-space:nowrap">
+        <button onclick="abrirEditar('${os.id}')" class="btn btn-ghost btn-sm">✏️</button>
+        <button onclick="deletarOS('${os.id}')" class="btn btn-danger btn-sm" style="margin-left:4px">✕</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+// KANBAN
+// ══════════════════════════════════════════
+function renderSetorTabs(){
+  document.getElementById('setorTabs').innerHTML=SETORES.map(s=>`
+    <div class="setor-tab ${s===setorAtivo?'active':''}"
+      style="${s===setorAtivo?`background:${SETOR_COLORS[s]};color:#000;border-color:${SETOR_COLORS[s]}`:''}"
+      onclick="setSetor('${s}')">
+      ${s} <span style="font-family:var(--fm);font-size:10px;margin-left:4px">${
+        osData.filter(o=>o.setor===s||(o.setoresAdicionais||[]).some(a=>a.setor===s)).length
+      }</span>
+    </div>`).join('');
+}
+
+function setSetor(s){ setorAtivo=s; renderSetorTabs(); renderKanban(); }
+
+function renderKanban(){
+  renderSetorTabs();
+  const board=document.getElementById('kanbanBoard');
+  const corSetor=SETOR_COLORS[setorAtivo];
+  const etapas=(etapasKanban[setorAtivo]||[]).length?etapasKanban[setorAtivo]:[{id:'diagnostico',label:'Diagnóstico',cor:'#3b82f6'}];
+  const osDoSetor=[];
+  osData.forEach(os=>{
+    if(os.setor===setorAtivo){
+      osDoSetor.push({...os, _statusNesseSetor:os.status, _isAdicional:false, _adicionalId:''});
+    }
+    const adic=(os.setoresAdicionais||[]).find(s=>s.setor===setorAtivo);
+    if(adic){
+      osDoSetor.push({...os, _statusNesseSetor:adic.status, _isAdicional:true, _adicionalId:adic.id});
+    }
+  });
+  board.innerHTML=etapas.map(etapa=>{
+    const cards=osDoSetor.filter(o=>o._statusNesseSetor===etapa.label);
+    return `<div class="kanban-col" data-status="${etapa.label}">
+      <div class="kanban-col-header" style="border-top:3px solid ${etapa.cor};border-radius:8px 8px 0 0">
+        <div class="kanban-col-title" style="color:${etapa.cor}">${etapa.label}</div>
+        <div class="kanban-count">${cards.length}</div>
+      </div>
+      <div class="kanban-body">
+        <div class="kanban-drop-zone" data-status="${etapa.label}"
+          ondragover="dragOver(event,this)" ondragleave="dragLeave(this)" ondrop="dropCard(event,'${etapa.label}')">
+          ${cards.map(os=>kanbanCard(os,corSetor)).join('')}
+          ${!cards.length?`<div style="text-align:center;color:var(--muted);font-size:11px;padding:16px 0">vazio</div>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  board.querySelectorAll('.kanban-card').forEach(card=>{
+    card.addEventListener('dragstart',e=>{
+      dragId=card.dataset.id;
+      dragAdicionalId=card.dataset.adicionalId||'';
+      setTimeout(()=>card.classList.add('dragging'),0);
+    });
+    card.addEventListener('dragend',()=>card.classList.remove('dragging'));
+  });
+}
+
+function kanbanCard(os, cor){
+  const d=calcDias(os.dataEntrada);
+  const dc=diasColor(d);
+  const isPeca=os.tipo==='peca'||os.placa==='PEÇA';
+  const etapas=(etapasKanban[setorAtivo]||[]).length?etapasKanban[setorAtivo]:[{label:'Diagnóstico'}];
+  const idx=etapas.findIndex(e=>e.label===os._statusNesseSetor);
+  const podePrev=idx>0, podeNext=idx<etapas.length-1;
+  const isAdicStr=os._isAdicional?'true':'false';
+  const adicId=os._adicionalId||'';
+  let extrasHtml='';
+  if(os.extras && camposConfig.length){
+    const linhas=camposConfig.filter(c=>os.extras[c.id]).map(c=>`<span style="color:var(--muted)">${c.label}:</span> ${os.extras[c.id]}`);
+    if(linhas.length) extrasHtml=`<div class="kc-extras">${linhas.join(' · ')}</div>`;
+  }
+  const isMulti=(os.setoresAdicionais||[]).length>0;
+  let badgeHtml='';
+  if(isMulti){
+    const dots=[
+      `<span title="Setor principal: ${os.setor}" style="width:8px;height:8px;border-radius:50%;background:${SETOR_COLORS[os.setor]||'#64748b'};display:inline-block;${os.setor===setorAtivo?'':'opacity:.6'}"></span>`,
+      ...(os.setoresAdicionais||[]).map(s=>`<span title="${s.setor}" style="width:8px;height:8px;border-radius:50%;background:${SETOR_COLORS[s.setor]||'#64748b'};display:inline-block;${s.setor===setorAtivo?'':'opacity:.6'}"></span>`)
+    ].join('');
+    const label=os._isAdicional?`<span style="font-size:9px;color:var(--accent);font-weight:700">SETOR CONECT.</span>`:'';
+    badgeHtml=`<div style="display:flex;align-items:center;gap:4px;margin-bottom:4px">${label}<div style="display:flex;gap:3px;align-items:center">${dots}</div></div>`;
+  }
+  return `<div class="kanban-card" draggable="true" data-id="${os.id}" data-adicional-id="${adicId}">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin-bottom:2px">
+      <div class="kc-num">${os.numero}</div>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        <button title="Editar" onclick="abrirEditar('${os.id}')" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:3px;cursor:pointer;font-size:11px;padding:2px 6px">✏️</button>
+        <button title="Excluir" onclick="deletarOS('${os.id}')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:var(--accent4);border-radius:3px;cursor:pointer;font-size:11px;padding:2px 6px">✕</button>
+      </div>
+    </div>
+    ${badgeHtml}
+    ${isPeca?`<div style="font-size:10px;font-weight:700;color:var(--accent5);margin-bottom:2px">🔩 PEÇA AVULSA</div><div class="kc-placa" style="font-size:12px;letter-spacing:0">${os.modelo}</div>`:`<div class="kc-placa">${os.placa}</div><div class="kc-modelo">${os.modelo||'—'}</div>`}
+    <div class="kc-cliente">${os.cliente}</div>
+    ${os.operador?`<div style="font-size:10px;color:var(--accent2);margin-bottom:3px">👤 ${os.operador}</div>`:''}
+    <div class="kc-dias" style="color:${dc};margin-bottom:6px">⏱ ${d} dia${d!==1?'s':''}</div>
+    ${extrasHtml}
+    ${os.obs?`<div style="font-size:10px;color:var(--muted);margin:5px 0;border-top:1px solid var(--border);padding-top:5px">${os.obs.substring(0,60)}${os.obs.length>60?'…':''}</div>`:''}
+    <div style="display:flex;gap:4px;margin-top:6px">
+      <button onclick="moverStatus('${os.id}',-1,${isAdicStr},'${adicId}')" ${!podePrev?'disabled':''} style="flex:1;background:${podePrev?'var(--surface2)':'rgba(51,51,51,.3)'};border:1px solid var(--border);color:${podePrev?'var(--text)':'var(--muted)'};border-radius:4px;cursor:${podePrev?'pointer':'default'};font-size:11px;padding:4px 0">◀ Voltar</button>
+      <button onclick="moverStatus('${os.id}',1,${isAdicStr},'${adicId}')" ${!podeNext?'disabled':''} style="flex:1;background:${podeNext?'rgba(16,185,129,.12)':'rgba(51,51,51,.3)'};border:1px solid ${podeNext?'rgba(16,185,129,.25)':'var(--border)'};color:${podeNext?'var(--accent3)':'var(--muted)'};border-radius:4px;cursor:${podeNext?'pointer':'default'};font-size:11px;padding:4px 0">Avançar ▶</button>
+    </div>
+  </div>`;
+}
+
+async function moverStatus(id, dir, isAdicional=false, adicionalId=''){
+  const os=osData.find(o=>o.id===id);
+  if(!os) return;
+  const etapas=(etapasKanban[setorAtivo]||[]).length?etapasKanban[setorAtivo]:[{label:'Diagnóstico'}];
+  const statusAtual=isAdicional
+    ? (os.setoresAdicionais||[]).find(s=>s.id===adicionalId)?.status||''
+    : os.status;
+  const idx=etapas.findIndex(e=>e.label===statusAtual)+dir;
+  if(idx<0||idx>=etapas.length) return;
+  const novoStatus=etapas[idx].label;
+  if(isAdicional){
+    const adic=(os.setoresAdicionais||[]).find(s=>s.id===adicionalId);
+    if(adic) adic.status=novoStatus;
+    renderKanban(); renderDashboard();
+    const { error } = await sb.from('os_setores').update({status:novoStatus}).eq('id',adicionalId);
+    if(error){ toast('Erro ao atualizar status','err'); console.error(error?.message||String(error)); }
+    else toast(`✓ ${os.numero} → ${novoStatus}`);
+  } else {
+    os.status=novoStatus;
+    renderKanban(); renderDashboard();
+    const { error } = await sb.from('ordens_servico').update({status:novoStatus}).eq('id',id);
+    if(error){ toast('Erro ao atualizar status','err'); console.error(error?.message||String(error)); }
+    else toast(`✓ ${os.numero} → ${novoStatus}`);
+  }
+}
+
+function dragOver(e,el){ e.preventDefault(); el.classList.add('drag-active'); }
+function dragLeave(el){ el.classList.remove('drag-active'); }
+async function dropCard(e,novoStatus){
+  e.preventDefault();
+  document.querySelectorAll('.kanban-drop-zone').forEach(z=>z.classList.remove('drag-active'));
+  if(!dragId) return;
+  const os=osData.find(o=>o.id===dragId);
+  const isAdicional=!!dragAdicionalId;
+  if(os){
+    const statusAtual=isAdicional
+      ? (os.setoresAdicionais||[]).find(s=>s.id===dragAdicionalId)?.status||''
+      : os.status;
+    if(statusAtual!==novoStatus){
+      if(isAdicional){
+        const adic=(os.setoresAdicionais||[]).find(s=>s.id===dragAdicionalId);
+        if(adic) adic.status=novoStatus;
+        renderKanban(); renderDashboard();
+        const { error } = await sb.from('os_setores').update({status:novoStatus}).eq('id',dragAdicionalId);
+        if(error){ toast('Erro ao mover OS','err'); console.error(error?.message||String(error)); }
+        else toast(`✓ ${os.numero} → ${novoStatus}`);
+      } else {
+        os.status=novoStatus;
+        renderKanban(); renderDashboard();
+        const { error } = await sb.from('ordens_servico').update({status:novoStatus}).eq('id',dragId);
+        if(error){ toast('Erro ao mover OS','err'); console.error(error?.message||String(error)); }
+        else toast(`✓ ${os.numero} → ${novoStatus}`);
+      }
+    }
+  }
+  dragId=null; dragAdicionalId='';
+}
+
+// ══════════════════════════════════════════
+// CAMPOS EXTRAS
+// ══════════════════════════════════════════
+function renderCamposExtrasForm(prefix, dados){
+  const container=document.getElementById(`campos-extras-${prefix}`);
+  if(!container||!camposConfig.length){ if(container) container.innerHTML=''; return; }
+  let html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:0">';
+  camposConfig.forEach(c=>{
+    const val=dados&&dados[c.id]?dados[c.id]:'';
+    const req=c.obrigatorio?`<span style="color:var(--accent4)">*</span>`:'';
+    let input='';
+    if(c.tipo==='select'&&c.opcoes?.length){
+      input=`<select class="inp" id="${prefix}-extra-${c.id}"><option value="">Selecionar...</option>${c.opcoes.map(o=>`<option ${val===o?'selected':''}>${o}</option>`).join('')}</select>`;
+    } else if(c.tipo==='number'){
+      input=`<input class="inp" type="number" id="${prefix}-extra-${c.id}" value="${val}" placeholder="0">`;
+    } else if(c.tipo==='date'){
+      input=`<input class="inp" type="date" id="${prefix}-extra-${c.id}" value="${val}">`;
+    } else {
+      input=`<input class="inp" type="text" id="${prefix}-extra-${c.id}" value="${val}" placeholder="${c.label}">`;
+    }
+    html+=`<div class="form-group"><div class="lbl">${c.label} ${req}</div>${input}</div>`;
+  });
+  html+='</div>';
+  container.innerHTML=html;
+}
+
+function getCamposExtrasValores(prefix){
+  const vals={};
+  camposConfig.forEach(c=>{ const el=document.getElementById(`${prefix}-extra-${c.id}`); if(el) vals[c.id]=el.value.trim(); });
+  return vals;
+}
+
+function validarCamposExtras(prefix){
+  for(const c of camposConfig){
+    if(c.obrigatorio){
+      const el=document.getElementById(`${prefix}-extra-${c.id}`);
+      if(el&&!el.value.trim()){ alert(`Campo "${c.label}" é obrigatório.`); el.focus(); return false; }
+    }
+  }
+  return true;
+}
+
+// ══════════════════════════════════════════
+// MODAL NOVA OS
+// ══════════════════════════════════════════
+function abrirModal(){
+  document.getElementById('modalBg').style.display='flex';
+  document.getElementById('m-num').value='';
+  document.getElementById('m-data').value=new Date().toISOString().split('T')[0];
+  const setor=setorAtivo||SETORES[0];
+  document.getElementById('m-setor').value=setor;
+  setTipo('veiculo');
+  atualizarOperadores('m-operador', setor);
+  atualizarStatusPorSetor('m-status', setor);
+  mostrarVinculo(setor);
+  renderCamposExtrasForm('form',null);
+  document.getElementById('setores-conectados-nova').style.display='none';
+  document.getElementById('btn-add-setor-nova').textContent='+ Adicionar';
+  renderSetoresConectadosNova();
+}
+
+function fecharModal(){
+  document.getElementById('modalBg').style.display='none';
+  ['m-placa','m-cliente','m-modelo','m-obs','m-peca','m-num'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  setTipo('veiculo');
+}
+
+function setTipo(tipo){
+  tipoEntrada=tipo;
+  const isV=tipo==='veiculo';
+  document.getElementById('campo-veiculo').style.display=isV?'grid':'none';
+  document.getElementById('campo-peca').style.display=isV?'none':'block';
+  const bV=document.getElementById('tipo-btn-veiculo'), bP=document.getElementById('tipo-btn-peca');
+  bV.style.cssText=`flex:1;padding:8px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:700;background:${isV?'var(--accent)':'var(--surface2)'};color:${isV?'#000':'var(--muted)'};border:${isV?'none':'1px solid var(--border)'}`;
+  bP.style.cssText=`flex:1;padding:8px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600;background:${isV?'var(--surface2)':'var(--accent5)'};color:${isV?'var(--muted)':'#fff'};border:${isV?'1px solid var(--border)':'none'}`;
+}
+
+// ── SETORES CONECTADOS — NOVA OS ──
+function toggleSetoresConectadosNova(){
+  const wrap=document.getElementById('setores-conectados-nova');
+  const btn=document.getElementById('btn-add-setor-nova');
+  const visible=wrap.style.display!=='none';
+  wrap.style.display=visible?'none':'block';
+  btn.textContent=visible?'+ Adicionar':'− Fechar';
+  if(!visible) renderSetoresConectadosNova();
+}
+
+function renderSetoresConectadosNova(){
+  const setorPrincipal=document.getElementById('m-setor')?.value||'';
+  const disponiveis=SETORES.filter(s=>s!==setorPrincipal);
+  const lista=document.getElementById('setores-conectados-lista-nova');
+  if(!lista) return;
+  const selecionados=getSetoresConectadosSelecionados('nova');
+  lista.innerHTML=disponiveis.map(s=>{
+    const cor=SETOR_COLORS[s]||'#64748b';
+    const ativo=selecionados.includes(s);
+    return `<div onclick="toggleSetorConectado('${s}','nova')"
+      style="display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:4px;border:1px solid ${ativo?cor:'var(--border)'};background:${ativo?cor+'22':'var(--surface2)'};cursor:pointer;font-size:11px;font-weight:600;color:${ativo?cor:'var(--muted)'};transition:all .15s"
+      data-setor-pill="${s}">
+      <span style="width:7px;height:7px;border-radius:50%;background:${cor};display:inline-block"></span>${s}
+    </div>`;
+  }).join('');
+  renderSetoresConectadosForms('nova', selecionados);
+}
+
+function getSetoresConectadosSelecionados(ctx){
+  const forms=document.getElementById(`setores-conectados-forms-${ctx}`);
+  if(!forms) return [];
+  return Array.from(forms.querySelectorAll('[data-setor-form]')).map(el=>el.dataset.setorForm);
+}
+
+function toggleSetorConectado(setor, ctx){
+  const selecionados=getSetoresConectadosSelecionados(ctx);
+  if(selecionados.includes(setor)){
+    renderSetoresConectadosForms(ctx, selecionados.filter(s=>s!==setor));
+  } else {
+    renderSetoresConectadosForms(ctx, [...selecionados, setor]);
+  }
+  if(ctx==='nova') renderSetoresConectadosNova();
+  else renderSetoresConectadosEditar();
+}
+
+function renderSetoresConectadosForms(ctx, selecionados){
+  const forms=document.getElementById(`setores-conectados-forms-${ctx}`);
+  if(!forms) return;
+  const existingData={};
+  forms.querySelectorAll('[data-setor-form]').forEach(el=>{
+    const s=el.dataset.setorForm;
+    const status=el.querySelector(`[data-sc-status="${s}"]`)?.value||'';
+    const op=el.querySelector(`[data-sc-op="${s}"]`)?.value||'';
+    existingData[s]={status, op};
+  });
+  forms.innerHTML=selecionados.map(s=>{
+    const cor=SETOR_COLORS[s]||'#64748b';
+    const prev=existingData[s]||{};
+    const etapasOpts=(etapasKanban[s]||[]).map(e=>`<option ${prev.status===e.label?'selected':''}>${e.label}</option>`).join('')||'<option>Diagnóstico</option>';
+    const opsOpts='<option value="">— Selecionar —</option>'+operadoresDB.filter(o=>o.setor===s).map(o=>`<option ${prev.op===o.nome?'selected':''}>${o.nome}</option>`).join('');
+    return `<div data-setor-form="${s}" style="background:var(--surface2);border:1px solid ${cor}44;border-radius:6px;padding:10px 12px;margin-bottom:6px">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+        <span style="width:8px;height:8px;border-radius:50%;background:${cor};display:inline-block"></span>
+        <span style="font-size:11px;font-weight:700;color:${cor}">${s}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><div class="lbl" style="font-size:9px">Status Inicial</div>
+          <select class="inp" style="font-size:12px;padding:5px 8px" data-sc-status="${s}">${etapasOpts}</select>
+        </div>
+        <div><div class="lbl" style="font-size:9px">Operador</div>
+          <select class="inp" style="font-size:12px;padding:5px 8px" data-sc-op="${s}">${opsOpts}</select>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function getSetoresConectados(ctx){
+  const forms=document.getElementById(`setores-conectados-forms-${ctx}`);
+  if(!forms) return [];
+  return Array.from(forms.querySelectorAll('[data-setor-form]')).map(el=>{
+    const s=el.dataset.setorForm;
+    return {
+      setor: s,
+      status: el.querySelector(`[data-sc-status="${s}"]`)?.value||'Diagnóstico',
+      operador: el.querySelector(`[data-sc-op="${s}"]`)?.value||''
+    };
+  });
+}
+
+async function salvarOS(){
+  const numOS=document.getElementById('m-num').value.trim();
+  if(!numOS){ alert('Nº OS é obrigatório.'); document.getElementById('m-num').focus(); return; }
+  if(osData.find(o=>o.numero===numOS)){ alert(`OS "${numOS}" já existe.`); return; }
+  const cliente=document.getElementById('m-cliente').value.trim();
+  if(!cliente){ alert('Nome do cliente é obrigatório.'); return; }
+  if(!validarCamposExtras('form')) return;
+  let placa='', modelo='';
+  if(tipoEntrada==='veiculo'){
+    placa=document.getElementById('m-placa').value.trim().toUpperCase();
+    if(!placa){ alert('Placa é obrigatória.'); return; }
+    modelo=document.getElementById('m-modelo').value.trim();
+  } else {
+    const peca=document.getElementById('m-peca').value.trim();
+    if(!peca){ alert('Descrição da peça é obrigatória.'); return; }
+    placa='PEÇA'; modelo=peca;
+  }
+  const extras=getCamposExtrasValores('form');
+  const operador=(document.getElementById('m-operador')?.value||'').trim();
+  const vinculoId=document.getElementById('m-vinculo')?.value||'';
+  const setoresConectados=getSetoresConectados('nova');
+  const payload={
+    numero:numOS, tipo:tipoEntrada, placa, cliente, modelo,
+    setor:document.getElementById('m-setor').value,
+    status:document.getElementById('m-status').value,
+    data_entrada:document.getElementById('m-data').value,
+    observacoes:document.getElementById('m-obs').value.trim(),
+    operador, extras
+  };
+  setBtnLoading('btn-salvar-os',true);
+  const { data, error } = await sb.from('ordens_servico').insert([payload]).select().single();
+  setBtnLoading('btn-salvar-os',false,'Salvar OS');
+  if(error){ toast('Erro ao salvar OS: '+error.message,'err'); return; }
+  if(setoresConectados.length){
+    const { error: erS } = await sb.from('os_setores').insert(
+      setoresConectados.map((s,i)=>({os_id:data.id, setor:s.setor, status:s.status, operador:s.operador, ordem:i+1}))
+    );
+    if(erS) console.warn('Setores conectados:', erS.message);
+  }
+  if(vinculoId) await salvarVinculo(data.id, vinculoId);
+  osData.unshift(mapRow(data, setoresConectados.map((s,i)=>({
+    id:'temp-'+i, os_id:data.id, setor:s.setor, status:s.status,
+    operador:s.operador, ordem:i+1, observacoes:''
+  }))));
+  fecharModal();
+  renderKanban(); renderDashboard();
+  toast(`✓ OS ${numOS} criada!`);
+}
+
+// ══════════════════════════════════════════
+// MODAL EDITAR OS
+// ══════════════════════════════════════════
+function abrirEditar(id){
+  const os=osData.find(o=>o.id===id);
+  if(!os) return;
+  const isPeca=os.tipo==='peca'||os.placa==='PEÇA';
+  document.getElementById('e-id').value=os.id;
+  document.getElementById('e-num').value=os.numero;
+  document.getElementById('e-data').value=os.dataEntrada||'';
+  document.getElementById('e-cliente').value=os.cliente;
+  document.getElementById('e-modelo').value=os.modelo||'';
+  document.getElementById('e-setor').value=os.setor;
+  atualizarStatusPorSetor('e-status', os.setor);
+  document.getElementById('e-status').value=os.status;
+  document.getElementById('e-obs').value=os.obs||'';
+  document.getElementById('e-placa-row').style.display=isPeca?'none':'grid';
+  if(!isPeca) document.getElementById('e-placa').value=os.placa;
+  renderCamposExtrasForm('editar',os.extras||{});
+  atualizarOperadores('e-operador', os.setor);
+  const selOp=document.getElementById('e-operador');
+  if(selOp && os.operador) selOp.value=os.operador;
+  mostrarVinculoEditar(os.setor);
+  carregarVinculos(os.id).then(vinculos=>{
+    const lista=document.getElementById('e-vinculos-lista');
+    if(!lista) return;
+    if(!vinculos.length){ lista.textContent='Nenhuma OS vinculada'; return; }
+    lista.innerHTML=vinculos.map(v=>{
+      const outra = v.os_origem===os.id ? v['ordens_servico!os_vinculos_os_destino_fkey'] : v['ordens_servico!os_vinculos_os_origem_fkey'];
+      if(!outra) return '';
+      return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+        <span style="font-family:var(--fm);color:var(--accent);font-size:11px">${outra.numero}</span>
+        <span>${outra.cliente}</span>
+        <span style="font-size:10px;color:var(--muted)">(${outra.setor})</span>
+        <span class="pill pill-gz" style="font-size:9px">${outra.status}</span>
+      </div>`;
+    }).join('');
+  });
+  // Setores conectados
+  const temAdicionais=(os.setoresAdicionais||[]).length>0;
+  const wrap=document.getElementById('setores-conectados-editar');
+  const btn=document.getElementById('btn-add-setor-editar');
+  wrap.style.display=temAdicionais?'block':'none';
+  btn.textContent=temAdicionais?'− Fechar':'+ Adicionar';
+  renderSetoresConectadosEditar(os.setoresAdicionais||[]);
+  document.getElementById('modalEditar').style.display='flex';
+}
+
+function fecharEditar(){ document.getElementById('modalEditar').style.display='none'; }
+
+// ── SETORES CONECTADOS — EDITAR OS ──
+function toggleSetoresConectadosEditar(){
+  const wrap=document.getElementById('setores-conectados-editar');
+  const btn=document.getElementById('btn-add-setor-editar');
+  const visible=wrap.style.display!=='none';
+  wrap.style.display=visible?'none':'block';
+  btn.textContent=visible?'+ Adicionar':'− Fechar';
+  if(!visible) renderSetoresConectadosEditar();
+}
+
+function renderSetoresConectadosEditar(preload){
+  const setorPrincipal=document.getElementById('e-setor')?.value||'';
+  const disponiveis=SETORES.filter(s=>s!==setorPrincipal);
+  const lista=document.getElementById('setores-conectados-lista-editar');
+  if(!lista) return;
+  if(preload!==undefined){
+    const forms=document.getElementById('setores-conectados-forms-editar');
+    if(forms && preload.length){
+      const selecionados=preload.map(s=>s.setor);
+      const existingData={};
+      preload.forEach(s=>{ existingData[s.setor]={status:s.status, op:s.operador}; });
+      forms.innerHTML=selecionados.map(s=>{
+        const cor=SETOR_COLORS[s]||'#64748b';
+        const prev=existingData[s]||{};
+        const etapasOpts=(etapasKanban[s]||[]).map(e=>`<option ${prev.status===e.label?'selected':''}>${e.label}</option>`).join('')||'<option>Diagnóstico</option>';
+        const opsOpts='<option value="">— Selecionar —</option>'+operadoresDB.filter(o=>o.setor===s).map(o=>`<option ${prev.op===o.nome?'selected':''}>${o.nome}</option>`).join('');
+        return `<div data-setor-form="${s}" style="background:var(--surface2);border:1px solid ${cor}44;border-radius:6px;padding:10px 12px;margin-bottom:6px">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+            <span style="width:8px;height:8px;border-radius:50%;background:${cor};display:inline-block"></span>
+            <span style="font-size:11px;font-weight:700;color:${cor}">${s}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div><div class="lbl" style="font-size:9px">Status</div>
+              <select class="inp" style="font-size:12px;padding:5px 8px" data-sc-status="${s}">${etapasOpts}</select>
+            </div>
+            <div><div class="lbl" style="font-size:9px">Operador</div>
+              <select class="inp" style="font-size:12px;padding:5px 8px" data-sc-op="${s}">${opsOpts}</select>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+  const selecionados=getSetoresConectadosSelecionados('editar');
+  lista.innerHTML=disponiveis.map(s=>{
+    const cor=SETOR_COLORS[s]||'#64748b';
+    const ativo=selecionados.includes(s);
+    return `<div onclick="toggleSetorConectado('${s}','editar')"
+      style="display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:4px;border:1px solid ${ativo?cor:'var(--border)'};background:${ativo?cor+'22':'var(--surface2)'};cursor:pointer;font-size:11px;font-weight:600;color:${ativo?cor:'var(--muted)'};transition:all .15s"
+      data-setor-pill="${s}">
+      <span style="width:7px;height:7px;border-radius:50%;background:${cor};display:inline-block"></span>${s}
+    </div>`;
+  }).join('');
+}
+
+async function salvarEdicao(){
+  const id=document.getElementById('e-id').value;
+  const os=osData.find(o=>o.id===id);
+  if(!os) return;
+  const novoNumero=document.getElementById('e-num').value.trim();
+  if(!novoNumero){ alert('Nº OS é obrigatório.'); document.getElementById('e-num').focus(); return; }
+  if(osData.find(o=>o.numero===novoNumero && o.id!==id)){
+    alert(`Nº OS "${novoNumero}" já existe em outra OS.`); document.getElementById('e-num').focus(); return;
+  }
+  const cliente=document.getElementById('e-cliente').value.trim();
+  if(!cliente){ alert('Cliente é obrigatório.'); return; }
+  if(!validarCamposExtras('editar')) return;
+  const isPeca=os.tipo==='peca'||os.placa==='PEÇA';
+  if(!isPeca){
+    const placa=document.getElementById('e-placa').value.trim().toUpperCase();
+    if(!placa){ alert('Placa é obrigatória.'); return; }
+    os.placa=placa;
+  }
+  os.numero=novoNumero;
+  os.cliente=cliente;
+  os.modelo=document.getElementById('e-modelo').value.trim();
+  os.setor=document.getElementById('e-setor').value;
+  os.status=document.getElementById('e-status').value;
+  os.dataEntrada=document.getElementById('e-data').value;
+  os.obs=document.getElementById('e-obs').value.trim();
+  os.extras=getCamposExtrasValores('editar');
+  os.operador=(document.getElementById('e-operador')?.value||'').trim();
+  const setoresConectados=getSetoresConectados('editar');
+  const payload={
+    numero:os.numero, placa:os.placa, cliente:os.cliente, modelo:os.modelo,
+    setor:os.setor, status:os.status, data_entrada:os.dataEntrada,
+    observacoes:os.obs, operador:os.operador, extras:os.extras
+  };
+  setBtnLoading('btn-salvar-edicao',true);
+  const { error } = await sb.from('ordens_servico').update(payload).eq('id',id);
+  if(error){ setBtnLoading('btn-salvar-edicao',false,'💾 Salvar'); toast('Erro ao salvar: '+error.message,'err'); return; }
+  await sb.from('os_setores').delete().eq('os_id',id);
+  if(setoresConectados.length){
+    const { error: erS } = await sb.from('os_setores').insert(
+      setoresConectados.map((s,i)=>({os_id:id, setor:s.setor, status:s.status, operador:s.operador, ordem:i+1}))
+    );
+    if(erS) console.warn('Setores conectados:', erS.message);
+  }
+  os.setoresAdicionais=setoresConectados.map((s,i)=>({
+    id:'', setor:s.setor, status:s.status, operador:s.operador, ordem:i+1, obs:''
+  }));
+  setBtnLoading('btn-salvar-edicao',false,'💾 Salvar');
+  fecharEditar();
+  renderKanban(); renderDashboard();
+  toast(`✓ OS ${os.numero} atualizada!`);
+}
+
+async function deletarOSdoModal(){
+  const id=document.getElementById('e-id').value;
+  const os=osData.find(o=>o.id===id);
+  if(!os||!confirm(`Excluir ${os.numero} — ${os.cliente}?`)) return;
+  const { error } = await sb.from('ordens_servico').delete().eq('id',id);
+  if(error){ toast('Erro ao excluir','err'); return; }
+  osData=osData.filter(o=>o.id!==id);
+  fecharEditar(); renderKanban(); renderDashboard();
+  toast(`🗑 OS ${os.numero} excluída`);
+}
+
+async function deletarOS(id){
+  const os=osData.find(o=>o.id===id);
+  if(!os||!confirm(`Remover ${os.numero} — ${os.cliente}?`)) return;
+  const { error } = await sb.from('ordens_servico').delete().eq('id',id);
+  if(error){ toast('Erro ao excluir','err'); return; }
+  osData=osData.filter(o=>o.id!==id);
+  renderKanban(); renderDashboard();
+  toast(`🗑 OS ${os.numero} excluída`);
+}
+
+// ══════════════════════════════════════════
+// CONFIGURADOR — ABAS
+// ══════════════════════════════════════════
+function abrirConfig(aba='campos'){
+  camposTemp=JSON.parse(JSON.stringify(camposConfig));
+  setorEtapasConfig=setorAtivo;
+  etapasTemp=JSON.parse(JSON.stringify(etapasKanban[setorEtapasConfig]||[]));
+  renderCamposConfig();
+  renderEtapasConfig();
+  // Sincronizar selector de setor na aba etapas
+  const sel=document.getElementById('cfg-setor-etapas');
+  if(sel) sel.value=setorEtapasConfig;
+  const btn=document.getElementById('btn-salvar-etapas');
+  if(btn) btn.textContent=`💾 Salvar Etapas — ${setorEtapasConfig}`;
+  mostrarCfgAba(aba);
+  document.getElementById('modalConfig').style.display='flex';
+}
+function fecharConfig(){ document.getElementById('modalConfig').style.display='none'; }
+
+function selecionarSetorEtapas(setor){
+  setorEtapasConfig=setor;
+  etapasTemp=JSON.parse(JSON.stringify(etapasKanban[setor]||[]));
+  renderEtapasConfig();
+  const btn=document.getElementById('btn-salvar-etapas');
+  if(btn) btn.textContent=`💾 Salvar Etapas — ${setor}`;
+}
+
+function mostrarCfgAba(aba){
+  ['campos','etapas','operadores'].forEach(a=>{
+    const el=document.getElementById(`cfg-aba-${a}`);
+    const tab=document.getElementById(`cfg-tab-${a}`);
+    if(el) el.style.display=aba===a?'block':'none';
+    if(tab){ tab.style.borderBottomColor=aba===a?'var(--accent)':'transparent'; tab.style.color=aba===a?'var(--accent)':'var(--muted)'; }
+  });
+  if(aba==='operadores') renderOperadoresConfig();
+}
+
+// ══════════════════════════════════════════
+// CONFIGURADOR DE ETAPAS DO KANBAN
+// ══════════════════════════════════════════
+const CORES_ETAPA = ['#3b82f6','#c8962a','#ef4444','#10b981','#8b5cf6','#64748b','#ec4899','#06b6d4','#f97316','#84cc16'];
+
+function renderEtapasConfig(){
+  const lista=document.getElementById('lista-etapas-config');
+  if(!etapasTemp.length){
+    lista.innerHTML=`<div style="color:var(--muted);font-size:13px;text-align:center;padding:16px">Nenhuma etapa. Clique em "+ Adicionar etapa".</div>`;
+    return;
+  }
+  lista.innerHTML=etapasTemp.map((e,i)=>`
+    <div class="campo-config" id="etapa-row-${i}">
+      <div style="display:flex;flex-direction:column;gap:2px;align-items:center;cursor:pointer" onclick="moverEtapa(${i},-1)" title="Subir">
+        <span style="font-size:10px;color:var(--muted);line-height:1">▲</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px;align-items:center;cursor:pointer" onclick="moverEtapa(${i},1)" title="Descer">
+        <span style="font-size:10px;color:var(--muted);line-height:1">▼</span>
+      </div>
+      <input value="${e.label}" placeholder="Nome da etapa" onchange="etapasTemp[${i}].label=this.value" style="flex:2">
+      <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+        ${CORES_ETAPA.map(c=>`<div onclick="etapasTemp[${i}].cor='${c}';renderEtapasConfig()" title="${c}"
+          style="width:16px;height:16px;border-radius:50%;background:${c};cursor:pointer;border:2px solid ${e.cor===c?'#fff':'transparent'};flex-shrink:0"></div>`).join('')}
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="etapasTemp.splice(${i},1);renderEtapasConfig()">✕</button>
+    </div>`).join('');
+}
+
+function moverEtapa(i, dir){
+  const j=i+dir;
+  if(j<0||j>=etapasTemp.length) return;
+  [etapasTemp[i],etapasTemp[j]]=[etapasTemp[j],etapasTemp[i]];
+  renderEtapasConfig();
+}
+
+function adicionarEtapa(){
+  etapasTemp.push({ id:'etapa_'+Date.now(), label:'Nova Etapa', cor:'#64748b', dbId:null });
+  renderEtapasConfig();
+}
+
+async function salvarEtapas(){
+  const setor = setorEtapasConfig;
+  setBtnLoading('btn-salvar-etapas',true);
+  // Deleta SOMENTE as etapas do setor atual
+  const { error:del } = await sb.from('etapas_kanban').delete().eq('setor', setor);
+  if(del){ toast('Erro ao salvar etapas: '+del.message,'err'); setBtnLoading('btn-salvar-etapas',false,`💾 Salvar Etapas — ${setor}`); return; }
+  if(etapasTemp.length){
+    const rows=etapasTemp.map((e,i)=>({
+      etapa_id: e.id||(`${setor.toLowerCase().replace(/\s+/g,'_')}_${i}_${Date.now()}`),
+      label: e.label,
+      cor: e.cor||'#64748b',
+      ordem: i+1,
+      setor: setor  // CRÍTICO: incluir o setor em cada row
+    }));
+    const { error:ins } = await sb.from('etapas_kanban').insert(rows);
+    if(ins){ toast('Erro ao inserir etapas: '+ins.message,'err'); setBtnLoading('btn-salvar-etapas',false,`💾 Salvar Etapas — ${setor}`); return; }
+  }
+  await carregarEtapas();
+  setBtnLoading('btn-salvar-etapas',false,`💾 Salvar Etapas — ${setor}`);
+  fecharConfig();
+  renderKanban(); renderDashboard();
+  toast(`✓ Etapas de ${setor} atualizadas!`);
+}
+
+function renderCamposConfig(){
+  const lista=document.getElementById('lista-campos-config');
+  if(!camposTemp.length){
+    lista.innerHTML=`<div style="color:var(--muted);font-size:13px;text-align:center;padding:16px">Nenhum campo extra. Clique em "+ Adicionar campo".</div>`;
+    return;
+  }
+  lista.innerHTML=camposTemp.map((c,i)=>`
+    <div class="campo-config">
+      <input value="${c.label}" placeholder="Nome do campo" onchange="camposTemp[${i}].label=this.value" style="flex:2">
+      <select onchange="camposTemp[${i}].tipo=this.value;renderCamposConfig()">
+        <option value="text" ${c.tipo==='text'?'selected':''}>Texto</option>
+        <option value="number" ${c.tipo==='number'?'selected':''}>Número</option>
+        <option value="date" ${c.tipo==='date'?'selected':''}>Data</option>
+        <option value="select" ${c.tipo==='select'?'selected':''}>Lista</option>
+      </select>
+      ${c.tipo==='select'?`<input value="${(c.opcoes||[]).join(', ')}" placeholder="Op1, Op2, Op3..." onchange="camposTemp[${i}].opcoes=this.value.split(',').map(s=>s.trim()).filter(Boolean)" style="flex:2">`:''}
+      <span class="req-badge ${c.obrigatorio?'req-on':'req-off'}" onclick="camposTemp[${i}].obrigatorio=!camposTemp[${i}].obrigatorio;renderCamposConfig()">
+        ${c.obrigatorio?'★ Obrig.':'☆ Opc.'}
+      </span>
+      <button class="btn btn-danger btn-sm" onclick="camposTemp.splice(${i},1);renderCamposConfig()">✕</button>
+    </div>`).join('');
+}
+
+function adicionarCampo(){
+  camposTemp.push({ id:'campo_'+Date.now(), label:'Novo Campo', tipo:'text', obrigatorio:false, opcoes:[] });
+  renderCamposConfig();
+}
+
+async function salvarConfig(){
+  setBtnLoading('btn-salvar-config',true);
+  // Apaga todos e reinsere na ordem certa
+  const { error: delErr } = await sb.from('campos_config').delete().neq('id','00000000-0000-0000-0000-000000000000');
+  if(delErr){ toast('Erro ao salvar config','err'); setBtnLoading('btn-salvar-config',false,'💾 Salvar no Banco'); return; }
+  if(camposTemp.length){
+    const rows=camposTemp.map((c,i)=>({
+      campo_id: c.id||('campo_'+i+'_'+Date.now()),
+      label: c.label,
+      tipo: c.tipo,
+      opcoes: c.opcoes||[],
+      obrigatorio: c.obrigatorio||false,
+      ordem: i
+    }));
+    const { error: insErr } = await sb.from('campos_config').insert(rows);
+    if(insErr){ toast('Erro ao salvar campos','err'); setBtnLoading('btn-salvar-config',false,'💾 Salvar no Banco'); return; }
+  }
+  await carregarCampos();
+  setBtnLoading('btn-salvar-config',false,'💾 Salvar no Banco');
+  fecharConfig();
+  renderDashboard();
+  toast('✓ Configuração salva no banco!');
+}
+
+// ══════════════════════════════════════════
+// CONFIGURADOR DE OPERADORES
+// ══════════════════════════════════════════
+let operadoresTemp = [];
+
+function abrirConfigOperadores(){
+  operadoresTemp = operadoresDB.map(o=>({...o}));
+  renderOperadoresConfig();
+}
+
+function renderOperadoresConfig(){
+  operadoresTemp = operadoresDB.map(o=>({...o}));
+  const lista = document.getElementById('lista-operadores-config');
+  if(!lista) return;
+  if(!operadoresTemp.length){
+    lista.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:16px">Nenhum operador. Clique em "+ Adicionar operador".</div>';
+    return;
+  }
+  lista.innerHTML = operadoresTemp.map((op,i)=>`
+    <div class="campo-config">
+      <input value="${op.nome}" placeholder="Nome do operador" onchange="operadoresTemp[${i}].nome=this.value" style="flex:2">
+      <select onchange="operadoresTemp[${i}].setor=this.value" style="flex:2">
+        ${SETORES.map(s=>`<option value="${s}" ${op.setor===s?'selected':''}>${s}</option>`).join('')}
+      </select>
+      <span class="req-badge ${op.ativo!==false?'req-on':'req-off'}" onclick="operadoresTemp[${i}].ativo=!(operadoresTemp[${i}].ativo!==false);renderOperadoresConfig()" style="cursor:pointer">
+        ${op.ativo!==false?'✓ Ativo':'✗ Inativo'}
+      </span>
+      <button class="btn btn-danger btn-sm" onclick="operadoresTemp.splice(${i},1);renderOperadoresConfig()">✕</button>
+    </div>`).join('');
+}
+
+function adicionarOperadorTemp(){
+  operadoresTemp.push({ nome:'Novo Operador', setor:SETORES[0], ativo:true });
+  renderOperadoresConfig();
+}
+
+async function salvarOperadoresConfig(){
+  setBtnLoading('btn-salvar-operadores',true);
+  // Apaga todos e recria
+  const { error:del } = await sb.from('operadores').delete().neq('id','00000000-0000-0000-0000-000000000000');
+  if(del){ toast('Erro ao salvar operadores','err'); setBtnLoading('btn-salvar-operadores',false,'💾 Salvar Operadores'); return; }
+  if(operadoresTemp.length){
+    const rows = operadoresTemp.map(o=>({ nome:o.nome, setor:o.setor, ativo:o.ativo!==false }));
+    const { error:ins } = await sb.from('operadores').insert(rows);
+    if(ins){ toast('Erro ao inserir operadores','err'); setBtnLoading('btn-salvar-operadores',false,'💾 Salvar Operadores'); return; }
+  }
+  await carregarOperadores();
+  setBtnLoading('btn-salvar-operadores',false,'💾 Salvar Operadores');
+  fecharConfig();
+  toast('✓ Operadores salvos!');
+}
+
+// Ao abrir config, inicializar operadoresTemp
+const _abrirConfigOrig = abrirConfig;
+
+// INIT
+init();
+</script>
+</body>
 </html>
