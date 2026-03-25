@@ -7,7 +7,8 @@
       "Bash(node -e \"console.log\\(require.resolve\\(''''npm/bin/npx-cli.js''''\\)\\)\")",
       "Read(//c/Program Files/nodejs/node_modules/**)",
       "Bash(npm root:*)",
-      "Bash(npm list:*)"
+      "Bash(npm list:*)",
+      "mcp__1a6a367a-c5ef-4aa9-b353-83e63079629c__list_deployments"
     ]
   }
 }
