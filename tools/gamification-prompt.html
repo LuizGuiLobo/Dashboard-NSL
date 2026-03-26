@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gamification Prompt — Claude Code</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff;
+    --bg-secondary: #f5f4f0;
+    --bg-tertiary: #eeede9;
+    --text-primary: #1a1a18;
+    --text-secondary: #6b6a66;
+    --border: rgba(0,0,0,0.12);
+    --border-hover: rgba(0,0,0,0.22);
+    --font: system-ui, -apple-system, sans-serif;
+    --font-mono: 'Fira Mono', 'Cascadia Code', monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a;
+      --bg-secondary: #242422;
+      --bg-tertiary: #2c2c2a;
+      --text-primary: #f0efe9;
+      --text-secondary: #9a9890;
+      --border: rgba(255,255,255,0.1);
+      --border-hover: rgba(255,255,255,0.2);
+    }
+  }
+  body {
+    font-family: var(--font);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+  .container {
+    max-width: 820px;
+    margin: 0 auto;
+    background: var(--bg);
+    border-radius: 16px;
+    border: 0.5px solid var(--border);
+    padding: 2rem;
+  }
+  .header { margin-bottom: 1.5rem; }
+  .badges { display: flex; gap: 8px; margin-bottom: 10px; }
+  .badge {
+    font-size: 11px; font-weight: 500; padding: 3px 10px;
+    border-radius: 999px; letter-spacing: 0.05em;
+  }
+  .badge-purple { background: #EEEDFE; color: #3C3489; }
+  .badge-teal   { background: #E1F5EE; color: #085041; }
+  @media (prefers-color-scheme: dark) {
+    .badge-purple { background: #26215C; color: #CECBF6; }
+    .badge-teal   { background: #04342C; color: #9FE1CB; }
+  }
+  .title { font-size: 20px; font-weight: 500; }
+  .subtitle { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+  .prompt-wrap {
+    background: var(--bg-secondary);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    position: relative;
+  }
+  .prompt-text {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--text-primary);
+    max-height: 520px;
+    overflow-y: auto;
+    padding-right: 6px;
+  }
+  .prompt-text::-webkit-scrollbar { width: 4px; }
+  .prompt-text::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+  .copy-btn {
+    position: absolute; top: 10px; right: 10px;
+    background: var(--bg);
+    border: 0.5px solid var(--border-hover);
+    border-radius: 8px; padding: 5px 16px;
+    font-size: 12px; cursor: pointer;
+    color: var(--text-secondary);
+    transition: all 0.15s;
+    font-family: var(--font);
+  }
+  .copy-btn:hover { background: var(--bg-tertiary); }
+  .copy-btn.copied { color: #0F6E56; border-color: #1D9E75; }
+  .footer { font-size: 11px; color: var(--text-secondary); text-align: center; margin-top: 1.5rem; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="badges">
+      <span class="badge badge-purple">CLAUDE CODE</span>
+      <span class="badge badge-teal">GAMIFICATION</span>
+    </div>
+    <div class="title">Prompt de Gamificação com Dopamina Loop</div>
+    <div class="subtitle">Copie e cole no Claude Code para implementar o sistema completo</div>
+  </div>
+
+  <div class="prompt-wrap">
+    <button class="copy-btn" id="copyBtn" onclick="copyPrompt()">Copiar</button>
+    <div class="prompt-text" id="promptText"></div>
+  </div>
+
+  <div class="footer">Gerado via Claude · gamification-prompt.html</div>
+</div>
+
+<script>
+const PROMPT = `# Sistema de Gamificação com Mecanismos de Dopamina
+# Stack: Next.js 14 (App Router) + TypeScript + Supabase (PostgreSQL + Realtime) + Zustand para estado global + Framer Motion para animações
+## Contexto
+Implemente um sistema de gamificação completo baseado em ciência comportamental e
+mecanismos de recompensa de redes sociais (TikTok, Instagram, Duolingo, Bereal).
+O objetivo é maximizar retenção, engagement e retorno diário do usuário usando
+loops dopaminérgicos comprovados.
+## Princípios psicológicos obrigatórios
+- **Variable Ratio Reinforcement**: recompensas imprevisíveis retêm mais que fixas
+- **Loss Aversion**: medo de perder streak > prazer de ganhar XP (2:1 ratio)
+- **Social Comparison**: mostrar progresso relativo a amigos próximos
+- **Progress Visibility**: barras de progresso sempre visíveis, nunca 100%
+- **Near-Miss Effect**: "faltam só 50 XP para o próximo nível"
+- **Sunk Cost**: quanto mais o usuário investe, mais difícil abandonar
+## Módulos a implementar
+  - **XP & Níveis**: Sistema de pontos de experiência com progressão de nível, barra de XP animada e celebração de level-up com confetti
+  - **Streaks diários**: Contagem de dias consecutivos com flame visual, risco de perda (loss aversion), proteção de streak como item premium e notificação de "não quebre sua sequência"
+  - **Badges & troféus**: Coleção de conquistas desbloqueáveis com raridade (comum/raro/épico/lendário), animação de unlock com partículas e showcase no perfil
+  - **Ranking social**: Leaderboard semanal/mensal com comparação próxima (você está a 50 pts do 3° lugar), rivalidade entre amigos e reset semanal que zera e gera ansiedade
+  - **Missões rápidas**: Daily quests com timer de 24h, missões de 5 minutos com recompensa imediata, barra de progresso visível e notificação "faltam 2 missões para completar hoje"
+  - **Loot boxes**: Recompensas de intervalo variável (VR schedules) com animação de abertura, probabilidades visíveis, itens exclusivos e caixas gratuitas diárias para criar hábito de retorno
+## Requisitos técnicos obrigatórios
+### Banco de dados
+\`\`\`sql
+-- Tabelas principais necessárias:
+-- users_gamification (xp, level, streak_count, last_active, prestige_level)
+-- achievements (id, name, rarity, xp_reward, unlock_condition)
+-- user_achievements (user_id, achievement_id, unlocked_at)
+-- daily_missions (id, description, xp_reward, type, resets_at)
+-- user_missions (user_id, mission_id, progress, completed_at)
+-- leaderboard_snapshots (user_id, score, rank, period, created_at)
+\`\`\`
+### Funções core
+1. \`awardXP(userId, amount, reason, multiplier?)\` — adiciona XP, verifica level-up, dispara eventos
+2. \`checkAndUpdateStreak(userId)\` — roda diariamente, aplica loss aversion em notificações
+3. \`rollLootbox(userId, boxType)\` — VR schedule com weighted random, registra no log
+4. \`calculateLeaderboardRank(userId)\` — rank relativo com vizinhos ±5 posições
+5. \`generateDailyMissions(userId)\` — missions personalizadas baseadas em comportamento
+### Animações e feedback imediato (CRÍTICO para dopamina)
+- XP gain: número flutuante +XP com easing de cubic-bezier
+- Level up: tela de celebração com confetti por 3s, som opcional
+- Badge unlock: reveal animation com partículas, haptic feedback mobile
+- Streak fire: animação de chama pulsante, vermelho quando em risco
+- Loot reveal: caixa com shake + abertura gradual de 1.5s, glow por raridade
+### Tempo real
+- Leaderboard atualiza via WebSocket/Supabase Realtime
+- Notificações in-app para "amigo te ultrapassou" instantâneas
+- Missão completa por outro usuário aparece como social proof
+### Componentes React necessários
+- <XPBar /> — barra animada com label de XP atual/necessário e nível
+- <StreakCounter /> — contador de dias com chama e estado de risco
+- <BadgeGrid /> — grid com badges bloqueados em grayscale + unlock animation
+- <MissionList /> — lista de daily missions com timer e barra de progresso
+- <Leaderboard /> — ranking com highlight do usuário atual e vizinhos
+- <LootboxOpener /> — componente de abertura com animação completa
+- <LevelUpModal /> — modal de celebração bloqueante com recompensas
+### UX anti-abandono
+- Onboarding: recompensa imediata nos primeiros 60 segundos (badge de "Iniciante")
+- First session XP boost: 2x XP nas primeiras 3 sessões
+- Re-engagement: após 2 dias inativo, notificação com recompensa garantida
+- Streak shield: 1 proteção grátis por semana para não quebrar streak
+## Entregáveis esperados
+1. Schema SQL completo com índices e funções RPC
+2. Hooks React (useGamification, useStreak, useMissions)
+3. Todos os componentes com animações Framer Motion
+4. Lógica de notificações (push + in-app)
+5. Dashboard admin para ver métricas de engagement
+6. Testes unitários para lógica de XP e streak
+## Padrão de código
+- TypeScript strict mode
+- Componentes com Storybook stories
+- Comentários explicando o mecanismo psicológico de cada feature
+- Performance: animações em 60fps, sem jank em mobile
+Comece pela estrutura de arquivos e depois implemente módulo por módulo.
+Pergunte se precisar de clareza sobre algum mecanismo antes de começar.`;
+
+document.getElementById('promptText').textContent = PROMPT;
+
+function copyPrompt() {
+  navigator.clipboard.writeText(PROMPT).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = 'Copiado!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copiar'; btn.classList.remove('copied'); }, 2000);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = PROMPT;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = 'Copiado!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copiar'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+</script>
+</body>
+</html>
