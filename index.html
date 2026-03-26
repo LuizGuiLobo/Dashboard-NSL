@@ -132,18 +132,58 @@ textarea.inp{resize:vertical;}
 /* NSL FOOTER MINI */
 .nsl-footer{font-size:10px;color:var(--muted);text-align:center;padding:8px 0;border-top:1px solid var(--border);margin-top:auto;letter-spacing:.5px;}
 @media(max-width:800px){.grid-4{grid-template-columns:repeat(2,1fr);}.grid-2{grid-template-columns:1fr;}main{padding:16px;}}
-/* GAMIFICAÇÃO */
-.gami-wrap{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:18px;position:relative;margin-bottom:20px;}
-.gami-prompt{font-family:var(--fm);font-size:12px;line-height:1.8;white-space:pre-wrap;word-break:break-word;color:var(--text);max-height:520px;overflow-y:auto;padding-right:6px;}
-.gami-prompt::-webkit-scrollbar{width:4px;}
-.gami-prompt::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px;}
-.gami-copy{position:absolute;top:12px;right:12px;background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:5px 14px;font-size:11px;font-weight:600;cursor:pointer;color:var(--muted);transition:all .2s;font-family:var(--fb);}
-.gami-copy:hover{border-color:var(--accent);color:var(--accent);}
-.gami-copy.copied{color:var(--accent3);border-color:rgba(16,185,129,.4);}
-.gami-badges{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
-.gami-badge{font-size:10px;font-weight:700;letter-spacing:1px;padding:3px 10px;border-radius:4px;}
-.gami-badge-p{background:rgba(139,92,246,.12);color:var(--accent5);border:1px solid rgba(139,92,246,.2);}
-.gami-badge-g{background:rgba(16,185,129,.12);color:var(--accent3);border:1px solid rgba(16,185,129,.2);}
+/* ═══ GAMIFICAÇÃO ═══ */
+@keyframes gamiFirePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
+@keyframes gamiFireDanger{0%,100%{color:#ef4444;transform:scale(1)}50%{color:#fca5a5;transform:scale(1.3)}}
+@keyframes gamiXpFloat{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-70px)}}
+@keyframes gamiShake{0%,100%{transform:rotate(0)}15%{transform:rotate(-12deg)}30%{transform:rotate(12deg)}45%{transform:rotate(-10deg)}60%{transform:rotate(10deg)}75%{transform:rotate(-6deg)}90%{transform:rotate(6deg)}}
+@keyframes gamiPop{0%{transform:scale(.5);opacity:0}70%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+@keyframes gamiSlideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+.gami-level-circle{width:44px;height:44px;border-radius:50%;background:rgba(200,150,42,.15);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:18px;font-weight:800;color:var(--accent);flex-shrink:0;}
+.gami-xp-fill{background:linear-gradient(90deg,var(--accent-dark),var(--accent),var(--accent-hover));border-radius:3px;transition:width .8s cubic-bezier(.4,0,.2,1);}
+.gami-streak-fire{font-size:32px;animation:gamiFirePulse 2s ease-in-out infinite;display:inline-block;line-height:1;}
+.gami-streak-fire.danger{animation:gamiFireDanger 1s ease-in-out infinite;}
+.gami-stat-card{position:relative;overflow:visible;}
+.gami-level-badge{display:inline-block;font-family:var(--fm);font-size:9px;font-weight:700;background:rgba(200,150,42,.15);color:var(--accent);border:1px solid rgba(200,150,42,.3);border-radius:3px;padding:1px 5px;vertical-align:middle;margin-left:4px;}
+/* Leaderboard */
+.gami-lb-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;margin-bottom:4px;transition:background .2s;}
+.gami-lb-row:hover{background:rgba(200,150,42,.05);}
+.gami-lb-me{background:rgba(200,150,42,.08);border:1px solid rgba(200,150,42,.2);}
+.gami-lb-rank{font-family:var(--fm);font-size:16px;width:28px;text-align:center;flex-shrink:0;}
+.gami-lb-info{flex:1;min-width:0;}
+.gami-lb-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gami-lb-sub{font-size:10px;color:var(--muted);}
+.gami-lb-xp{font-family:var(--fm);font-size:12px;font-weight:700;color:var(--accent);flex-shrink:0;}
+/* Missões */
+.gami-mission{display:flex;gap:10px;align-items:flex-start;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;margin-bottom:6px;}
+.gami-mission-done{opacity:.6;border-color:var(--accent3);}
+.gami-mission-check{font-size:16px;flex-shrink:0;line-height:1.4;}
+.gami-mission-info{flex:1;}
+.gami-mission-desc{font-size:12px;font-weight:500;}
+/* Badge grid */
+.gami-badge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px;}
+.gami-badge-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 6px;text-align:center;cursor:default;transition:transform .2s,border-color .2s;}
+.gami-badge-unlocked:hover{transform:translateY(-2px);}
+.gami-badge-icon{font-size:22px;margin-bottom:4px;display:block;}
+.gami-badge-name{font-size:9px;font-weight:700;letter-spacing:.5px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.gami-badge-rarity{font-size:8px;text-transform:uppercase;letter-spacing:.5px;display:block;margin-top:2px;}
+/* Lootbox */
+.gami-lootbox{font-size:52px;display:inline-block;cursor:pointer;transition:transform .2s;line-height:1;padding:8px;}
+.gami-lootbox:hover{transform:scale(1.1);}
+.gami-lootbox.shaking{animation:gamiShake .6s ease;}
+.gami-loot-reveal{background:var(--surface2);border:1px solid var(--accent);border-radius:8px;padding:16px;margin-top:12px;text-align:center;animation:gamiPop .4s ease;}
+/* XP float */
+.gami-xp-float{position:fixed;font-family:var(--fd);font-size:18px;font-weight:800;color:var(--accent);pointer-events:none;z-index:9997;opacity:0;transition:opacity .3s,transform 1.2s cubic-bezier(.2,0,.8,1);text-shadow:0 2px 8px rgba(200,150,42,.4);}
+/* Level-up overlay */
+.gami-levelup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9990;display:flex;align-items:center;justify-content:center;}
+.gami-levelup-box{background:var(--surface);border:2px solid var(--accent);border-radius:16px;padding:40px 50px;text-align:center;animation:gamiPop .5s ease;}
+.gami-levelup-icon{font-size:48px;margin-bottom:8px;}
+.gami-levelup-text{font-family:var(--fd);font-size:14px;letter-spacing:4px;color:var(--muted);text-transform:uppercase;}
+.gami-levelup-num{font-family:var(--fd);font-size:80px;font-weight:800;color:var(--accent);line-height:1;}
+.gami-levelup-sub{font-size:14px;color:var(--text);margin-top:4px;}
+/* Badge unlock toast */
+.gami-badge-toast{position:fixed;bottom:80px;right:24px;background:var(--surface);border:1px solid var(--accent);border-radius:10px;padding:14px 16px;display:flex;gap:12px;align-items:center;z-index:9995;max-width:280px;transform:translateX(120%);opacity:0;transition:transform .4s cubic-bezier(.2,.8,.2,1),opacity .3s;}
+.gami-badge-toast.show{transform:translateX(0);opacity:1;}
 </style>
 </head>
 <body>
@@ -269,21 +309,103 @@ textarea.inp{resize:vertical;}
 
 <!-- GAMIFICAÇÃO -->
 <section id="gamificacao" class="section">
-  <h2 class="sec-title">Gamificação</h2>
-  <div class="card" style="margin-bottom:20px">
-    <div class="gami-badges">
-      <span class="gami-badge gami-badge-p">CLAUDE CODE</span>
-      <span class="gami-badge gami-badge-g">DOPAMINA LOOP</span>
+  <!-- Header + seletor de operador -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+    <h2 class="sec-title" style="margin:0">Gamificação</h2>
+    <div>
+      <div class="lbl" style="margin-bottom:4px">Jogar como operador</div>
+      <select class="inp" id="gamiOpSelect" onchange="gamiSelectOperador(this.value)" style="width:220px">
+        <option value="">— Selecione seu operador —</option>
+      </select>
     </div>
-    <div class="block-title" style="margin-bottom:6px">Prompt de Gamificação com Dopamina Loop</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:0">Copie e cole no Claude Code para implementar o sistema completo de gamificação.</div>
   </div>
-  <div class="gami-wrap">
-    <button class="gami-copy" id="gamiCopyBtn" onclick="gamiCopy()">Copiar</button>
-    <div class="gami-prompt" id="gamiPrompt"></div>
+
+  <!-- Stats: XP/Nível · Streak · Rank -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px">
+    <div class="card gami-stat-card">
+      <div class="card-label">Nível & XP</div>
+      <div style="display:flex;align-items:center;gap:10px;margin:8px 0">
+        <div class="gami-level-circle" id="gamiLevelNum">1</div>
+        <div style="flex:1">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:5px">
+            <span id="gamiXpLabel" style="color:var(--text);font-weight:600">0 XP</span>
+            &nbsp;·&nbsp;
+            <span id="gamiXpNext" style="color:var(--accent)">faltam 100 XP</span>
+          </div>
+          <div class="prog-track" style="height:8px">
+            <div class="gami-xp-fill prog-fill" id="gamiXpFill" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-sub" id="gamiTotalXp">XP acumulado: 0</div>
+    </div>
+
+    <div class="card gami-stat-card">
+      <div class="card-label">Streak Diário</div>
+      <div style="display:flex;align-items:flex-end;gap:8px;margin:6px 0 4px">
+        <span class="gami-streak-fire" id="gamiStreakFire">🔥</span>
+        <span style="font-family:var(--fd);font-size:38px;font-weight:700;color:var(--accent);line-height:1" id="gamiStreak">0</span>
+        <span style="font-size:12px;color:var(--muted);margin-bottom:4px">dias</span>
+      </div>
+      <div class="card-sub">Recorde: <span id="gamiStreakBest" style="color:var(--text)">0</span> dias</div>
+      <div id="gamiShieldStatus" style="font-size:11px;color:var(--accent3);margin-top:4px">🛡️ Escudo disponível</div>
+    </div>
+
+    <div class="card gami-stat-card">
+      <div class="card-label">Ranking</div>
+      <div style="font-family:var(--fd);font-size:40px;font-weight:700;color:var(--accent2);line-height:1;margin:6px 0 4px" id="gamiRank">#—</div>
+      <div class="card-sub" id="gamiRankSub">entre operadores</div>
+      <div id="gamiNearMiss" style="font-size:11px;color:var(--accent);margin-top:4px"></div>
+    </div>
   </div>
-  <div style="font-size:10px;color:var(--muted);text-align:center;letter-spacing:.5px">Gerado via Claude · Nova São Luiz Diesel</div>
+
+  <!-- Missões + Leaderboard -->
+  <div class="grid-2" style="margin-bottom:22px">
+    <div class="card">
+      <div class="block-title" style="margin-bottom:12px">
+        ⚡ Missões do Dia
+        <span id="gamiMissionsTimer" style="font-family:var(--fm);font-size:10px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;margin-left:6px"></span>
+      </div>
+      <div id="gamiMissions"><div style="color:var(--muted);font-size:13px;text-align:center;padding:16px">Selecione um operador para ver missões</div></div>
+    </div>
+    <div class="card">
+      <div class="block-title" style="margin-bottom:12px">🏆 Leaderboard</div>
+      <div id="gamiLeaderboard"><div style="color:var(--muted);text-align:center;padding:16px"><span class="spinner"></span> Carregando...</div></div>
+    </div>
+  </div>
+
+  <!-- Lootbox + Conquistas -->
+  <div class="grid-2">
+    <div class="card" style="text-align:center">
+      <div class="block-title" style="margin-bottom:12px">🎁 Caixa do Dia</div>
+      <div class="gami-lootbox" id="gamiLootboxBtn" onclick="gamiOpenLootbox()">🎁</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px" id="gamiLootboxLabel">Abrir caixa gratuita!</div>
+      <div class="gami-loot-reveal" id="gamiLootReveal" style="display:none"></div>
+    </div>
+    <div class="card">
+      <div class="block-title" style="margin-bottom:4px">🏅 Conquistas</div>
+      <div id="gamiBadgesCount" style="font-size:11px;color:var(--muted);margin-bottom:12px">—</div>
+      <div class="gami-badge-grid" id="gamiBadges"></div>
+    </div>
+  </div>
 </section>
+
+<!-- Level-up overlay -->
+<div class="gami-levelup-overlay" id="gamiLevelUpModal" style="display:none" onclick="this.style.display='none'">
+  <div class="gami-levelup-box">
+    <div class="gami-levelup-icon">⬆️</div>
+    <div class="gami-levelup-text">Subiu para o nível</div>
+    <div class="gami-levelup-num" id="gamiLevelUpNum">2</div>
+    <div class="gami-levelup-sub">Continue assim! 🎉</div>
+    <button class="btn btn-primary" style="margin-top:18px" onclick="document.getElementById('gamiLevelUpModal').style.display='none'">Continuar</button>
+  </div>
+</div>
+
+<!-- Badge unlock toast -->
+<div class="gami-badge-toast" id="gamiBadgeUnlockToast"></div>
+
+<!-- Confetti canvas -->
+<canvas id="gamiConfettiCanvas" style="position:fixed;top:0;left:0;pointer-events:none;z-index:9998;display:none"></canvas>
 
 </main>
 
@@ -893,13 +1015,43 @@ async function moverStatus(id, dir, isAdicional=false, adicionalId=''){
     renderKanban(); renderDashboard();
     const { error } = await sb.from('os_setores').update({status:novoStatus}).eq('id',adicionalId);
     if(error){ toast('Erro ao atualizar status','err'); console.error(error?.message||String(error)); }
-    else toast(`✓ ${os.numero} → ${novoStatus}`);
+    else{
+      toast(`✓ ${os.numero} → ${novoStatus}`);
+      // Gamificação: XP por avanço de kanban
+      if(gamiCurrentOpId){
+        if(gamiXpBoostMoves>0){ gamiXpBoostMoves--; if(gamiXpBoostMoves===0){ gamiXpMultiplier=1; toast('Boost 2x XP encerrado','ok'); } }
+        await awardXP(gamiCurrentOpId,5,'Kanban move');
+        await gamiMissionProgress(gamiCurrentOpId,'advance_kanban');
+        await sb.from('operadores_gamification').update({total_kanban_moves:((gamiBoard.find(g=>g.operador_id===gamiCurrentOpId)?.total_kanban_moves||0)+1)}).eq('operador_id',gamiCurrentOpId);
+        // OS concluída = última etapa
+        const isLastStep=idx===etapas.length-1;
+        if(isLastStep){
+          await awardXP(gamiCurrentOpId,50,'OS concluída');
+          await gamiMissionProgress(gamiCurrentOpId,'complete_os');
+          await sb.from('operadores_gamification').update({total_os_completed:((gamiBoard.find(g=>g.operador_id===gamiCurrentOpId)?.total_os_completed||0)+1)}).eq('operador_id',gamiCurrentOpId);
+        }
+      }
+    }
   } else {
     os.status=novoStatus;
     renderKanban(); renderDashboard();
     const { error } = await sb.from('ordens_servico').update({status:novoStatus}).eq('id',id);
     if(error){ toast('Erro ao atualizar status','err'); console.error(error?.message||String(error)); }
-    else toast(`✓ ${os.numero} → ${novoStatus}`);
+    else{
+      toast(`✓ ${os.numero} → ${novoStatus}`);
+      if(gamiCurrentOpId){
+        if(gamiXpBoostMoves>0){ gamiXpBoostMoves--; if(gamiXpBoostMoves===0){ gamiXpMultiplier=1; toast('Boost 2x XP encerrado','ok'); } }
+        await awardXP(gamiCurrentOpId,5,'Kanban move');
+        await gamiMissionProgress(gamiCurrentOpId,'advance_kanban');
+        await sb.from('operadores_gamification').update({total_kanban_moves:((gamiBoard.find(g=>g.operador_id===gamiCurrentOpId)?.total_kanban_moves||0)+1)}).eq('operador_id',gamiCurrentOpId);
+        const isLastStep=idx===etapas.length-1;
+        if(isLastStep){
+          await awardXP(gamiCurrentOpId,50,'OS concluída');
+          await gamiMissionProgress(gamiCurrentOpId,'complete_os');
+          await sb.from('operadores_gamification').update({total_os_completed:((gamiBoard.find(g=>g.operador_id===gamiCurrentOpId)?.total_os_completed||0)+1)}).eq('operador_id',gamiCurrentOpId);
+        }
+      }
+    }
   }
 }
 
@@ -1149,6 +1301,11 @@ async function salvarOS(){
   fecharModal();
   renderKanban(); renderDashboard();
   toast(`✓ OS ${numOS} criada!`);
+  // Gamificação: XP por nova OS
+  if(gamiCurrentOpId){
+    await awardXP(gamiCurrentOpId,10,'Nova OS');
+    await gamiMissionProgress(gamiCurrentOpId,'create_os');
+  }
 }
 
 // ══════════════════════════════════════════
@@ -1538,107 +1695,404 @@ async function salvarOperadoresConfig(){
 const _abrirConfigOrig = abrirConfig;
 
 // INIT
-init();
+init().then(()=>{ if(typeof gamiInit==='function') gamiInit(); });
 
-// ── GAMIFICAÇÃO ──────────────────────────────────────────────
-const GAMI_PROMPT = `# Sistema de Gamificação com Mecanismos de Dopamina
-# Stack: Next.js 14 (App Router) + TypeScript + Supabase (PostgreSQL + Realtime) + Zustand para estado global + Framer Motion para animações
-## Contexto
-Implemente um sistema de gamificação completo baseado em ciência comportamental e
-mecanismos de recompensa de redes sociais (TikTok, Instagram, Duolingo, Bereal).
-O objetivo é maximizar retenção, engagement e retorno diário do usuário usando
-loops dopaminérgicos comprovados.
-## Princípios psicológicos obrigatórios
-- **Variable Ratio Reinforcement**: recompensas imprevisíveis retêm mais que fixas
-- **Loss Aversion**: medo de perder streak > prazer de ganhar XP (2:1 ratio)
-- **Social Comparison**: mostrar progresso relativo a amigos próximos
-- **Progress Visibility**: barras de progresso sempre visíveis, nunca 100%
-- **Near-Miss Effect**: "faltam só 50 XP para o próximo nível"
-- **Sunk Cost**: quanto mais o usuário investe, mais difícil abandonar
-## Módulos a implementar
-  - **XP & Níveis**: Sistema de pontos de experiência com progressão de nível, barra de XP animada e celebração de level-up com confetti
-  - **Streaks diários**: Contagem de dias consecutivos com flame visual, risco de perda (loss aversion), proteção de streak como item premium e notificação de "não quebre sua sequência"
-  - **Badges & troféus**: Coleção de conquistas desbloqueáveis com raridade (comum/raro/épico/lendário), animação de unlock com partículas e showcase no perfil
-  - **Ranking social**: Leaderboard semanal/mensal com comparação próxima (você está a 50 pts do 3° lugar), rivalidade entre amigos e reset semanal que zera e gera ansiedade
-  - **Missões rápidas**: Daily quests com timer de 24h, missões de 5 minutos com recompensa imediata, barra de progresso visível e notificação "faltam 2 missões para completar hoje"
-  - **Loot boxes**: Recompensas de intervalo variável (VR schedules) com animação de abertura, probabilidades visíveis, itens exclusivos e caixas gratuitas diárias para criar hábito de retorno
-## Requisitos técnicos obrigatórios
-### Banco de dados
-\`\`\`sql
--- Tabelas principais necessárias:
--- users_gamification (xp, level, streak_count, last_active, prestige_level)
--- achievements (id, name, rarity, xp_reward, unlock_condition)
--- user_achievements (user_id, achievement_id, unlocked_at)
--- daily_missions (id, description, xp_reward, type, resets_at)
--- user_missions (user_id, mission_id, progress, completed_at)
--- leaderboard_snapshots (user_id, score, rank, period, created_at)
-\`\`\`
-### Funções core
-1. \`awardXP(userId, amount, reason, multiplier?)\` — adiciona XP, verifica level-up, dispara eventos
-2. \`checkAndUpdateStreak(userId)\` — roda diariamente, aplica loss aversion em notificações
-3. \`rollLootbox(userId, boxType)\` — VR schedule com weighted random, registra no log
-4. \`calculateLeaderboardRank(userId)\` — rank relativo com vizinhos ±5 posições
-5. \`generateDailyMissions(userId)\` — missions personalizadas baseadas em comportamento
-### Animações e feedback imediato (CRÍTICO para dopamina)
-- XP gain: número flutuante +XP com easing de cubic-bezier
-- Level up: tela de celebração com confetti por 3s, som opcional
-- Badge unlock: reveal animation com partículas, haptic feedback mobile
-- Streak fire: animação de chama pulsante, vermelho quando em risco
-- Loot reveal: caixa com shake + abertura gradual de 1.5s, glow por raridade
-### Tempo real
-- Leaderboard atualiza via WebSocket/Supabase Realtime
-- Notificações in-app para "amigo te ultrapassou" instantâneas
-- Missão completa por outro usuário aparece como social proof
-### Componentes React necessários
-- <XPBar /> — barra animada com label de XP atual/necessário e nível
-- <StreakCounter /> — contador de dias com chama e estado de risco
-- <BadgeGrid /> — grid com badges bloqueados em grayscale + unlock animation
-- <MissionList /> — lista de daily missions com timer e barra de progresso
-- <Leaderboard /> — ranking com highlight do usuário atual e vizinhos
-- <LootboxOpener /> — componente de abertura com animação completa
-- <LevelUpModal /> — modal de celebração bloqueante com recompensas
-### UX anti-abandono
-- Onboarding: recompensa imediata nos primeiros 60 segundos (badge de "Iniciante")
-- First session XP boost: 2x XP nas primeiras 3 sessões
-- Re-engagement: após 2 dias inativo, notificação com recompensa garantida
-- Streak shield: 1 proteção grátis por semana para não quebrar streak
-## Entregáveis esperados
-1. Schema SQL completo com índices e funções RPC
-2. Hooks React (useGamification, useStreak, useMissions)
-3. Todos os componentes com animações Framer Motion
-4. Lógica de notificações (push + in-app)
-5. Dashboard admin para ver métricas de engagement
-6. Testes unitários para lógica de XP e streak
-## Padrão de código
-- TypeScript strict mode
-- Componentes com Storybook stories
-- Comentários explicando o mecanismo psicológico de cada feature
-- Performance: animações em 60fps, sem jank em mobile
-Comece pela estrutura de arquivos e depois implemente módulo por módulo.
-Pergunte se precisar de clareza sobre algum mecanismo antes de começar.`;
+// ══════════════════════════════════════════════════════════════
+// MÓDULO: GAMIFICAÇÃO — XP, Streaks, Badges, Missões, Lootbox
+// Princípios: Variable Ratio, Loss Aversion, Social Comparison
+// ══════════════════════════════════════════════════════════════
 
-(function initGami(){
-  const el = document.getElementById('gamiPrompt');
-  if(el) el.textContent = GAMI_PROMPT;
-})();
+// ── Estado ──────────────────────────────────────────────────
+let gamiCurrentOpId = localStorage.getItem('gamiOpId') || null;
+let gamiAchs = [];
+let gamiMissionsList = [];
+let gamiBoard = [];
+let gamiXpMultiplier = 1;
+let gamiXpBoostMoves = 0;
 
-function gamiCopy(){
-  const btn = document.getElementById('gamiCopyBtn');
-  const done = () => {
-    btn.textContent = 'Copiado!';
-    btn.classList.add('copied');
-    setTimeout(()=>{ btn.textContent='Copiar'; btn.classList.remove('copied'); }, 2000);
-  };
-  navigator.clipboard.writeText(GAMI_PROMPT).then(done).catch(()=>{
-    const ta=document.createElement('textarea');
-    ta.value=GAMI_PROMPT;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    done();
-  });
+const GAMI_LEVELS = [0,100,250,500,900,1400,2100,3000,4200,5700,7500,10000];
+
+function gamiGetLevel(xp){
+  let lv=1;
+  for(let i=1;i<GAMI_LEVELS.length;i++){ if(xp>=GAMI_LEVELS[i]) lv=i+1; else break; }
+  return Math.min(lv,GAMI_LEVELS.length);
 }
+
+function gamiXpProgress(xp){
+  const lv=gamiGetLevel(xp);
+  const cur=GAMI_LEVELS[lv-1]||0;
+  const nxt=GAMI_LEVELS[lv]||GAMI_LEVELS[GAMI_LEVELS.length-1];
+  const pct=Math.min(((xp-cur)/(nxt-cur))*100,99.5);
+  return { lv, xp, cur, nxt, pct, toNext:nxt-xp };
+}
+
+async function gamiLoad(){
+  const [{ data:achs },{ data:ms },{ data:lb }] = await Promise.all([
+    sb.from('achievements').select('*'),
+    sb.from('daily_missions').select('*'),
+    sb.from('operadores_gamification').select('*,operadores(nome,setor)').order('xp',{ascending:false})
+  ]);
+  gamiAchs=achs||[]; gamiMissionsList=ms||[]; gamiBoard=lb||[];
+  gamiRender();
+}
+
+async function gamiEnsure(opId){
+  await sb.from('operadores_gamification')
+    .upsert({operador_id:opId},{onConflict:'operador_id',ignoreDuplicates:true});
+}
+
+async function awardXP(opId,amount,reason=''){
+  if(!opId) return;
+  await gamiEnsure(opId);
+  const { data:cur } = await sb.from('operadores_gamification')
+    .select('*').eq('operador_id',opId).single();
+  if(!cur) return;
+  const effective=Math.round(amount*gamiXpMultiplier);
+  const oldLv=gamiGetLevel(cur.xp);
+  const newXp=cur.xp+effective;
+  const newLv=gamiGetLevel(newXp);
+  const today=new Date().toISOString().split('T')[0];
+  const yesterday=new Date(Date.now()-86400000).toISOString().split('T')[0];
+  const dayBefore=new Date(Date.now()-2*86400000).toISOString().split('T')[0];
+  let streak=cur.streak_count, best=cur.best_streak, shield=cur.streak_shield_available;
+  if(cur.last_active!==today){
+    if(cur.last_active===yesterday){ streak=cur.streak_count+1; }
+    else if(cur.last_active===dayBefore&&cur.streak_shield_available){ streak=cur.streak_count+1; shield=false; }
+    else { streak=1; }
+    best=Math.max(best,streak);
+  }
+  await sb.from('operadores_gamification').update({
+    xp:newXp,level:newLv,streak_count:streak,best_streak:best,
+    last_active:today,streak_shield_available:shield,updated_at:new Date().toISOString()
+  }).eq('operador_id',opId);
+  if(opId===gamiCurrentOpId){
+    gamiFloatXP(`+${effective} XP`);
+    if(newLv>oldLv) setTimeout(()=>gamiShowLevelUp(newLv),900);
+    const prog=gamiXpProgress(newXp);
+    const nm=document.getElementById('gamiNearMiss');
+    if(nm) nm.textContent=`faltam ${prog.toNext} XP para Lv ${prog.lv+1}`;
+  }
+  await gamiCheckAchs(opId,{xp:newXp,lv:newLv,streak});
+}
+
+async function gamiMissionProgress(opId,type,inc=1){
+  if(!opId||!gamiMissionsList.length) return;
+  const today=new Date().toISOString().split('T')[0];
+  for(const m of gamiMissionsList.filter(m=>m.type===type)){
+    const { data:ex } = await sb.from('operador_missions').select('*')
+      .eq('operador_id',opId).eq('mission_id',m.id).eq('date',today).maybeSingle();
+    if(ex?.completed_at) continue;
+    const prog=(ex?.progress||0)+inc;
+    const done=prog>=m.target_count;
+    await sb.from('operador_missions').upsert({
+      operador_id:opId,mission_id:m.id,progress:prog,
+      completed_at:done?new Date().toISOString():null,date:today
+    },{onConflict:'operador_id,mission_id,date'});
+    if(done){
+      await awardXP(opId,m.xp_reward,`Missao:${m.description}`);
+      if(opId===gamiCurrentOpId) toast(`🎯 Missão completa! +${m.xp_reward} XP`,'ok');
+    }
+  }
+}
+
+async function gamiCheckAchs(opId,stats){
+  const { data:unlocked } = await sb.from('operador_achievements')
+    .select('achievement_id').eq('operador_id',opId);
+  const ids=new Set((unlocked||[]).map(u=>u.achievement_id));
+  const { data:cur } = await sb.from('operadores_gamification')
+    .select('total_os_completed,total_kanban_moves,total_missions_completed')
+    .eq('operador_id',opId).single();
+  const toUnlock=gamiAchs.filter(a=>{
+    if(ids.has(a.id)) return false;
+    switch(a.slug){
+      case 'first_os':    return (cur?.total_os_completed||0)>=1;
+      case 'os_5':        return (cur?.total_os_completed||0)>=5;
+      case 'os_25':       return (cur?.total_os_completed||0)>=25;
+      case 'os_100':      return (cur?.total_os_completed||0)>=100;
+      case 'os_500':      return (cur?.total_os_completed||0)>=500;
+      case 'streak_7':    return stats.streak>=7;
+      case 'streak_30':   return stats.streak>=30;
+      case 'streak_100':  return stats.streak>=100;
+      case 'missions_10': return (cur?.total_missions_completed||0)>=10;
+      case 'missions_50': return (cur?.total_missions_completed||0)>=50;
+      case 'level_5':     return stats.lv>=5;
+      case 'level_10':    return stats.lv>=10;
+      case 'kanban_50':   return (cur?.total_kanban_moves||0)>=50;
+      case 'kanban_200':  return (cur?.total_kanban_moves||0)>=200;
+      default: return false;
+    }
+  });
+  for(const a of toUnlock){
+    await sb.from('operador_achievements').insert({operador_id:opId,achievement_id:a.id});
+    await awardXP(opId,a.xp_reward,`Conquista:${a.name}`);
+    if(opId===gamiCurrentOpId) gamiBadgeUnlockToast(a);
+  }
+}
+
+function gamiFloatXP(text){
+  const el=document.createElement('div');
+  el.className='gami-xp-float';
+  el.textContent=text;
+  el.style.cssText=`left:${window.innerWidth/2-40}px;top:${window.innerHeight*0.4}px;`;
+  document.body.appendChild(el);
+  requestAnimationFrame(()=>{
+    el.style.opacity='1';el.style.transform='translateY(-80px)';
+    el.style.transition='opacity 1.4s ease,transform 1.4s cubic-bezier(.2,0,.8,1)';
+  });
+  setTimeout(()=>{ el.style.opacity='0'; setTimeout(()=>el.remove(),400); },1200);
+}
+
+function gamiShowLevelUp(lv){
+  const m=document.getElementById('gamiLevelUpModal');
+  if(!m) return;
+  document.getElementById('gamiLevelUpNum').textContent=lv;
+  m.style.display='flex';
+  gamiConfetti();
+  setTimeout(()=>{ if(m.style.display!=='none') m.style.display='none'; },5000);
+}
+
+function gamiBadgeUnlockToast(ach){
+  const CLR={comum:'var(--muted)',raro:'var(--accent2)',epico:'var(--accent5)',lendario:'var(--accent)'};
+  const rkey=ach.rarity.replace('é','e').replace('á','a');
+  const t=document.getElementById('gamiBadgeUnlockToast');
+  if(!t) return;
+  t.innerHTML=`<span style="font-size:28px">${ach.icon}</span>
+    <div><div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${CLR[rkey]||'var(--accent)'}">${ach.rarity} desbloqueada!</div>
+    <div style="font-size:13px;font-weight:700">${ach.name}</div>
+    <div style="font-size:11px;color:var(--muted)">${ach.description}</div></div>`;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),4500);
+}
+
+function gamiConfetti(){
+  const c=document.getElementById('gamiConfettiCanvas');
+  if(!c) return;
+  const ctx=c.getContext('2d');
+  c.width=window.innerWidth; c.height=window.innerHeight; c.style.display='block';
+  const COLORS=['#c8962a','#daa832','#3b82f6','#10b981','#8b5cf6','#ef4444','#06b6d4'];
+  const pieces=Array.from({length:100},()=>({
+    x:Math.random()*c.width,y:-10,w:Math.random()*10+4,h:Math.random()*7+3,
+    color:COLORS[Math.floor(Math.random()*COLORS.length)],
+    vx:(Math.random()-.5)*4,vy:Math.random()*4+2,rot:Math.random()*360,rs:(Math.random()-.5)*6
+  }));
+  let frame=0;
+  function draw(){
+    ctx.clearRect(0,0,c.width,c.height);
+    pieces.forEach(p=>{
+      p.x+=p.vx; p.y+=p.vy; p.rot+=p.rs;
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180);
+      ctx.fillStyle=p.color; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore();
+    });
+    if(++frame<180) requestAnimationFrame(draw); else c.style.display='none';
+  }
+  draw();
+}
+
+async function gamiOpenLootbox(){
+  if(!gamiCurrentOpId){ toast('Selecione um operador primeiro','err'); return; }
+  const today=new Date().toISOString().split('T')[0];
+  const lbKey=`gamiLootbox_${gamiCurrentOpId}_${today}`;
+  if(localStorage.getItem(lbKey)){ toast('Você já abriu sua caixa hoje! Volte amanhã','err'); return; }
+  const btn=document.getElementById('gamiLootboxBtn');
+  btn.classList.add('shaking');
+  setTimeout(async()=>{
+    btn.classList.remove('shaking');
+    const roll=Math.random();
+    let label;
+    if(roll<0.50){
+      const xp=Math.floor(Math.random()*51+25);
+      await awardXP(gamiCurrentOpId,xp,'Lootbox');
+      label=`<div style="font-size:32px">⭐</div><div style="font-size:15px;font-weight:700;color:var(--accent)">+${xp} XP</div><div style="font-size:11px;color:var(--muted)">Recompensa comum</div>`;
+    } else if(roll<0.78){
+      const xp=Math.floor(Math.random()*101+75);
+      await awardXP(gamiCurrentOpId,xp,'Lootbox Raro');
+      label=`<div style="font-size:32px">💫</div><div style="font-size:15px;font-weight:700;color:var(--accent2)">+${xp} XP</div><div style="font-size:11px;color:var(--muted)">Recompensa rara!</div>`;
+    } else if(roll<0.92){
+      gamiXpMultiplier=2; gamiXpBoostMoves=5;
+      toast('🚀 2x XP ativado para os próximos 5 avanços!','ok');
+      label=`<div style="font-size:32px">🚀</div><div style="font-size:15px;font-weight:700;color:var(--accent5)">2× XP Boost!</div><div style="font-size:11px;color:var(--muted)">Próximos 5 avanços no Kanban</div>`;
+    } else {
+      await sb.from('operadores_gamification').update({streak_shield_available:true}).eq('operador_id',gamiCurrentOpId);
+      label=`<div style="font-size:32px">🛡️</div><div style="font-size:15px;font-weight:700;color:var(--accent3)">Escudo de Streak!</div><div style="font-size:11px;color:var(--muted)">Protege 1 dia de gap</div>`;
+    }
+    localStorage.setItem(lbKey,'1');
+    const reveal=document.getElementById('gamiLootReveal');
+    if(reveal){ reveal.innerHTML=label; reveal.style.display='block'; }
+    const lbl=document.getElementById('gamiLootboxLabel');
+    if(lbl) lbl.textContent='Próxima caixa: amanhã';
+    btn.textContent='📦'; btn.style.opacity='.4'; btn.onclick=null;
+    await gamiLoad();
+  },700);
+}
+
+async function gamiRender(){
+  gamiRenderLeaderboard();
+  await gamiRenderMissions();
+  await gamiRenderBadges();
+  gamiRenderMyStats();
+  gamiRenderMissionsTimer();
+  gamiRenderLootbox();
+  gamiPopulateOpSelect();
+}
+
+function gamiRenderLeaderboard(){
+  const el=document.getElementById('gamiLeaderboard');
+  if(!el) return;
+  if(!gamiBoard.length){
+    el.innerHTML='<div style="color:var(--muted);text-align:center;padding:16px;font-size:13px">Conclua OS para aparecer no ranking!</div>';
+    return;
+  }
+  el.innerHTML=gamiBoard.map((g,i)=>{
+    const prog=gamiXpProgress(g.xp);
+    const isMe=g.operador_id===gamiCurrentOpId;
+    const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}.`;
+    return `<div class="gami-lb-row ${isMe?'gami-lb-me':''}">
+      <div class="gami-lb-rank">${medal}</div>
+      <div class="gami-lb-info">
+        <div class="gami-lb-name">${g.operadores?.nome||'—'} <span class="gami-level-badge">Lv ${prog.lv}</span></div>
+        <div class="gami-lb-sub">${g.operadores?.setor||''} · 🔥 ${g.streak_count} dias</div>
+      </div>
+      <div class="gami-lb-xp">${g.xp.toLocaleString('pt-BR')} XP</div>
+    </div>`;
+  }).join('');
+}
+
+async function gamiRenderMissions(){
+  const el=document.getElementById('gamiMissions');
+  if(!el) return;
+  if(!gamiCurrentOpId){
+    el.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:16px">Selecione um operador</div>';
+    return;
+  }
+  const today=new Date().toISOString().split('T')[0];
+  const { data:prog } = await sb.from('operador_missions').select('*')
+    .eq('operador_id',gamiCurrentOpId).eq('date',today);
+  const progMap={};
+  (prog||[]).forEach(p=>{ progMap[p.mission_id]=p; });
+  const done=Object.values(progMap).filter(p=>p.completed_at).length;
+  const total=gamiMissionsList.length;
+  el.innerHTML=gamiMissionsList.map(m=>{
+    const p=progMap[m.id]; const cur=p?.progress||0; const isDone=!!p?.completed_at;
+    const pct=Math.min((cur/m.target_count)*100,100);
+    return `<div class="gami-mission ${isDone?'gami-mission-done':''}">
+      <div class="gami-mission-check">${isDone?'✅':'⬜'}</div>
+      <div class="gami-mission-info">
+        <div class="gami-mission-desc">${m.description}</div>
+        <div class="prog-track" style="margin-top:5px;height:4px">
+          <div class="prog-fill" style="width:${pct}%;background:${isDone?'var(--accent3)':'var(--accent)'};transition:width .5s"></div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px">${cur}/${m.target_count} · <span style="color:${isDone?'var(--accent3)':'var(--accent)'}">+${m.xp_reward} XP</span></div>
+      </div>
+    </div>`;
+  }).join('')+`<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px">${done}/${total} missões completas hoje</div>`;
+}
+
+async function gamiRenderBadges(){
+  const el=document.getElementById('gamiBadges');
+  const countEl=document.getElementById('gamiBadgesCount');
+  if(!el) return;
+  let unlocked=new Set();
+  if(gamiCurrentOpId){
+    const { data } = await sb.from('operador_achievements').select('achievement_id').eq('operador_id',gamiCurrentOpId);
+    unlocked=new Set((data||[]).map(d=>d.achievement_id));
+  }
+  if(countEl) countEl.textContent=`${unlocked.size} / ${gamiAchs.length} desbloqueadas`;
+  const CLR={comum:'#777',raro:'var(--accent2)','épico':'var(--accent5)','lendário':'var(--accent)'};
+  const BG={comum:'rgba(119,119,119,.1)',raro:'rgba(59,130,246,.1)','épico':'rgba(139,92,246,.1)','lendário':'rgba(200,150,42,.1)'};
+  const ORDER={'lendário':0,'épico':1,raro:2,comum:3};
+  const sorted=[...gamiAchs].sort((a,b)=>{
+    const au=unlocked.has(a.id)?0:1, bu=unlocked.has(b.id)?0:1;
+    return au!==bu?au-bu:(ORDER[a.rarity]||3)-(ORDER[b.rarity]||3);
+  });
+  el.innerHTML=sorted.map(a=>{
+    const on=unlocked.has(a.id);
+    return `<div class="gami-badge-card ${on?'gami-badge-unlocked':'gami-badge-locked'}"
+      style="border-color:${on?(CLR[a.rarity]||'var(--accent)'):'var(--border)'};background:${on?(BG[a.rarity]||'rgba(200,150,42,.1)'):'var(--surface2)'};"
+      title="${a.description} (+${a.xp_reward} XP)">
+      <span class="gami-badge-icon" style="filter:${on?'none':'grayscale(1) opacity(.25)'}">${a.icon}</span>
+      <span class="gami-badge-name" style="color:${on?(CLR[a.rarity]||'var(--accent)'):'var(--muted)'}">${a.name}</span>
+      <span class="gami-badge-rarity" style="color:${on?(CLR[a.rarity]||'var(--accent)'):'var(--border)'}">${a.rarity}</span>
+    </div>`;
+  }).join('');
+}
+
+function gamiRenderMyStats(){
+  const me=gamiBoard.find(g=>g.operador_id===gamiCurrentOpId);
+  const prog=gamiXpProgress(me?.xp||0);
+  const fill=document.getElementById('gamiXpFill');
+  if(fill) setTimeout(()=>fill.style.width=prog.pct+'%',200);
+  const lbl=document.getElementById('gamiXpLabel');
+  if(lbl) lbl.textContent=`${(me?.xp||0).toLocaleString('pt-BR')} XP`;
+  const nxt=document.getElementById('gamiXpNext');
+  if(nxt) nxt.textContent=`faltam ${prog.toNext} XP para Lv ${prog.lv+1}`;
+  const lvEl=document.getElementById('gamiLevelNum');
+  if(lvEl) lvEl.textContent=prog.lv;
+  const tot=document.getElementById('gamiTotalXp');
+  if(tot) tot.textContent=`XP acumulado: ${(me?.xp||0).toLocaleString('pt-BR')}`;
+  const sEl=document.getElementById('gamiStreak');
+  if(sEl) sEl.textContent=me?.streak_count||0;
+  const bEl=document.getElementById('gamiStreakBest');
+  if(bEl) bEl.textContent=me?.best_streak||0;
+  const fire=document.getElementById('gamiStreakFire');
+  if(fire){
+    const today=new Date().toISOString().split('T')[0];
+    const atRisk=me&&me.last_active!==today&&(me.streak_count||0)>0;
+    fire.classList.toggle('danger',!!atRisk);
+  }
+  const shEl=document.getElementById('gamiShieldStatus');
+  if(shEl) shEl.textContent=me?.streak_shield_available!==false?'🛡️ Escudo disponível':'🛡️ Escudo usado';
+  const rank=gamiBoard.findIndex(g=>g.operador_id===gamiCurrentOpId)+1;
+  const rankEl=document.getElementById('gamiRank');
+  if(rankEl) rankEl.textContent=rank>0?`#${rank}`:'#—';
+  const subEl=document.getElementById('gamiRankSub');
+  if(subEl) subEl.textContent=`de ${gamiBoard.length} operadores`;
+  const nmEl=document.getElementById('gamiNearMiss');
+  if(nmEl&&me&&rank>1){ const above=gamiBoard[rank-2]; if(above) nmEl.textContent=`faltam ${above.xp-me.xp} XP para #${rank-1}`; }
+}
+
+function gamiRenderMissionsTimer(){
+  const el=document.getElementById('gamiMissionsTimer');
+  if(!el) return;
+  const now=new Date(); const end=new Date(); end.setHours(23,59,59,0);
+  const diff=end-now; const h=Math.floor(diff/3600000), m=Math.floor((diff%3600000)/60000);
+  el.textContent=`(reinicia em ${h}h ${m}m)`;
+}
+
+function gamiRenderLootbox(){
+  const btn=document.getElementById('gamiLootboxBtn');
+  const lbl=document.getElementById('gamiLootboxLabel');
+  if(!btn||!gamiCurrentOpId) return;
+  const today=new Date().toISOString().split('T')[0];
+  if(localStorage.getItem(`gamiLootbox_${gamiCurrentOpId}_${today}`)){
+    btn.textContent='📦'; btn.style.opacity='.4'; btn.onclick=null;
+    if(lbl) lbl.textContent='Próxima caixa: amanhã';
+  } else {
+    btn.textContent='🎁'; btn.style.opacity='1'; btn.onclick=gamiOpenLootbox;
+    if(lbl) lbl.textContent='Caixa gratuita disponível!';
+  }
+}
+
+function gamiPopulateOpSelect(){
+  const sel=document.getElementById('gamiOpSelect');
+  if(!sel) return;
+  sel.innerHTML='<option value="">— Selecione seu operador —</option>'+
+    operadoresDB.filter(o=>o.ativo!==false).map(o=>
+      `<option value="${o.id}" ${o.id===gamiCurrentOpId?'selected':''}>${o.nome} (${o.setor})</option>`
+    ).join('');
+}
+
+function gamiSelectOperador(id){
+  gamiCurrentOpId=id;
+  if(id) localStorage.setItem('gamiOpId',id); else localStorage.removeItem('gamiOpId');
+  gamiLoad();
+}
+
+async function gamiInit(){
+  for(const op of operadoresDB){ if(op.id) await gamiEnsure(op.id); }
+  await gamiLoad();
+}
+
+setInterval(gamiRenderMissionsTimer,60000);
 </script>
 </body>
 </html>
