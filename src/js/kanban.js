@@ -31,10 +31,11 @@ function renderKanban(){
   osData.forEach(os=>{
     if(os.setor===setorAtivo){
       osDoSetor.push({...os, _statusNesseSetor:os.status, _isAdicional:false, _adicionalId:''});
-    }
-    const adic=(os.setoresAdicionais||[]).find(s=>s.setor===setorAtivo);
-    if(adic){
-      osDoSetor.push({...os, _statusNesseSetor:adic.status, _isAdicional:true, _adicionalId:adic.id});
+    } else {
+      const adic=(os.setoresAdicionais||[]).find(s=>s.setor===setorAtivo);
+      if(adic){
+        osDoSetor.push({...os, _statusNesseSetor:adic.status, _isAdicional:true, _adicionalId:adic.id});
+      }
     }
   });
 

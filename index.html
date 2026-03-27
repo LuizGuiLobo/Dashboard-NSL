@@ -921,10 +921,11 @@ function renderKanban(){
   osData.forEach(os=>{
     if(os.setor===setorAtivo){
       osDoSetor.push({...os, _statusNesseSetor:os.status, _isAdicional:false, _adicionalId:''});
-    }
-    const adic=(os.setoresAdicionais||[]).find(s=>s.setor===setorAtivo);
-    if(adic){
-      osDoSetor.push({...os, _statusNesseSetor:adic.status, _isAdicional:true, _adicionalId:adic.id});
+    } else {
+      const adic=(os.setoresAdicionais||[]).find(s=>s.setor===setorAtivo);
+      if(adic){
+        osDoSetor.push({...os, _statusNesseSetor:adic.status, _isAdicional:true, _adicionalId:adic.id});
+      }
     }
   });
   board.innerHTML=etapas.map(etapa=>{
@@ -1023,13 +1024,6 @@ async function moverStatus(id, dir, isAdicional=false, adicionalId=''){
         await awardXP(gamiCurrentOpId,5,'Kanban move');
         await gamiMissionProgress(gamiCurrentOpId,'advance_kanban');
         await sb.from('operadores_gamification').update({total_kanban_moves:((gamiBoard.find(g=>g.operador_id===gamiCurrentOpId)?.total_kanban_moves||0)+1)}).eq('operador_id',gamiCurrentOpId);
-        // OS concluída = última etapa
-        const isLastStep=idx===etapas.length-1;
-        if(isLastStep){
-          await awardXP(gamiCurrentOpId,50,'OS concluída');
-          await gamiMissionProgress(gamiCurrentOpId,'complete_os');
-          await sb.from('operadores_gamification').update({total_os_completed:((gamiBoard.find(g=>g.operador_id===gamiCurrentOpId)?.total_os_completed||0)+1)}).eq('operador_id',gamiCurrentOpId);
-        }
       }
     }
   } else {
@@ -1044,12 +1038,6 @@ async function moverStatus(id, dir, isAdicional=false, adicionalId=''){
         await awardXP(gamiCurrentOpId,5,'Kanban move');
         await gamiMissionProgress(gamiCurrentOpId,'advance_kanban');
         await sb.from('operadores_gamification').update({total_kanban_moves:((gamiBoard.find(g=>g.operador_id===gamiCurrentOpId)?.total_kanban_moves||0)+1)}).eq('operador_id',gamiCurrentOpId);
-        const isLastStep=idx===etapas.length-1;
-        if(isLastStep){
-          await awardXP(gamiCurrentOpId,50,'OS concluída');
-          await gamiMissionProgress(gamiCurrentOpId,'complete_os');
-          await sb.from('operadores_gamification').update({total_os_completed:((gamiBoard.find(g=>g.operador_id===gamiCurrentOpId)?.total_os_completed||0)+1)}).eq('operador_id',gamiCurrentOpId);
-        }
       }
     }
   }
@@ -1150,7 +1138,7 @@ function abrirModal(){
 
 function fecharModal(){
   document.getElementById('modalBg').style.display='none';
-  ['m-placa','m-cliente','m-modelo','m-obs','m-peca','m-num'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['m-placa','m-cliente','m-modelo','m-obs','m-peca','m-num','m-operador'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});;
   setTipo('veiculo');
 }
 
@@ -1301,11 +1289,6 @@ async function salvarOS(){
   fecharModal();
   renderKanban(); renderDashboard();
   toast(`✓ OS ${numOS} criada!`);
-  // Gamificação: XP por nova OS
-  if(gamiCurrentOpId){
-    await awardXP(gamiCurrentOpId,10,'Nova OS');
-    await gamiMissionProgress(gamiCurrentOpId,'create_os');
-  }
 }
 
 // ══════════════════════════════════════════

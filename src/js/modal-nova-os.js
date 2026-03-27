@@ -26,7 +26,7 @@ function abrirModal(){
 
 function fecharModal(){
   document.getElementById('modalBg').style.display='none';
-  ['m-placa','m-cliente','m-modelo','m-obs','m-peca','m-num'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['m-placa','m-cliente','m-modelo','m-obs','m-peca','m-num','m-operador'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   setTipo('veiculo');
 }
 
