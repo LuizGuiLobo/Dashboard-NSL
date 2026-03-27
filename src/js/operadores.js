@@ -16,7 +16,7 @@ function atualizarOperadores(selectId, setor){
   const sel = document.getElementById(selectId);
   if(!sel) return;
   const val = sel.value;
-  const ops = operadoresDB.filter(o=>o.setor===setor);
+  const ops = operadoresDB.filter(o=>(o.setores||[]).includes(setor));
   sel.innerHTML = '<option value="">— Selecionar —</option>' +
     ops.map(o=>`<option value="${o.nome}" ${val===o.nome?'selected':''}>${o.nome}</option>`).join('');
 }

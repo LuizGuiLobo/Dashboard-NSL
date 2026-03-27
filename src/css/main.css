@@ -125,6 +125,9 @@ textarea.inp{resize:vertical;}
 .req-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;cursor:pointer;white-space:nowrap;}
 .req-on{background:rgba(239,68,68,.15);color:var(--accent4);border:1px solid rgba(239,68,68,.25);}
 .req-off{background:var(--surface);color:var(--muted);border:1px solid var(--border);}
+.chip-setor{font-size:10px;font-weight:600;padding:3px 9px;border-radius:12px;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--muted);white-space:nowrap;transition:all .15s;user-select:none;}
+.chip-setor:hover{border-color:var(--accent);color:var(--accent);}
+.chip-setor-on{border-color:var(--accent)!important;background:rgba(200,150,42,.15)!important;color:var(--accent)!important;}
 /* NSL FOOTER MINI */
 .nsl-footer{font-size:10px;color:var(--muted);text-align:center;padding:8px 0;border-top:1px solid var(--border);margin-top:auto;letter-spacing:.5px;}
 @media(max-width:800px){.grid-4{grid-template-columns:repeat(2,1fr);}.grid-2{grid-template-columns:1fr;}main{padding:16px;}}

@@ -15,7 +15,6 @@ function abrirConfigOperadores(){
 }
 
 function renderOperadoresConfig(){
-  operadoresTemp = operadoresDB.map(o=>({...o}));
   const lista = document.getElementById('lista-operadores-config');
   if(!lista) return;
   if(!operadoresTemp.length){
@@ -23,20 +22,35 @@ function renderOperadoresConfig(){
     return;
   }
   lista.innerHTML = operadoresTemp.map((op,i)=>`
-    <div class="campo-config">
-      <input value="${op.nome}" placeholder="Nome do operador" onchange="operadoresTemp[${i}].nome=this.value" style="flex:2">
-      <select onchange="operadoresTemp[${i}].setor=this.value" style="flex:2">
-        ${SETORES.map(s=>`<option value="${s}" ${op.setor===s?'selected':''}>${s}</option>`).join('')}
-      </select>
-      <span class="req-badge ${op.ativo!==false?'req-on':'req-off'}" onclick="operadoresTemp[${i}].ativo=!(operadoresTemp[${i}].ativo!==false);renderOperadoresConfig()" style="cursor:pointer">
-        ${op.ativo!==false?'✓ Ativo':'✗ Inativo'}
-      </span>
-      <button class="btn btn-danger btn-sm" onclick="operadoresTemp.splice(${i},1);renderOperadoresConfig()">✕</button>
+    <div class="campo-config" style="flex-wrap:wrap;align-items:flex-start;gap:8px;padding:10px">
+      <div style="display:flex;align-items:center;gap:8px;width:100%">
+        <input value="${op.nome}" placeholder="Nome do operador" onchange="operadoresTemp[${i}].nome=this.value" style="flex:2;min-width:120px">
+        <span class="req-badge ${op.ativo!==false?'req-on':'req-off'}" onclick="operadoresTemp[${i}].ativo=!(operadoresTemp[${i}].ativo!==false);renderOperadoresConfig()" style="cursor:pointer">
+          ${op.ativo!==false?'✓ Ativo':'✗ Inativo'}
+        </span>
+        <button class="btn btn-danger btn-sm" onclick="operadoresTemp.splice(${i},1);renderOperadoresConfig()">✕</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;padding-left:2px">
+        ${SETORES.map(s=>{
+          const ativo=(op.setores||[]).includes(s);
+          return `<span class="chip-setor${ativo?' chip-setor-on':''}" onclick="toggleSetorOp(${i},'${s}')">${s}</span>`;
+        }).join('')}
+      </div>
     </div>`).join('');
 }
 
+function toggleSetorOp(i, setor){
+  const arr = operadoresTemp[i].setores || [];
+  if(arr.includes(setor)){
+    operadoresTemp[i].setores = arr.filter(s=>s!==setor);
+  } else {
+    operadoresTemp[i].setores = [...arr, setor];
+  }
+  renderOperadoresConfig();
+}
+
 function adicionarOperadorTemp(){
-  operadoresTemp.push({ nome:'Novo Operador', setor:SETORES[0], ativo:true });
+  operadoresTemp.push({ nome:'Novo Operador', setores:[SETORES[0]], ativo:true });
   renderOperadoresConfig();
 }
 
@@ -46,7 +60,7 @@ async function salvarOperadoresConfig(){
   const { error:del } = await sb.from('operadores').delete().neq('id','00000000-0000-0000-0000-000000000000');
   if(del){ toast('Erro ao salvar operadores','err'); setBtnLoading('btn-salvar-operadores',false,'💾 Salvar Operadores'); return; }
   if(operadoresTemp.length){
-    const rows = operadoresTemp.map(o=>({ nome:o.nome, setor:o.setor, ativo:o.ativo!==false }));
+    const rows = operadoresTemp.map(o=>({ nome:o.nome, setores:o.setores||[], ativo:o.ativo!==false }));
     const { error:ins } = await sb.from('operadores').insert(rows);
     if(ins){ toast('Erro ao inserir operadores','err'); setBtnLoading('btn-salvar-operadores',false,'💾 Salvar Operadores'); return; }
   }

@@ -129,6 +129,9 @@ textarea.inp{resize:vertical;}
 .req-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;cursor:pointer;white-space:nowrap;}
 .req-on{background:rgba(239,68,68,.15);color:var(--accent4);border:1px solid rgba(239,68,68,.25);}
 .req-off{background:var(--surface);color:var(--muted);border:1px solid var(--border);}
+.chip-setor{font-size:10px;font-weight:600;padding:3px 9px;border-radius:12px;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--muted);white-space:nowrap;transition:all .15s;user-select:none;}
+.chip-setor:hover{border-color:var(--accent);color:var(--accent);}
+.chip-setor-on{border-color:var(--accent)!important;background:rgba(200,150,42,.15)!important;color:var(--accent)!important;}
 /* NSL FOOTER MINI */
 .nsl-footer{font-size:10px;color:var(--muted);text-align:center;padding:8px 0;border-top:1px solid var(--border);margin-top:auto;letter-spacing:.5px;}
 @media(max-width:800px){.grid-4{grid-template-columns:repeat(2,1fr);}.grid-2{grid-template-columns:1fr;}main{padding:16px;}}
@@ -679,7 +682,7 @@ function atualizarOperadores(selectId, setor){
   const sel = document.getElementById(selectId);
   if(!sel) return;
   const val = sel.value;
-  const ops = operadoresDB.filter(o=>o.setor===setor);
+  const ops = operadoresDB.filter(o=>(o.setores||[]).includes(setor));
   sel.innerHTML = '<option value="">— Selecionar —</option>' +
     ops.map(o=>`<option value="${o.nome}" ${val===o.nome?'selected':''}>${o.nome}</option>`).join('');
 }
@@ -1223,7 +1226,7 @@ function renderSetoresConectadosForms(ctx, selecionados){
     const cor=SETOR_COLORS[s]||'#64748b';
     const prev=existingData[s]||{};
     const etapasOpts=(etapasKanban[s]||[]).map(e=>`<option ${prev.status===e.label?'selected':''}>${e.label}</option>`).join('')||'<option>Diagnóstico</option>';
-    const opsOpts='<option value="">— Selecionar —</option>'+operadoresDB.filter(o=>o.setor===s).map(o=>`<option ${prev.op===o.nome?'selected':''}>${o.nome}</option>`).join('');
+    const opsOpts='<option value="">— Selecionar —</option>'+operadoresDB.filter(o=>(o.setores||[]).includes(s)).map(o=>`<option ${prev.op===o.nome?'selected':''}>${o.nome}</option>`).join('');
     return `<div data-setor-form="${s}" style="background:var(--surface2);border:1px solid ${cor}44;border-radius:6px;padding:10px 12px;margin-bottom:6px">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
         <span style="width:8px;height:8px;border-radius:50%;background:${cor};display:inline-block"></span>
@@ -1383,7 +1386,7 @@ function renderSetoresConectadosEditar(preload){
         const cor=SETOR_COLORS[s]||'#64748b';
         const prev=existingData[s]||{};
         const etapasOpts=(etapasKanban[s]||[]).map(e=>`<option ${prev.status===e.label?'selected':''}>${e.label}</option>`).join('')||'<option>Diagnóstico</option>';
-        const opsOpts='<option value="">— Selecionar —</option>'+operadoresDB.filter(o=>o.setor===s).map(o=>`<option ${prev.op===o.nome?'selected':''}>${o.nome}</option>`).join('');
+        const opsOpts='<option value="">— Selecionar —</option>'+operadoresDB.filter(o=>(o.setores||[]).includes(s)).map(o=>`<option ${prev.op===o.nome?'selected':''}>${o.nome}</option>`).join('');
         return `<div data-setor-form="${s}" style="background:var(--surface2);border:1px solid ${cor}44;border-radius:6px;padding:10px 12px;margin-bottom:6px">
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
             <span style="width:8px;height:8px;border-radius:50%;background:${cor};display:inline-block"></span>
@@ -1650,7 +1653,6 @@ function abrirConfigOperadores(){
 }
 
 function renderOperadoresConfig(){
-  operadoresTemp = operadoresDB.map(o=>({...o}));
   const lista = document.getElementById('lista-operadores-config');
   if(!lista) return;
   if(!operadoresTemp.length){
@@ -1658,20 +1660,35 @@ function renderOperadoresConfig(){
     return;
   }
   lista.innerHTML = operadoresTemp.map((op,i)=>`
-    <div class="campo-config">
-      <input value="${op.nome}" placeholder="Nome do operador" onchange="operadoresTemp[${i}].nome=this.value" style="flex:2">
-      <select onchange="operadoresTemp[${i}].setor=this.value" style="flex:2">
-        ${SETORES.map(s=>`<option value="${s}" ${op.setor===s?'selected':''}>${s}</option>`).join('')}
-      </select>
-      <span class="req-badge ${op.ativo!==false?'req-on':'req-off'}" onclick="operadoresTemp[${i}].ativo=!(operadoresTemp[${i}].ativo!==false);renderOperadoresConfig()" style="cursor:pointer">
-        ${op.ativo!==false?'✓ Ativo':'✗ Inativo'}
-      </span>
-      <button class="btn btn-danger btn-sm" onclick="operadoresTemp.splice(${i},1);renderOperadoresConfig()">✕</button>
+    <div class="campo-config" style="flex-wrap:wrap;align-items:flex-start;gap:8px;padding:10px">
+      <div style="display:flex;align-items:center;gap:8px;width:100%">
+        <input value="${op.nome}" placeholder="Nome do operador" onchange="operadoresTemp[${i}].nome=this.value" style="flex:2;min-width:120px">
+        <span class="req-badge ${op.ativo!==false?'req-on':'req-off'}" onclick="operadoresTemp[${i}].ativo=!(operadoresTemp[${i}].ativo!==false);renderOperadoresConfig()" style="cursor:pointer">
+          ${op.ativo!==false?'✓ Ativo':'✗ Inativo'}
+        </span>
+        <button class="btn btn-danger btn-sm" onclick="operadoresTemp.splice(${i},1);renderOperadoresConfig()">✕</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;padding-left:2px">
+        ${SETORES.map(s=>{
+          const ativo=(op.setores||[]).includes(s);
+          return `<span class="chip-setor${ativo?' chip-setor-on':''}" onclick="toggleSetorOp(${i},'${s}')">${s}</span>`;
+        }).join('')}
+      </div>
     </div>`).join('');
 }
 
+function toggleSetorOp(i, setor){
+  const arr = operadoresTemp[i].setores || [];
+  if(arr.includes(setor)){
+    operadoresTemp[i].setores = arr.filter(s=>s!==setor);
+  } else {
+    operadoresTemp[i].setores = [...arr, setor];
+  }
+  renderOperadoresConfig();
+}
+
 function adicionarOperadorTemp(){
-  operadoresTemp.push({ nome:'Novo Operador', setor:SETORES[0], ativo:true });
+  operadoresTemp.push({ nome:'Novo Operador', setores:[SETORES[0]], ativo:true });
   renderOperadoresConfig();
 }
 
@@ -1681,7 +1698,7 @@ async function salvarOperadoresConfig(){
   const { error:del } = await sb.from('operadores').delete().neq('id','00000000-0000-0000-0000-000000000000');
   if(del){ toast('Erro ao salvar operadores','err'); setBtnLoading('btn-salvar-operadores',false,'💾 Salvar Operadores'); return; }
   if(operadoresTemp.length){
-    const rows = operadoresTemp.map(o=>({ nome:o.nome, setor:o.setor, ativo:o.ativo!==false }));
+    const rows = operadoresTemp.map(o=>({ nome:o.nome, setores:o.setores||[], ativo:o.ativo!==false }));
     const { error:ins } = await sb.from('operadores').insert(rows);
     if(ins){ toast('Erro ao inserir operadores','err'); setBtnLoading('btn-salvar-operadores',false,'💾 Salvar Operadores'); return; }
   }

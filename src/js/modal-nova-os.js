@@ -105,7 +105,7 @@ function renderSetoresConectadosForms(ctx, selecionados){
     const cor=SETOR_COLORS[s]||'#64748b';
     const prev=existingData[s]||{};
     const etapasOpts=(etapasKanban[s]||[]).map(e=>`<option ${prev.status===e.label?'selected':''}>${e.label}</option>`).join('')||'<option>Diagnóstico</option>';
-    const opsOpts='<option value="">— Selecionar —</option>'+operadoresDB.filter(o=>o.setor===s).map(o=>`<option ${prev.op===o.nome?'selected':''}>${o.nome}</option>`).join('');
+    const opsOpts='<option value="">— Selecionar —</option>'+operadoresDB.filter(o=>(o.setores||[]).includes(s)).map(o=>`<option ${prev.op===o.nome?'selected':''}>${o.nome}</option>`).join('');
     return `<div data-setor-form="${s}" style="background:var(--surface2);border:1px solid ${cor}44;border-radius:6px;padding:10px 12px;margin-bottom:6px">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
         <span style="width:8px;height:8px;border-radius:50%;background:${cor};display:inline-block"></span>
