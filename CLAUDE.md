@@ -5,52 +5,50 @@
 Sistema de gestão operacional da **Nova São Luiz Diesel** — oficina especializada em
 bomba injetora, bomba de alta pressão, injetores mecânicos/eletrônicos, turbinas e veículos diesel.
 
-**Stack:** HTML + CSS + JS puro (single file) · Supabase PostgreSQL · Deploy Vercel
+**Stack:** React 19 + TypeScript + Tailwind CSS + Vite · Supabase PostgreSQL · Deploy Vercel
 
 ---
 
 ## Arquitetura
 
 ```
-index.html          ← ARQUIVO DE DEPLOY (não editar diretamente)
-src/                ← EDITAR AQUI (módulos separados)
-  css/main.css      ← variáveis CSS, estilos globais, componentes
-  html/sections/    ← cada aba da interface
-  html/modals/      ← modais de criação, edição e configuração
-  js/               ← lógica separada por responsabilidade
-supabase/migrations ← SQL em ordem numérica (001→002→003)
+src/
+  App.tsx                      ← roteamento principal (React Router)
+  main.tsx                     ← entry point
+  index.css                    ← estilos globais + variáveis Tailwind
+  pages/                       ← uma página por aba da interface
+  components/
+    dashboard/                 ← KPICard, Charts
+    kanban/                    ← KanbanBoard, KanbanCard, KanbanColumn
+    layout/                    ← Header, Sidebar, PageTransition
+    os/                        ← OSForm, OSTable
+    ui/                        ← Modal, Toast, Badge, Skeleton, AnimatedCounter
+  hooks/
+    useSupabase.ts             ← queries e mutations Supabase
+    useAnimations.ts           ← animações Framer Motion
+  lib/
+    supabase.ts                ← client Supabase
+    constants.ts               ← SETORES, cores, constantes globais
+    utils.ts                   ← helpers gerais
+  types/index.ts               ← interfaces TypeScript
+supabase/migrations            ← SQL em ordem numérica (001→005)
 ```
 
-## Módulos JS — o que editar para cada tarefa
+## Componentes — o que editar para cada tarefa
 
 | Arquivo | Editar quando quiser... |
 |---|---|
-| `src/js/config.js` | Trocar projeto Supabase |
-| `src/js/constants.js` | Adicionar/renomear setor, mudar cores |
-| `src/js/helpers.js` | Mudar toast, calcular dias diferente |
-| `src/js/init.js` | Alterar ordem de carregamento inicial |
-| `src/js/operadores.js` | Mudar lógica de vínculos ou operadores |
-| `src/js/dashboard.js` | KPIs, alertas, tabela principal |
-| `src/js/kanban.js` | Cards, drag & drop, avançar/voltar |
-| `src/js/campos-extras.js` | Campos dinâmicos do formulário |
-| `src/js/modal-nova-os.js` | Formulário de criação de OS |
-| `src/js/modal-editar-os.js` | Formulário de edição/exclusão de OS |
-| `src/js/configurador-campos.js` | Config de campos extras |
-| `src/js/configurador-etapas.js` | Config de etapas do Kanban |
-| `src/js/configurador-ops.js` | Config de operadores por setor |
-
-## Seções HTML
-
-| Arquivo | Conteúdo |
-|---|---|
-| `src/html/sections/header.html` | Logo, data, badge Supabase, nav |
-| `src/html/sections/dashboard.html` | KPIs, barras de progresso, tabela |
-| `src/html/sections/kanban.html` | Board com abas de setor |
-| `src/html/sections/agenda.html` | Reuniões semanais e mensais |
-| `src/html/sections/matrizes.html` | Análise, gargalos, infraestrutura |
-| `src/html/modals/nova-os.html` | Modal de nova OS |
-| `src/html/modals/editar-os.html` | Modal de edição de OS |
-| `src/html/modals/config.html` | Modal ⚙️ Config (campos+etapas+operadores) |
+| `src/lib/supabase.ts` | Trocar projeto Supabase |
+| `src/lib/constants.ts` | Adicionar/renomear setor, mudar cores |
+| `src/lib/utils.ts` | Mudar toast, formatação de datas |
+| `src/hooks/useSupabase.ts` | Mudar lógica de queries/mutations |
+| `src/pages/Dashboard.tsx` | KPIs, alertas, tabela principal |
+| `src/pages/Kanban.tsx` | Board com abas de setor |
+| `src/components/kanban/` | Cards, drag & drop, colunas |
+| `src/components/os/OSForm.tsx` | Formulário de criação/edição de OS |
+| `src/pages/Config.tsx` | Config de campos, etapas, operadores |
+| `src/pages/Agenda.tsx` | Reuniões semanais e mensais |
+| `src/pages/Matrizes.tsx` | Análise, gargalos, infraestrutura |
 
 ---
 
@@ -71,27 +69,16 @@ supabase/migrations ← SQL em ordem numérica (001→002→003)
 ### Adicionar nova migration
 ```bash
 # Via MCP Supabase no Claude Code:
-# Supabase:apply_migration(project_id="yfnfcdxmirvfhzphuigy", name="004_...", query="...")
-# Salvar também em supabase/migrations/004_nome.sql
+# Supabase:apply_migration(project_id="yfnfcdxmirvfhzphuigy", name="005_...", query="...")
+# Salvar também em supabase/migrations/005_nome.sql
 ```
-
----
-
-## Como aplicar mudanças dos src/ no index.html
-
-Os arquivos `src/` são para **edição e referência** no Claude Code.
-O `index.html` é o arquivo de deploy (tem tudo junto).
-
-Para refletir uma edição do `src/` no `index.html`:
-1. Edite o módulo em `src/`
-2. Peça ao Claude Code: *"Aplica a mudança do src/js/kanban.js no index.html"*
 
 ---
 
 ## Setores e cores
 
-```js
-// src/js/constants.js
+```ts
+// src/lib/constants.ts
 const SETORES = [
   'Bomba Injetora',        // #3b82f6 azul
   'Bomba de Alta',         // #f59e0b amarelo
@@ -117,9 +104,9 @@ vercel deploy --prod --name=nova-sao-luiz-diesel
 ## Convenções de código
 
 - **Erros Supabase:** sempre `error?.message` — nunca `throw error` direto (causa DataCloneError)
-- **Feedback:** usar `toast('msg', 'ok'|'err')` — nunca alert() para erros de API
-- **IDs HTML:** prefixo `m-` (nova OS), `e-` (editar), `cfg-` (config)
-- **Async:** todas as chamadas Supabase são async/await com try/catch
+- **Feedback:** usar componente `<Toast>` ou hook de toast — nunca `alert()` para erros de API
+- **Tipagem:** todas as entidades têm interface em `src/types/index.ts` — não usar `any`
+- **Async:** todas as chamadas Supabase são async/await com try/catch dentro de `useSupabase.ts`
 
 ## Problemas conhecidos
 
