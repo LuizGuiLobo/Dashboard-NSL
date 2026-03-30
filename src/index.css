@@ -5,28 +5,28 @@
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #252a33; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #374151; }
+::-webkit-scrollbar-thumb { background: #44464F; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #5C5F6B; }
 
 /* Selection */
-::selection { background: rgba(245, 158, 11, 0.3); color: #fff; }
+::selection { background: rgba(255, 186, 70, 0.25); color: #fff; }
 
 /* Base */
 body {
-  background: #0a0c10;
-  color: #e5e7eb;
-  font-family: 'DM Sans', sans-serif;
+  background: #131313;
+  color: #E5E2E1;
+  font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 /* Smooth scrollbar for kanban */
 .scrollbar-thin::-webkit-scrollbar { height: 4px; }
-.scrollbar-thin::-webkit-scrollbar-thumb { background: #252a33; border-radius: 2px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: #44464F; border-radius: 2px; }
 
 /* Focus visible */
 :focus-visible {
-  outline: 2px solid #f59e0b;
+  outline: 2px solid #FFBA46;
   outline-offset: 2px;
   border-radius: 4px;
 }

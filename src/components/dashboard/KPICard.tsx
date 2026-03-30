@@ -18,22 +18,22 @@ export function KPICard({ title, value, icon: Icon, color, suffix = '', decimals
     <motion.div
       variants={staggerItem}
       whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
-      className="relative bg-dark-surface border border-dark-border rounded-xl p-5 overflow-hidden group cursor-default"
+      className="relative bg-dark-surface2 rounded-lg p-5 overflow-hidden group cursor-default"
     >
-      {/* Glow effect */}
+      {/* Tonal glow on hover */}
       <div
         className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-        style={{ background: `radial-gradient(circle at 50% 0%, ${color}10, transparent 70%)` }}
+        style={{ background: `radial-gradient(circle at 50% 0%, ${color}12, transparent 65%)` }}
       />
 
       <div className="relative z-10">
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-body font-semibold text-dark-muted uppercase tracking-wider">{title}</span>
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-[11px] font-body font-semibold text-dark-muted uppercase tracking-widest">{title}</span>
           <div
-            className="w-9 h-9 rounded-lg flex items-center justify-center"
-            style={{ backgroundColor: `${color}15`, color }}
+            className="w-8 h-8 rounded-lg flex items-center justify-center"
+            style={{ backgroundColor: `${color}18`, color }}
           >
-            <Icon className="w-5 h-5" />
+            <Icon className="w-4 h-4" />
           </div>
         </div>
 
@@ -41,11 +41,11 @@ export function KPICard({ title, value, icon: Icon, color, suffix = '', decimals
           value={value}
           suffix={suffix}
           decimals={decimals}
-          className="text-3xl font-bold text-white"
+          className="text-3xl font-display font-bold text-onsurface"
         />
 
         {subtitle && (
-          <p className="text-xs text-dark-muted mt-1 font-body">{subtitle}</p>
+          <p className="text-xs text-dark-muted mt-1.5 font-body">{subtitle}</p>
         )}
       </div>
     </motion.div>

@@ -25,19 +25,19 @@ export function KanbanColumn({ etapa, ordens, onEdit, onDelete }: KanbanColumnPr
     >
       {/* Header */}
       <div className="flex items-center gap-2 mb-3 px-1">
-        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: etapa.cor }} />
-        <h3 className="text-xs font-display tracking-wider text-white uppercase">{etapa.label}</h3>
+        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: etapa.cor }} />
+        <h3 className="text-xs font-display font-bold tracking-widest text-onsurface uppercase">{etapa.label}</h3>
         <span
-          className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md"
-          style={{ backgroundColor: `${etapa.cor}20`, color: etapa.cor }}
+          className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded"
+          style={{ backgroundColor: `${etapa.cor}18`, color: etapa.cor }}
         >
           {ordens.length}
         </span>
       </div>
 
       {/* Cards */}
-      <div className={`space-y-3 min-h-[100px] p-2 rounded-xl transition-colors duration-300 ${
-        isOver ? 'bg-dark-surface2/50' : 'bg-transparent'
+      <div className={`space-y-2.5 min-h-[100px] p-2 rounded-lg transition-colors duration-300 ${
+        isOver ? 'bg-dark-surface2/40' : 'bg-transparent'
       }`}>
         {ordens.length === 0 ? (
           <div className="text-center py-8 text-dark-muted text-xs font-body">vazio</div>

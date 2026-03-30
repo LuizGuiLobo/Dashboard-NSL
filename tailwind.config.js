@@ -6,19 +6,26 @@ module.exports = {
     extend: {
       colors: {
         dark: {
-          bg: '#0a0c10',
-          surface: '#111419',
-          surface2: '#191d24',
-          border: '#252a33',
-          muted: '#6b7280',
+          bg: '#131313',
+          surface: '#1B1B1B',
+          surface2: '#2A2A2A',
+          surface3: '#353535',
+          border: '#44464F',
+          muted: '#737373',
+        },
+        primary: {
+          DEFAULT: '#B3C5FE',
+          container: '#405284',
         },
         accent: {
-          DEFAULT: '#f59e0b',
-          hover: '#d97706',
+          DEFAULT: '#FFBA46',
+          hover: '#D08E00',
+          fixed: '#FFDDB0',
         },
+        onsurface: '#E5E2E1',
         setor: {
           bombaInjetora: '#3b82f6',
-          bombaAlta: '#f59e0b',
+          bombaAlta: '#FFBA46',
           injetoresMec: '#10b981',
           injetoresEle: '#8b5cf6',
           veiculoDiesel: '#ef4444',
@@ -26,8 +33,8 @@ module.exports = {
         },
       },
       fontFamily: {
-        display: ['"Bebas Neue"', 'sans-serif'],
-        body: ['"DM Sans"', 'sans-serif'],
+        display: ['"Manrope"', 'sans-serif'],
+        body: ['"Inter"', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'monospace'],
       },
       keyframes: {

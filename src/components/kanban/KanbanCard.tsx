@@ -29,9 +29,11 @@ export function KanbanCard({ os, onEdit, onDelete, overlay }: KanbanCardProps) {
       {...(!overlay ? { ...attributes, ...listeners } : {})}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: isDragging ? 0.4 : 1, y: 0 }}
-      whileHover={!overlay ? { scale: 1.02 } : undefined}
-      className={`bg-dark-surface border border-dark-border rounded-xl p-4 cursor-grab active:cursor-grabbing transition-shadow ${
-        overlay ? 'shadow-2xl shadow-black/50 ring-2 ring-accent/30' : 'hover:shadow-lg hover:shadow-black/20 hover:border-dark-muted/30'
+      whileHover={!overlay ? { scale: 1.015 } : undefined}
+      className={`bg-dark-surface3 rounded-lg p-4 cursor-grab active:cursor-grabbing transition-shadow ${
+        overlay
+          ? 'shadow-[0px_24px_48px_rgba(0,0,0,0.5)] ring-2 ring-accent/40'
+          : 'hover:shadow-[0px_8px_24px_rgba(0,0,0,0.3)]'
       }`}
     >
       {/* Header */}
@@ -61,12 +63,12 @@ export function KanbanCard({ os, onEdit, onDelete, overlay }: KanbanCardProps) {
       )}
 
       {/* Info */}
-      {os.placa && <p className="text-sm font-mono font-bold text-white">{os.placa}</p>}
+      {os.placa && <p className="text-sm font-mono font-bold text-onsurface">{os.placa}</p>}
       {os.modelo && <p className="text-xs text-dark-muted">{os.modelo}</p>}
-      <p className="text-sm font-body font-semibold text-white/90 mt-1">{os.cliente}</p>
+      <p className="text-sm font-body font-semibold text-onsurface mt-1">{os.cliente}</p>
 
       {/* Dias */}
-      <div className={`flex items-center gap-1 mt-2 text-xs font-mono font-bold px-2 py-1 rounded-md border w-fit ${diasStyle.bg} ${diasStyle.cor}`}>
+      <div className={`flex items-center gap-1 mt-2 text-xs font-mono font-bold px-2 py-1 rounded border w-fit ${diasStyle.bg} ${diasStyle.cor}`}>
         <Clock className="w-3 h-3" /> {dias}d
       </div>
 
@@ -79,7 +81,9 @@ export function KanbanCard({ os, onEdit, onDelete, overlay }: KanbanCardProps) {
 
       {/* Observacoes preview */}
       {os.observacoes && (
-        <p className="text-xs text-dark-muted mt-2 line-clamp-2 border-t border-dark-border pt-2">{os.observacoes}</p>
+        <p className="text-xs text-dark-muted mt-2 line-clamp-2 pt-2" style={{ borderTop: '1px solid rgba(68,70,79,0.3)' }}>
+          {os.observacoes}
+        </p>
       )}
     </motion.div>
   )

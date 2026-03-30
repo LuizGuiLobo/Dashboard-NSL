@@ -12,14 +12,24 @@ interface ChartsProps {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-dark-surface2 border border-dark-border rounded-lg px-3 py-2 shadow-xl">
-      <p className="text-xs text-dark-muted font-body">{label}</p>
+    <div
+      className="px-3 py-2 rounded-lg shadow-xl"
+      style={{
+        background: 'rgba(53,53,53,0.92)',
+        backdropFilter: 'blur(12px)',
+        border: '1px solid rgba(68,70,79,0.3)',
+      }}
+    >
+      <p className="text-xs text-dark-muted font-body mb-1">{label}</p>
       {payload.map((p: any, i: number) => (
         <p key={i} className="text-sm font-mono font-bold" style={{ color: p.color }}>{p.value}</p>
       ))}
     </div>
   )
 }
+
+const cardClass = 'bg-dark-surface2 rounded-lg p-5'
+const titleClass = 'text-xs font-display font-bold tracking-widest text-onsurface uppercase mb-4'
 
 export function ChartOSporSetor({ ordens }: { ordens: OrdemServico[] }) {
   const data = SETORES.map(s => ({
@@ -29,15 +39,15 @@ export function ChartOSporSetor({ ordens }: { ordens: OrdemServico[] }) {
   }))
 
   return (
-    <motion.div variants={staggerItem} className="bg-dark-surface border border-dark-border rounded-xl p-5">
-      <h3 className="text-sm font-display tracking-wider text-white mb-4">OS POR SETOR</h3>
+    <motion.div variants={staggerItem} className={cardClass}>
+      <h3 className={titleClass}>OS por Setor</h3>
       <ResponsiveContainer width="100%" height={250}>
         <BarChart data={data}>
-          <XAxis dataKey="setor" tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={false} tickLine={false} />
+          <XAxis dataKey="setor" tick={{ fill: '#737373', fontSize: 10 }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fill: '#737373', fontSize: 11 }} axisLine={false} tickLine={false} />
           <Tooltip content={<CustomTooltip />} />
-          <Bar dataKey="total" radius={[6, 6, 0, 0]} animationDuration={1200}>
-            {data.map((d, i) => <Cell key={i} fill={d.cor} fillOpacity={0.85} />)}
+          <Bar dataKey="total" radius={[4, 4, 0, 0]} animationDuration={1200}>
+            {data.map((d, i) => <Cell key={i} fill={d.cor} fillOpacity={0.8} />)}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
@@ -54,15 +64,15 @@ export function ChartStatusPizza({ ordens, etapas }: ChartsProps) {
 
   if (!data.length) {
     return (
-      <motion.div variants={staggerItem} className="bg-dark-surface border border-dark-border rounded-xl p-5 flex items-center justify-center h-[310px]">
+      <motion.div variants={staggerItem} className={`${cardClass} flex items-center justify-center h-[310px]`}>
         <p className="text-dark-muted text-sm font-body">Sem dados para exibir</p>
       </motion.div>
     )
   }
 
   return (
-    <motion.div variants={staggerItem} className="bg-dark-surface border border-dark-border rounded-xl p-5">
-      <h3 className="text-sm font-display tracking-wider text-white mb-4">POR STATUS</h3>
+    <motion.div variants={staggerItem} className={cardClass}>
+      <h3 className={titleClass}>Por Status</h3>
       <ResponsiveContainer width="100%" height={250}>
         <PieChart>
           <Pie
@@ -80,10 +90,10 @@ export function ChartStatusPizza({ ordens, etapas }: ChartsProps) {
           <Tooltip content={<CustomTooltip />} />
         </PieChart>
       </ResponsiveContainer>
-      <div className="flex flex-wrap gap-2 mt-2">
+      <div className="flex flex-wrap gap-3 mt-2">
         {data.map((d, i) => (
           <div key={i} className="flex items-center gap-1.5 text-xs text-dark-muted">
-            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: d.color }} />
             {d.name} ({d.value})
           </div>
         ))}
@@ -105,15 +115,23 @@ export function ChartEvolucaoMensal({ ordens }: { ordens: OrdemServico[] }) {
   })
 
   return (
-    <motion.div variants={staggerItem} className="bg-dark-surface border border-dark-border rounded-xl p-5">
-      <h3 className="text-sm font-display tracking-wider text-white mb-4">EVOLUCAO MENSAL</h3>
+    <motion.div variants={staggerItem} className={cardClass}>
+      <h3 className={titleClass}>Evolução Mensal</h3>
       <ResponsiveContainer width="100%" height={250}>
         <LineChart data={meses}>
-          <CartesianGrid stroke="#252a33" strokeDasharray="3 3" />
-          <XAxis dataKey="mes" tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={false} tickLine={false} />
+          <CartesianGrid stroke="#2A2A2A" strokeDasharray="0" />
+          <XAxis dataKey="mes" tick={{ fill: '#737373', fontSize: 11 }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fill: '#737373', fontSize: 11 }} axisLine={false} tickLine={false} />
           <Tooltip content={<CustomTooltip />} />
-          <Line type="monotone" dataKey="abertas" stroke="#f59e0b" strokeWidth={2.5} dot={{ fill: '#f59e0b', r: 4 }} animationDuration={1500} />
+          <Line
+            type="monotone"
+            dataKey="abertas"
+            stroke="#FFBA46"
+            strokeWidth={2.5}
+            dot={{ fill: '#FFBA46', r: 4, strokeWidth: 0 }}
+            activeDot={{ r: 6, fill: '#FFBA46', stroke: '#FFDDB0', strokeWidth: 2 }}
+            animationDuration={1500}
+          />
         </LineChart>
       </ResponsiveContainer>
     </motion.div>
@@ -124,21 +142,23 @@ export function PatioIndicator({ ordens }: { ordens: OrdemServico[] }) {
   const patio = ordens.filter(o => o.setor === 'Veículo Diesel' && o.status !== 'Concluído' && o.status !== 'Entregue')
 
   return (
-    <motion.div variants={staggerItem} className="bg-dark-surface border border-dark-border rounded-xl p-5">
-      <h3 className="text-sm font-display tracking-wider text-white mb-4">VEICULOS NO PATIO</h3>
+    <motion.div variants={staggerItem} className={cardClass}>
+      <h3 className={titleClass}>Veículos no Pátio</h3>
       {!patio.length ? (
-        <p className="text-dark-muted text-sm font-body py-4 text-center">Nenhum veiculo no patio</p>
+        <p className="text-dark-muted text-sm font-body py-4 text-center">Nenhum veículo no pátio</p>
       ) : (
         <div className="space-y-2 max-h-[200px] overflow-y-auto">
           {patio.map(o => {
             const dias = Math.floor((Date.now() - new Date(o.data_entrada).getTime()) / 86400000)
-            const cor = dias >= 7 ? 'text-red-400 bg-red-500/10 border-red-500/20'
-              : dias >= 4 ? 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20'
+            const cor = dias >= 7
+              ? 'text-red-400 bg-red-500/10 border-red-500/20'
+              : dias >= 4
+              ? 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20'
               : 'text-green-400 bg-green-500/10 border-green-500/20'
             return (
-              <div key={o.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-dark-surface2">
+              <div key={o.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-dark-surface3">
                 <div>
-                  <span className="text-sm font-mono text-white">{o.placa || o.numero}</span>
+                  <span className="text-sm font-mono text-onsurface">{o.placa || o.numero}</span>
                   <span className="text-xs text-dark-muted ml-2">{o.cliente}</span>
                 </div>
                 <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded border ${cor}`}>{dias}d</span>

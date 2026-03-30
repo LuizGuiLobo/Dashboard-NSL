@@ -24,11 +24,11 @@ export function Header({ onMenuToggle, darkMode, onToggleDark }: HeaderProps) {
   }, [])
 
   return (
-    <header className="sticky top-0 z-30 h-16 bg-dark-surface/80 backdrop-blur-xl border-b border-dark-border flex items-center justify-between px-4 md:px-6">
+    <header className="sticky top-0 z-30 h-16 bg-dark-surface/90 backdrop-blur-xl flex items-center justify-between px-4 md:px-6">
       <div className="flex items-center gap-3">
         <button
           onClick={onMenuToggle}
-          className="lg:hidden p-2 rounded-lg text-dark-muted hover:text-white hover:bg-dark-surface2 transition-all"
+          className="lg:hidden p-2 rounded-lg text-dark-muted hover:text-onsurface hover:bg-dark-surface2 transition-all"
         >
           <Menu className="w-5 h-5" />
         </button>
@@ -38,7 +38,9 @@ export function Header({ onMenuToggle, darkMode, onToggleDark }: HeaderProps) {
       <div className="flex items-center gap-2">
         {/* Status Supabase */}
         <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono ${
-          supaOk ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
+          supaOk
+            ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+            : 'bg-red-500/10 text-red-400 border border-red-500/20'
         }`}>
           {supaOk ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
           {supaOk ? 'Supabase' : 'Offline'}

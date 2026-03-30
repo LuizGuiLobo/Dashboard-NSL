@@ -22,14 +22,16 @@ interface SidebarProps {
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <motion.aside
-      className="fixed left-0 top-0 h-screen bg-dark-surface border-r border-dark-border z-40 flex flex-col"
+      className="fixed left-0 top-0 h-screen bg-dark-surface z-40 flex flex-col"
       animate={{ width: collapsed ? 72 : 240 }}
       transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 px-4 h-16 border-b border-dark-border">
-        <div className="w-9 h-9 rounded-lg bg-accent/20 flex items-center justify-center flex-shrink-0">
-          <Fuel className="w-5 h-5 text-accent" />
+      <div className="flex items-center gap-3 px-4 h-16">
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{ background: 'linear-gradient(135deg, #B3C5FE 0%, #405284 100%)' }}
+        >
+          <Fuel className="w-5 h-5 text-white" />
         </div>
         {!collapsed && (
           <motion.div
@@ -37,24 +39,24 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             animate={{ opacity: 1 }}
             className="overflow-hidden"
           >
-            <p className="font-display text-lg tracking-wider text-white leading-none">NOVA SÃO LUIZ</p>
-            <p className="text-[10px] text-accent font-body font-semibold tracking-widest">DIESEL</p>
+            <p className="font-display font-bold text-base tracking-wide text-onsurface leading-none">NOVA SÃO LUIZ</p>
+            <p className="text-[10px] text-accent font-body font-semibold tracking-widest mt-0.5">DIESEL</p>
           </motion.div>
         )}
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 py-4 px-2 space-y-1">
+      <nav className="flex-1 py-4 px-2 space-y-0.5">
         {NAV_ITEMS.map(item => (
           <NavLink
             key={item.to}
             to={item.to}
             className={({ isActive }) =>
               cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-body font-medium transition-all duration-200',
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-body font-medium transition-all duration-200',
                 isActive
-                  ? 'bg-accent/15 text-accent shadow-lg shadow-accent/5'
-                  : 'text-dark-muted hover:text-white hover:bg-dark-surface2'
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-dark-muted hover:text-onsurface hover:bg-dark-surface2'
               )
             }
           >
@@ -75,7 +77,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Toggle */}
       <button
         onClick={onToggle}
-        className="flex items-center justify-center h-12 border-t border-dark-border text-dark-muted hover:text-white transition-colors"
+        className="flex items-center justify-center h-12 text-dark-muted hover:text-onsurface transition-colors"
       >
         {collapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
       </button>

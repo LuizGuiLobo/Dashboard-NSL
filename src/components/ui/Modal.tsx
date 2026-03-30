@@ -28,19 +28,26 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
           animate="visible"
           exit="exit"
         >
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={onClose} />
           <motion.div
-            className={`relative w-full ${sizes[size]} bg-dark-surface border border-dark-border rounded-2xl shadow-2xl max-h-[90vh] flex flex-col`}
+            className={`relative w-full ${sizes[size]} rounded-xl max-h-[90vh] flex flex-col`}
+            style={{
+              background: 'rgba(53, 53, 53, 0.82)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid rgba(68, 70, 79, 0.25)',
+              boxShadow: '0px 24px 48px rgba(0, 0, 0, 0.4)',
+            }}
             variants={modalVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
           >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-dark-border">
-              <h2 className="text-xl font-display tracking-wide text-white">{title}</h2>
+            <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid rgba(68, 70, 79, 0.25)' }}>
+              <h2 className="text-lg font-display font-bold tracking-wide text-onsurface">{title}</h2>
               <button
                 onClick={onClose}
-                className="p-2 rounded-lg text-dark-muted hover:text-white hover:bg-dark-surface2 transition-all"
+                className="p-2 rounded-lg text-dark-muted hover:text-onsurface hover:bg-dark-surface2 transition-all"
               >
                 <X className="w-5 h-5" />
               </button>
