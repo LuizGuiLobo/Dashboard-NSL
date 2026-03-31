@@ -19,10 +19,12 @@ export function useOrdens() {
 
   useEffect(() => { carregar() }, [carregar])
 
-  const criar = async (os: Partial<OrdemServico>) => {
-    const { error } = await supabase.from('ordens_servico').insert([os])
+  const criar = async (os: Partial<OrdemServico>): Promise<string | undefined> => {
+    const { data: novo, error } = await supabase
+      .from('ordens_servico').insert([os]).select('id').single()
     if (error) throw new Error(error.message)
     await carregar()
+    return novo?.id
   }
 
   const atualizar = async (id: string, dados: Partial<OrdemServico>) => {

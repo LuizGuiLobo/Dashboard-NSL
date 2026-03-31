@@ -5,7 +5,7 @@ import { KanbanBoard } from '@/components/kanban/KanbanBoard'
 import { OSForm } from '@/components/os/OSForm'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/Toast'
-import type { OrdemServico, EtapaKanban, CampoConfig, Operador } from '@/types'
+import type { OrdemServico, EtapaKanban, CampoConfig, Operador, OSVinculo } from '@/types'
 
 interface KanbanPageProps {
   ordens: OrdemServico[]
@@ -13,13 +13,15 @@ interface KanbanPageProps {
   todasEtapas: EtapaKanban[]
   campos: CampoConfig[]
   operadores: Operador[]
+  vinculos: OSVinculo[]
+  criarVinculo: (origemId: string, destinoId: string) => Promise<void>
   loading: boolean
-  onCriar: (os: Partial<OrdemServico>) => Promise<void>
+  onCriar: (os: Partial<OrdemServico>) => Promise<string | undefined>
   onAtualizar: (id: string, dados: Partial<OrdemServico>) => Promise<void>
   onExcluir: (id: string) => Promise<void>
 }
 
-export function Kanban({ ordens, etapasDoSetor, todasEtapas, campos, operadores, loading, onCriar, onAtualizar, onExcluir }: KanbanPageProps) {
+export function Kanban({ ordens, etapasDoSetor, todasEtapas, campos, operadores, vinculos, criarVinculo, loading, onCriar, onAtualizar, onExcluir }: KanbanPageProps) {
   const [modalCriar, setModalCriar] = useState(false)
   const [osEditando, setOsEditando] = useState<OrdemServico | null>(null)
   const [saving, setSaving] = useState(false)
@@ -34,10 +36,11 @@ export function Kanban({ ordens, etapasDoSetor, todasEtapas, campos, operadores,
     }
   }
 
-  const handleCriar = async (data: Partial<OrdemServico>) => {
+  const handleCriar = async (data: Partial<OrdemServico>, vinculoId?: string) => {
     setSaving(true)
     try {
-      await onCriar(data)
+      const novoId = await onCriar(data)
+      if (vinculoId && novoId) await criarVinculo(novoId, vinculoId)
       setModalCriar(false)
       toast('OS criada com sucesso!')
     } catch (e: any) {
@@ -73,7 +76,7 @@ export function Kanban({ ordens, etapasDoSetor, todasEtapas, campos, operadores,
     <PageTransition>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-display tracking-wider text-white">KANBAN POR SETOR</h1>
+          <h1 className="text-3xl font-display tracking-wider text-onsurface">KANBAN POR SETOR</h1>
           <button
             onClick={() => setModalCriar(true)}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent text-black font-body font-bold text-sm hover:bg-accent-hover transition-all shadow-lg shadow-accent/20 hover:shadow-accent/40"
@@ -85,6 +88,7 @@ export function Kanban({ ordens, etapasDoSetor, todasEtapas, campos, operadores,
         <KanbanBoard
           ordens={ordens}
           etapasDoSetor={etapasDoSetor}
+          vinculos={vinculos}
           loading={loading}
           onMove={handleMove}
           onEdit={setOsEditando}

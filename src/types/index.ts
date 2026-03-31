@@ -37,7 +37,7 @@ export interface CampoConfig {
 export interface Operador {
   id: string
   nome: string
-  setor: string
+  setores: string[]
   ativo: boolean
   criado_em: string
 }

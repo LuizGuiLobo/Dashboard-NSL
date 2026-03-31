@@ -1,6 +1,6 @@
 import { useDraggable } from '@dnd-kit/core'
 import { motion } from 'framer-motion'
-import { Pencil, Trash2, User, Clock } from 'lucide-react'
+import { Pencil, Trash2, User, Clock, Link } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
 import { diasDesdeEntrada, badgeDias } from '@/lib/utils'
 import { corDoSetor } from '@/lib/constants'
@@ -8,12 +8,13 @@ import type { OrdemServico } from '@/types'
 
 interface KanbanCardProps {
   os: OrdemServico
+  vinculosCount?: number
   onEdit: (os: OrdemServico) => void
   onDelete: (id: string) => void
   overlay?: boolean
 }
 
-export function KanbanCard({ os, onEdit, onDelete, overlay }: KanbanCardProps) {
+export function KanbanCard({ os, vinculosCount, onEdit, onDelete, overlay }: KanbanCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: os.id })
   const dias = diasDesdeEntrada(os.data_entrada)
   const diasStyle = badgeDias(dias)
@@ -76,6 +77,13 @@ export function KanbanCard({ os, onEdit, onDelete, overlay }: KanbanCardProps) {
       {os.operador && (
         <div className="flex items-center gap-1.5 mt-2 text-xs text-dark-muted">
           <User className="w-3 h-3" /> {os.operador}
+        </div>
+      )}
+
+      {/* Vinculos */}
+      {!!vinculosCount && (
+        <div className="flex items-center gap-1 mt-1.5 text-[10px] text-primary font-mono">
+          <Link className="w-3 h-3" /> {vinculosCount} vínculo{vinculosCount > 1 ? 's' : ''}
         </div>
       )}
 

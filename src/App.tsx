@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { Sidebar } from '@/components/layout/Sidebar'
@@ -10,24 +10,34 @@ import { OrdensServico } from '@/pages/OrdensServico'
 import { Agenda } from '@/pages/Agenda'
 import { Matrizes } from '@/pages/Matrizes'
 import { Config } from '@/pages/Config'
-import { useOrdens, useEtapas, useCampos, useOperadores } from '@/hooks/useSupabase'
+import { useOrdens, useEtapas, useCampos, useOperadores, useVinculos } from '@/hooks/useSupabase'
 
 export default function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [darkMode, setDarkMode] = useState(true)
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') !== 'light')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const { ordens, loading: loadingOS, criar, atualizar, excluir } = useOrdens()
   const { todasEtapas, loading: loadingEtapas, etapasDoSetor, todasEtapasUnicas, salvarSetor, carregar: carregarEtapas } = useEtapas()
   const { campos, loading: loadingCampos, salvar: salvarCampos } = useCampos()
   const { operadores, loading: loadingOps, salvar: salvarOperadores } = useOperadores()
+  const { vinculos, criar: criarVinculo } = useVinculos()
 
   const loading = loadingOS || loadingEtapas
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+    localStorage.setItem('theme', darkMode ? 'dark' : 'light')
+  }, [darkMode])
 
   return (
     <BrowserRouter>
       <ToastProvider>
-        <div className={`min-h-screen bg-dark-bg text-white font-body ${darkMode ? 'dark' : ''}`}>
+        <div className="min-h-screen bg-dark-bg text-onsurface font-body">
           {/* Sidebar desktop */}
           <div className="hidden lg:block">
             <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(c => !c)} />
@@ -60,6 +70,7 @@ export default function App() {
                   <Route path="/kanban" element={
                     <Kanban
                       ordens={ordens} etapasDoSetor={etapasDoSetor} todasEtapas={todasEtapas} campos={campos} operadores={operadores}
+                      vinculos={vinculos} criarVinculo={criarVinculo}
                       loading={loading}
                       onCriar={criar} onAtualizar={atualizar} onExcluir={excluir}
                     />
@@ -67,6 +78,7 @@ export default function App() {
                   <Route path="/ordens" element={
                     <OrdensServico
                       ordens={ordens} todasEtapas={todasEtapas} etapasDoSetor={etapasDoSetor} campos={campos} operadores={operadores}
+                      vinculos={vinculos} criarVinculo={criarVinculo}
                       loading={loading}
                       onCriar={criar} onAtualizar={atualizar} onExcluir={excluir}
                     />

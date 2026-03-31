@@ -127,19 +127,19 @@ export function Config({ todasEtapas, etapasDoSetor, campos, operadores, ordens,
   const [savingOps, setSavingOps] = useState(false)
 
   useEffect(() => {
-    setOpsTemp(operadores.map(o => ({ nome: o.nome, setor: o.setor, ativo: o.ativo })))
+    setOpsTemp(operadores.map(o => ({ nome: o.nome, setor: o.setores?.[0] || SETORES[0].nome, ativo: o.ativo })))
   }, [operadores])
 
   const salvarOps = async () => {
     setSavingOps(true)
     try {
-      await onSalvarOperadores(opsTemp)
+      await onSalvarOperadores(opsTemp.map(op => ({ nome: op.nome, setores: [op.setor], ativo: op.ativo })) as any)
       toast('Operadores salvos!')
     } catch (e: any) { toast(e.message, 'error') }
     setSavingOps(false)
   }
 
-  const inputClass = 'bg-dark-surface2 border border-dark-border rounded-lg px-3 py-2 text-sm text-white font-body placeholder-dark-muted focus:outline-none focus:border-accent transition-all'
+  const inputClass = 'bg-dark-surface2 border border-dark-border rounded-lg px-3 py-2 text-sm text-onsurface font-body placeholder-dark-muted focus:outline-none focus:border-accent transition-all'
   const btnSave = 'px-5 py-2.5 rounded-xl bg-accent text-black font-body font-bold text-sm hover:bg-accent-hover transition-all shadow-lg shadow-accent/20 disabled:opacity-50'
 
   const abas = [
@@ -151,7 +151,7 @@ export function Config({ todasEtapas, etapasDoSetor, campos, operadores, ordens,
   return (
     <PageTransition>
       <div className="space-y-6">
-        <h1 className="text-3xl font-display tracking-wider text-white">CONFIGURACOES</h1>
+        <h1 className="text-3xl font-display tracking-wider text-onsurface">CONFIGURACOES</h1>
 
         {/* Tabs */}
         <div className="flex gap-2 border-b border-dark-border pb-3">
@@ -160,7 +160,7 @@ export function Config({ todasEtapas, etapasDoSetor, campos, operadores, ordens,
               key={a.key}
               onClick={() => setAba(a.key)}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-body font-semibold transition-all ${
-                aba === a.key ? 'bg-accent/15 text-accent border border-accent/30' : 'text-dark-muted hover:text-white border border-transparent'
+                aba === a.key ? 'bg-accent/15 text-accent border border-accent/30' : 'text-dark-muted hover:text-onsurface border border-transparent'
               }`}
             >
               <a.icon className="w-4 h-4" /> {a.label}

@@ -6,12 +6,12 @@ module.exports = {
     extend: {
       colors: {
         dark: {
-          bg: '#131313',
-          surface: '#1B1B1B',
-          surface2: '#2A2A2A',
-          surface3: '#353535',
-          border: '#44464F',
-          muted: '#737373',
+          bg: 'var(--color-bg)',
+          surface: 'var(--color-surface)',
+          surface2: 'var(--color-surface2)',
+          surface3: 'var(--color-surface3)',
+          border: 'var(--color-border)',
+          muted: 'var(--color-muted)',
         },
         primary: {
           DEFAULT: '#B3C5FE',
@@ -22,7 +22,7 @@ module.exports = {
           hover: '#D08E00',
           fixed: '#FFDDB0',
         },
-        onsurface: '#E5E2E1',
+        onsurface: 'var(--color-onsurface)',
         setor: {
           bombaInjetora: '#3b82f6',
           bombaAlta: '#FFBA46',

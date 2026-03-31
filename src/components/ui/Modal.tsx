@@ -32,10 +32,10 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
           <motion.div
             className={`relative w-full ${sizes[size]} rounded-xl max-h-[90vh] flex flex-col`}
             style={{
-              background: 'rgba(53, 53, 53, 0.82)',
+              background: 'var(--modal-bg)',
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
-              border: '1px solid rgba(68, 70, 79, 0.25)',
+              border: '1px solid var(--modal-border)',
               boxShadow: '0px 24px 48px rgba(0, 0, 0, 0.4)',
             }}
             variants={modalVariants}
@@ -43,7 +43,7 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
             animate="visible"
             exit="exit"
           >
-            <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid rgba(68, 70, 79, 0.25)' }}>
+            <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid var(--modal-border)' }}>
               <h2 className="text-lg font-display font-bold tracking-wide text-onsurface">{title}</h2>
               <button
                 onClick={onClose}

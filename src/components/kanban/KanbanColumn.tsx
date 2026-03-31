@@ -7,11 +7,12 @@ import type { OrdemServico, EtapaKanban } from '@/types'
 interface KanbanColumnProps {
   etapa: EtapaKanban
   ordens: OrdemServico[]
+  vinculosCountMap: Record<string, number>
   onEdit: (os: OrdemServico) => void
   onDelete: (id: string) => void
 }
 
-export function KanbanColumn({ etapa, ordens, onEdit, onDelete }: KanbanColumnProps) {
+export function KanbanColumn({ etapa, ordens, vinculosCountMap, onEdit, onDelete }: KanbanColumnProps) {
   const { isOver, setNodeRef } = useDroppable({ id: etapa.label })
 
   return (
@@ -43,7 +44,13 @@ export function KanbanColumn({ etapa, ordens, onEdit, onDelete }: KanbanColumnPr
           <div className="text-center py-8 text-dark-muted text-xs font-body">vazio</div>
         ) : (
           ordens.map(os => (
-            <KanbanCard key={os.id} os={os} onEdit={onEdit} onDelete={onDelete} />
+            <KanbanCard
+              key={os.id}
+              os={os}
+              vinculosCount={vinculosCountMap[os.id] || 0}
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
           ))
         )}
       </div>

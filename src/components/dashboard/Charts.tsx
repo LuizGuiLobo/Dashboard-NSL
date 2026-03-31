@@ -15,9 +15,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     <div
       className="px-3 py-2 rounded-lg shadow-xl"
       style={{
-        background: 'rgba(53,53,53,0.92)',
+        background: 'var(--chart-tooltip-bg)',
         backdropFilter: 'blur(12px)',
-        border: '1px solid rgba(68,70,79,0.3)',
+        border: '1px solid var(--chart-tooltip-border)',
       }}
     >
       <p className="text-xs text-dark-muted font-body mb-1">{label}</p>
@@ -119,7 +119,7 @@ export function ChartEvolucaoMensal({ ordens }: { ordens: OrdemServico[] }) {
       <h3 className={titleClass}>Evolução Mensal</h3>
       <ResponsiveContainer width="100%" height={250}>
         <LineChart data={meses}>
-          <CartesianGrid stroke="#2A2A2A" strokeDasharray="0" />
+          <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="0" />
           <XAxis dataKey="mes" tick={{ fill: '#737373', fontSize: 11 }} axisLine={false} tickLine={false} />
           <YAxis tick={{ fill: '#737373', fontSize: 11 }} axisLine={false} tickLine={false} />
           <Tooltip content={<CustomTooltip />} />

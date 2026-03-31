@@ -2,29 +2,64 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Scrollbar */
+/* ── Theme tokens ─────────────────────────────────────── */
+:root {
+  --color-bg: #131313;
+  --color-surface: #1B1B1B;
+  --color-surface2: #2A2A2A;
+  --color-surface3: #353535;
+  --color-border: #44464F;
+  --color-muted: #737373;
+  --color-onsurface: #E5E2E1;
+  --modal-bg: rgba(53, 53, 53, 0.82);
+  --modal-border: rgba(68, 70, 79, 0.25);
+  --chart-tooltip-bg: rgba(53, 53, 53, 0.92);
+  --chart-tooltip-border: rgba(68, 70, 79, 0.3);
+  --chart-grid: #2A2A2A;
+  --scrollbar-thumb: #44464F;
+  --scrollbar-thumb-hover: #5C5F6B;
+}
+
+html:not(.dark) {
+  --color-bg: #F0F0F0;
+  --color-surface: #FFFFFF;
+  --color-surface2: #F7F7F7;
+  --color-surface3: #EFEFEF;
+  --color-border: #D0D0D0;
+  --color-muted: #8A8A8A;
+  --color-onsurface: #1C1C1C;
+  --modal-bg: rgba(255, 255, 255, 0.92);
+  --modal-border: rgba(0, 0, 0, 0.12);
+  --chart-tooltip-bg: rgba(255, 255, 255, 0.97);
+  --chart-tooltip-border: rgba(0, 0, 0, 0.12);
+  --chart-grid: #E0E0E0;
+  --scrollbar-thumb: #C0C0C0;
+  --scrollbar-thumb-hover: #A0A0A0;
+}
+
+/* ── Scrollbar ────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #44464F; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #5C5F6B; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
 
-/* Selection */
-::selection { background: rgba(255, 186, 70, 0.25); color: #fff; }
+/* ── Selection ────────────────────────────────────────── */
+::selection { background: rgba(255, 186, 70, 0.25); color: inherit; }
 
-/* Base */
+/* ── Base ─────────────────────────────────────────────── */
 body {
-  background: #131313;
-  color: #E5E2E1;
+  background: var(--color-bg);
+  color: var(--color-onsurface);
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Smooth scrollbar for kanban */
+/* ── Kanban scrollbar ─────────────────────────────────── */
 .scrollbar-thin::-webkit-scrollbar { height: 4px; }
-.scrollbar-thin::-webkit-scrollbar-thumb { background: #44464F; border-radius: 2px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 2px; }
 
-/* Focus visible */
+/* ── Focus visible ────────────────────────────────────── */
 :focus-visible {
   outline: 2px solid #FFBA46;
   outline-offset: 2px;

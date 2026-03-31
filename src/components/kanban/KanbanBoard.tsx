@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { DndContext, DragOverlay, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
 import { motion, AnimatePresence } from 'framer-motion'
 import { KanbanColumn } from './KanbanColumn'
@@ -6,24 +6,35 @@ import { KanbanCard } from './KanbanCard'
 import { staggerContainer } from '@/hooks/useAnimations'
 import { SETORES } from '@/lib/constants'
 import { KanbanSkeleton } from '@/components/ui/Skeleton'
-import type { OrdemServico, EtapaKanban } from '@/types'
+import type { OrdemServico, EtapaKanban, OSVinculo } from '@/types'
 
 interface KanbanBoardProps {
   ordens: OrdemServico[]
   etapasDoSetor: (setor: string) => EtapaKanban[]
+  vinculos: OSVinculo[]
   loading: boolean
   onMove: (osId: string, novoStatus: string) => void
   onEdit: (os: OrdemServico) => void
   onDelete: (id: string) => void
 }
 
-export function KanbanBoard({ ordens, etapasDoSetor, loading, onMove, onEdit, onDelete }: KanbanBoardProps) {
+export function KanbanBoard({ ordens, etapasDoSetor, vinculos, loading, onMove, onEdit, onDelete }: KanbanBoardProps) {
   const [setorAtivo, setSetorAtivo] = useState(SETORES[0].nome)
   const [draggingOS, setDraggingOS] = useState<OrdemServico | null>(null)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
   const ordensFiltradas = ordens.filter(o => o.setor === setorAtivo)
   const etapas = etapasDoSetor(setorAtivo)
+
+  // Count vinculos per OS (appears on both sides of the relation)
+  const vinculosCountMap = useMemo<Record<string, number>>(() => {
+    const map: Record<string, number> = {}
+    vinculos.forEach(v => {
+      map[v.os_origem] = (map[v.os_origem] || 0) + 1
+      map[v.os_destino] = (map[v.os_destino] || 0) + 1
+    })
+    return map
+  }, [vinculos])
 
   const handleDragStart = (event: DragStartEvent) => {
     const os = ordens.find(o => o.id === event.active.id)
@@ -58,7 +69,7 @@ export function KanbanBoard({ ordens, etapasDoSetor, loading, onMove, onEdit, on
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-body font-semibold whitespace-nowrap transition-all duration-200 border ${
                 active
                   ? 'text-white shadow-lg'
-                  : 'text-dark-muted bg-dark-surface2 border-dark-border hover:text-white hover:bg-dark-surface'
+                  : 'text-dark-muted bg-dark-surface2 border-dark-border hover:text-onsurface hover:bg-dark-surface'
               }`}
               style={active ? {
                 backgroundColor: `${s.cor}20`,
@@ -96,6 +107,7 @@ export function KanbanBoard({ ordens, etapasDoSetor, loading, onMove, onEdit, on
                   key={etapa.id}
                   etapa={etapa}
                   ordens={ordensFiltradas.filter(o => o.status === etapa.label)}
+                  vinculosCountMap={vinculosCountMap}
                   onEdit={onEdit}
                   onDelete={onDelete}
                 />

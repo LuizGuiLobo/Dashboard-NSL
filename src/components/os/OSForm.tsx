@@ -10,7 +10,7 @@ interface OSFormProps {
   campos: CampoConfig[]
   operadores: Operador[]
   ordens: OrdemServico[]
-  onSave: (data: Partial<OrdemServico>) => void
+  onSave: (data: Partial<OrdemServico>, vinculoId?: string) => void
   onCancel: () => void
   saving?: boolean
 }
@@ -50,19 +50,17 @@ export function OSForm({ os, etapasDoSetor, campos, operadores, ordens, onSave, 
     }
   }, [])
 
-  const operadoresDoSetor = operadores.filter(o => o.setor === form.setor && o.ativo !== false)
-  const mostrarVinculo = form.setor === 'Veículo Diesel' || form.setor === 'Turbinas'
+  const operadoresDoSetor = operadores.filter(o => o.setores?.includes(form.setor) && o.ativo !== false)
   const osDisponiveis = ordens.filter(o => o.id !== os?.id && o.setor !== form.setor)
 
   const set = (field: string, value: string) => {
     if (field === 'setor' && !isEdit) {
-      // When changing setor, also reset status to first etapa of new setor
       const novasEtapas = etapasDoSetor(value)
       setForm(prev => ({
         ...prev,
         setor: value,
         status: novasEtapas.length > 0 ? novasEtapas[0].label : '',
-        operador: '', // Reset operador when setor changes
+        operador: '',
       }))
       return
     }
@@ -78,13 +76,13 @@ export function OSForm({ os, etapasDoSetor, campos, operadores, ordens, onSave, 
     e.preventDefault()
     if (!form.cliente.trim()) return
     const { vinculo, ...data } = form
-    onSave(data)
+    onSave(data, vinculo || undefined)
   }
 
   // Check if current status is unknown (not in etapas of this setor)
   const statusDesconhecido = form.status && etapasAtuais.length > 0 && !etapasAtuais.find(e => e.label === form.status)
 
-  const inputClass = 'w-full bg-dark-surface2 border border-dark-border rounded-lg px-3 py-2.5 text-sm text-white font-body placeholder-dark-muted focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all'
+  const inputClass = 'w-full bg-dark-surface2 border border-dark-border rounded-lg px-3 py-2.5 text-sm text-onsurface font-body placeholder-dark-muted focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all'
   const labelClass = 'text-xs font-body font-semibold text-dark-muted uppercase tracking-wider mb-1.5 block'
 
   return (
@@ -151,6 +149,9 @@ export function OSForm({ os, etapasDoSetor, campos, operadores, ordens, onSave, 
             <option value="">Selecionar...</option>
             {operadoresDoSetor.map(o => <option key={o.id} value={o.nome}>{o.nome}</option>)}
           </select>
+          {operadoresDoSetor.length === 0 && (
+            <p className="text-xs text-dark-muted mt-1 font-body">Nenhum operador cadastrado para este setor.</p>
+          )}
         </div>
         <div>
           <label className={labelClass}>Data de Entrada</label>
@@ -180,10 +181,10 @@ export function OSForm({ os, etapasDoSetor, campos, operadores, ordens, onSave, 
         </div>
       )}
 
-      {/* Vinculo */}
-      {mostrarVinculo && (
+      {/* Vinculo com OS de outro setor */}
+      {osDisponiveis.length > 0 && (
         <div className="border-t border-dark-border pt-4">
-          <label className={labelClass}>Vincular a OS existente</label>
+          <label className={labelClass}>Vincular a OS existente (outro setor)</label>
           <select className={inputClass} value={form.vinculo} onChange={e => set('vinculo', e.target.value)}>
             <option value="">Sem vinculo</option>
             {osDisponiveis.map(o => <option key={o.id} value={o.id}>{o.numero} — {o.cliente} ({o.setor})</option>)}
@@ -199,7 +200,7 @@ export function OSForm({ os, etapasDoSetor, campos, operadores, ordens, onSave, 
 
       {/* Botoes */}
       <div className="flex gap-3 justify-end pt-2 border-t border-dark-border">
-        <button type="button" onClick={onCancel} className="px-5 py-2.5 rounded-xl text-sm font-body font-semibold text-dark-muted bg-dark-surface2 border border-dark-border hover:text-white transition-all">
+        <button type="button" onClick={onCancel} className="px-5 py-2.5 rounded-xl text-sm font-body font-semibold text-dark-muted bg-dark-surface2 border border-dark-border hover:text-onsurface transition-all">
           Cancelar
         </button>
         <button
