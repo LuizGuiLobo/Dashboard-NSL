@@ -31,16 +31,11 @@ async function analyticsKPIs(){
 async function analyticsAtrasadas(){
   const el=document.getElementById('analytics-atrasadas');
   const {data,error}=await sb.from('v_os_atrasadas').select('*');
-  if(error||!data?.length){
-    el.innerHTML='<div style="color:var(--accent3);font-size:13px;padding:12px 0">✅ Nenhuma OS atrasada!</div>';
-    return;
-  }
+  if(error||!data?.length){el.innerHTML='<div style="color:var(--accent3);font-size:13px;padding:12px 0">✅ Nenhuma OS atrasada!</div>';return;}
   el.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px">
     <thead><tr style="color:var(--muted);font-size:10px;text-transform:uppercase">
-      <th style="padding:6px 8px;text-align:left">OS</th>
-      <th style="padding:6px 8px;text-align:left">Cliente</th>
-      <th style="padding:6px 8px;text-align:left">Setor</th>
-      <th style="padding:6px 8px;text-align:left">Operador</th>
+      <th style="padding:6px 8px;text-align:left">OS</th><th style="padding:6px 8px;text-align:left">Cliente</th>
+      <th style="padding:6px 8px;text-align:left">Setor</th><th style="padding:6px 8px;text-align:left">Operador</th>
       <th style="padding:6px 8px;text-align:right;color:var(--accent4)">Dias</th>
     </tr></thead><tbody>
     ${data.map(o=>`<tr style="border-top:1px solid var(--border)">
@@ -56,10 +51,7 @@ async function analyticsAtrasadas(){
 async function analyticsRanking(){
   const el=document.getElementById('analytics-ranking');
   const {data,error}=await sb.from('v_operador_ranking').select('*');
-  if(error||!data?.length){
-    el.innerHTML='<div style="color:var(--muted);font-size:13px;padding:12px 0">Nenhum dado de gamificação ainda.</div>';
-    return;
-  }
+  if(error||!data?.length){el.innerHTML='<div style="color:var(--muted);font-size:13px;padding:12px 0">Nenhum dado de gamificação ainda.</div>';return;}
   const medals=['🥇','🥈','🥉'];
   el.innerHTML=data.map((op,i)=>`
     <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
@@ -78,27 +70,20 @@ async function analyticsRanking(){
 async function analyticsSLA(){
   const el=document.getElementById('analytics-sla');
   const {data,error}=await sb.from('v_os_sla').select('*').order('dias_totais',{ascending:false});
-  if(error||!data?.length){
-    el.innerHTML='<div style="color:var(--muted);font-size:13px;padding:12px 0">Nenhuma OS encontrada.</div>';
-    return;
-  }
+  if(error||!data?.length){el.innerHTML='<div style="color:var(--muted);font-size:13px;padding:12px 0">Nenhuma OS encontrada.</div>';return;}
   el.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap">
     <thead><tr style="color:var(--muted);font-size:10px;text-transform:uppercase">
-      <th style="padding:6px 8px;text-align:left">OS</th>
-      <th style="padding:6px 8px;text-align:left">Placa</th>
-      <th style="padding:6px 8px;text-align:left">Cliente</th>
-      <th style="padding:6px 8px;text-align:left">Setor</th>
-      <th style="padding:6px 8px;text-align:left">Operador</th>
-      <th style="padding:6px 8px;text-align:left">Status</th>
-      <th style="padding:6px 8px;text-align:right">Dias</th>
-      <th style="padding:6px 8px;text-align:right">Movim.</th>
+      <th style="padding:6px 8px;text-align:left">OS</th><th style="padding:6px 8px;text-align:left">Placa</th>
+      <th style="padding:6px 8px;text-align:left">Cliente</th><th style="padding:6px 8px;text-align:left">Setor</th>
+      <th style="padding:6px 8px;text-align:left">Operador</th><th style="padding:6px 8px;text-align:left">Status</th>
+      <th style="padding:6px 8px;text-align:right">Dias</th><th style="padding:6px 8px;text-align:right">Movim.</th>
       <th style="padding:6px 8px;text-align:right">Últ. Mov.</th>
     </tr></thead><tbody>
     ${data.map(o=>{
       const atrasada=(o.dias_totais||0)>=5&&!_isUltimasEtapas(o.status,o.setor);
-      const cor=atrasada?'var(--accent4)':(o.dias_totais>=2?'var(--accent)":'var(--accent3)');
+      const cor=atrasada?'var(--accent4)':(o.dias_totais>=2?'var(--accent)':'var(--accent3)');
       const ultMov=o.ultima_movimentacao?new Date(o.ultima_movimentacao).toLocaleDateString('pt-BR'):'—';
-      return `<tr style="border-top:1px solid var(--border);${atrasada?'background:rgba(239,68,68,.04)':''} ">
+      return `<tr style="border-top:1px solid var(--border);${atrasada?'background:rgba(239,68,68,.04)':''}">
         <td style="padding:6px 8px;font-family:var(--fm);color:var(--accent);font-weight:700">${o.numero}</td>
         <td style="padding:6px 8px;font-family:var(--fm);letter-spacing:1px;font-size:11px">${o.placa}</td>
         <td style="padding:6px 8px">${o.cliente}</td>
@@ -125,10 +110,7 @@ async function analyticsLoadTimeline(osId){
   if(!osId){el.innerHTML='';return;}
   el.innerHTML='<div style="color:var(--muted);font-size:12px">Carregando histórico…</div>';
   const {data,error}=await sb.from('v_os_timeline').select('*').eq('os_id',osId).order('criado_em');
-  if(error||!data?.length){
-    el.innerHTML='<div style="color:var(--muted);font-size:13px;padding:12px 0">Nenhuma movimentação registrada ainda para esta OS.</div>';
-    return;
-  }
+  if(error||!data?.length){el.innerHTML='<div style="color:var(--muted);font-size:13px;padding:12px 0">Nenhuma movimentação registrada ainda para esta OS.</div>';return;}
   el.innerHTML=`<div style="position:relative;padding-left:24px">
     ${data.map((ev,i)=>{
       const dt=new Date(ev.criado_em).toLocaleString('pt-BR');
@@ -136,7 +118,7 @@ async function analyticsLoadTimeline(osId){
       const cor=SETOR_COLORS[ev.setor]||'#64748b';
       return `<div style="position:relative;margin-bottom:16px">
         <div style="position:absolute;left:-20px;top:4px;width:10px;height:10px;border-radius:50%;background:${cor};border:2px solid var(--bg)"></div>
-        ${i<data.length-1?`<div style="position:absolute;left:-16px;top:14px;width:2px;height:calc(100% + 4px);background:var(--border)"></div>`:''}
+        ${i<data.length-1?'<div style="position:absolute;left:-16px;top:14px;width:2px;height:calc(100% + 4px);background:var(--border)"></div>':''}
         <div style="font-size:10px;color:var(--muted);margin-bottom:2px">${dt}${horas}</div>
         <div style="font-size:12px">
           <span style="color:${cor};font-size:10px;font-weight:700">${ev.setor}</span>&nbsp;
