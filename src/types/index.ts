@@ -42,6 +42,17 @@ export interface Operador {
   criado_em: string
 }
 
+export interface OSHistorico {
+  id: string
+  os_id: string
+  setor: string
+  status_anterior: string
+  status_novo: string
+  operador: string
+  tipo: 'status' | 'criacao' | 'edicao'
+  criado_em: string
+}
+
 export interface OSVinculo {
   id: string
   os_origem: string

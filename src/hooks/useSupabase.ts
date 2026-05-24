@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { OrdemServico, EtapaKanban, CampoConfig, Operador, OSVinculo } from '@/types'
+import type { OrdemServico, EtapaKanban, CampoConfig, Operador, OSVinculo, OSHistorico } from '@/types'
 
 export function useOrdens() {
   const [ordens, setOrdens] = useState<OrdemServico[]>([])
@@ -23,17 +23,36 @@ export function useOrdens() {
     const { data: novo, error } = await supabase
       .from('ordens_servico').insert([os]).select('id').single()
     if (error) throw new Error(error.message)
+    if (novo?.id) {
+      await supabase.from('os_historico').insert([{
+        os_id: novo.id, setor: os.setor || '', status_anterior: '', status_novo: os.status || '',
+        operador: os.operador || '', tipo: 'criacao',
+      }])
+    }
     await carregar()
     return novo?.id
   }
 
   const atualizar = async (id: string, dados: Partial<OrdemServico>) => {
+    const osAtual = ordens.find(o => o.id === id)
     const { error } = await supabase.from('ordens_servico').update(dados).eq('id', id)
     if (error) throw new Error(error.message)
+    if (dados.status && osAtual && dados.status !== osAtual.status) {
+      await supabase.from('os_historico').insert([{
+        os_id: id, setor: osAtual.setor, status_anterior: osAtual.status, status_novo: dados.status,
+        operador: dados.operador || osAtual.operador || '', tipo: 'status',
+      }])
+    } else if (Object.keys(dados).some(k => k !== 'atualizado_em')) {
+      await supabase.from('os_historico').insert([{
+        os_id: id, setor: osAtual?.setor || '', status_anterior: osAtual?.status || '', status_novo: osAtual?.status || '',
+        operador: dados.operador || osAtual?.operador || '', tipo: 'edicao',
+      }])
+    }
     await carregar()
   }
 
   const excluir = async (id: string) => {
+    await supabase.from('os_historico').delete().eq('os_id', id)
     await supabase.from('os_vinculos').delete().or(`os_origem.eq.${id},os_destino.eq.${id}`)
     const { error } = await supabase.from('ordens_servico').delete().eq('id', id)
     if (error) throw new Error(error.message)
@@ -174,4 +193,23 @@ export function useVinculos() {
   }
 
   return { vinculos, carregar, criar }
+}
+
+export function useHistorico(osId: string | null) {
+  const [historico, setHistorico] = useState<OSHistorico[]>([])
+
+  const carregar = useCallback(async () => {
+    if (!osId) return
+    const { data, error } = await supabase
+      .from('os_historico')
+      .select('*')
+      .eq('os_id', osId)
+      .order('criado_em', { ascending: false })
+    if (error) console.error('Erro ao carregar historico:', error.message)
+    setHistorico((data as OSHistorico[]) || [])
+  }, [osId])
+
+  useEffect(() => { carregar() }, [carregar])
+
+  return { historico, carregar }
 }

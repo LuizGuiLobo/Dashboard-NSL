@@ -123,20 +123,29 @@ export function Config({ todasEtapas, etapasDoSetor, campos, operadores, ordens,
   }
 
   // ==================== OPERADORES ====================
-  const [opsTemp, setOpsTemp] = useState<Array<{ nome: string; setor: string; ativo: boolean }>>([])
+  const [opsTemp, setOpsTemp] = useState<Array<{ nome: string; setores: string[]; ativo: boolean }>>([])
   const [savingOps, setSavingOps] = useState(false)
 
   useEffect(() => {
-    setOpsTemp(operadores.map(o => ({ nome: o.nome, setor: o.setores?.[0] || SETORES[0].nome, ativo: o.ativo })))
+    setOpsTemp(operadores.map(o => ({ nome: o.nome, setores: o.setores?.length ? o.setores : [SETORES[0].nome], ativo: o.ativo })))
   }, [operadores])
 
   const salvarOps = async () => {
     setSavingOps(true)
     try {
-      await onSalvarOperadores(opsTemp.map(op => ({ nome: op.nome, setores: [op.setor], ativo: op.ativo })))
+      await onSalvarOperadores(opsTemp.map(op => ({ nome: op.nome, setores: op.setores, ativo: op.ativo })))
       toast('Operadores salvos!')
     } catch (e: any) { toast(e.message, 'error') }
     setSavingOps(false)
+  }
+
+  const toggleSetorOp = (i: number, setor: string) => {
+    setOpsTemp(prev => prev.map((x, j) => {
+      if (j !== i) return x
+      const has = x.setores.includes(setor)
+      const next = has ? x.setores.filter(s => s !== setor) : [...x.setores, setor]
+      return { ...x, setores: next.length ? next : x.setores }
+    }))
   }
 
   const inputClass = 'bg-dark-surface2 border border-dark-border rounded-lg px-3 py-2 text-sm text-onsurface font-body placeholder-dark-muted focus:outline-none focus:border-accent transition-all'
@@ -393,35 +402,48 @@ export function Config({ todasEtapas, etapasDoSetor, campos, operadores, ordens,
               💡 Operadores aparecem no formulario de OS filtrados por setor.
             </div>
             {opsTemp.map((op, i) => (
-              <motion.div key={i} variants={staggerItem} className="flex items-center gap-3 bg-dark-surface border border-dark-border rounded-xl px-4 py-3">
-                <input
-                  className={`${inputClass} flex-1`}
-                  value={op.nome}
-                  placeholder="Nome do operador"
-                  onChange={ev => setOpsTemp(prev => prev.map((x, j) => j === i ? { ...x, nome: ev.target.value } : x))}
-                />
-                <select
-                  className={inputClass}
-                  value={op.setor}
-                  onChange={ev => setOpsTemp(prev => prev.map((x, j) => j === i ? { ...x, setor: ev.target.value } : x))}
-                >
-                  {SETORES.map(s => <option key={s.nome} value={s.nome}>{s.nome}</option>)}
-                </select>
-                <button
-                  onClick={() => setOpsTemp(prev => prev.map((x, j) => j === i ? { ...x, ativo: !x.ativo } : x))}
-                  className={`px-3 py-1 rounded-lg text-xs font-body font-bold transition-all ${
-                    op.ativo ? 'bg-green-500/15 text-green-400 border border-green-500/30' : 'bg-dark-surface2 text-dark-muted border border-dark-border'
-                  }`}
-                >
-                  {op.ativo ? '✓ Ativo' : '✗ Inativo'}
-                </button>
-                <button onClick={() => setOpsTemp(prev => prev.filter((_, j) => j !== i))} className="p-1.5 rounded-lg text-dark-muted hover:text-red-400 hover:bg-red-500/10 transition-all">
-                  <Trash2 className="w-4 h-4" />
-                </button>
+              <motion.div key={i} variants={staggerItem} className="bg-dark-surface border border-dark-border rounded-xl px-4 py-3 space-y-3">
+                <div className="flex items-center gap-3">
+                  <input
+                    className={`${inputClass} flex-1`}
+                    value={op.nome}
+                    placeholder="Nome do operador"
+                    onChange={ev => setOpsTemp(prev => prev.map((x, j) => j === i ? { ...x, nome: ev.target.value } : x))}
+                  />
+                  <button
+                    onClick={() => setOpsTemp(prev => prev.map((x, j) => j === i ? { ...x, ativo: !x.ativo } : x))}
+                    className={`px-3 py-1 rounded-lg text-xs font-body font-bold transition-all whitespace-nowrap ${
+                      op.ativo ? 'bg-green-500/15 text-green-400 border border-green-500/30' : 'bg-dark-surface2 text-dark-muted border border-dark-border'
+                    }`}
+                  >
+                    {op.ativo ? '✓ Ativo' : '✗ Inativo'}
+                  </button>
+                  <button onClick={() => setOpsTemp(prev => prev.filter((_, j) => j !== i))} className="p-1.5 rounded-lg text-dark-muted hover:text-red-400 hover:bg-red-500/10 transition-all">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {SETORES.map(s => {
+                    const active = op.setores.includes(s.nome)
+                    return (
+                      <button
+                        key={s.nome}
+                        type="button"
+                        onClick={() => toggleSetorOp(i, s.nome)}
+                        className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-body font-semibold transition-all border ${
+                          active ? 'text-white' : 'text-dark-muted bg-dark-surface2 border-dark-border hover:text-onsurface'
+                        }`}
+                        style={active ? { backgroundColor: `${s.cor}25`, borderColor: `${s.cor}60`, color: s.cor } : undefined}
+                      >
+                        {s.icon} {s.nome}
+                      </button>
+                    )
+                  })}
+                </div>
               </motion.div>
             ))}
             <button
-              onClick={() => setOpsTemp(prev => [...prev, { nome: 'Novo Operador', setor: SETORES[0].nome, ativo: true }])}
+              onClick={() => setOpsTemp(prev => [...prev, { nome: 'Novo Operador', setores: [SETORES[0].nome], ativo: true }])}
               className="w-full py-2.5 rounded-xl border border-dashed border-dark-border text-sm font-body text-dark-muted hover:text-accent hover:border-accent/30 transition-all"
             >
               <Plus className="w-4 h-4 inline mr-1" /> Adicionar operador

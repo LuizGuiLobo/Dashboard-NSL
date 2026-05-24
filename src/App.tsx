@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { Sidebar } from '@/components/layout/Sidebar'
@@ -10,7 +10,26 @@ import { OrdensServico } from '@/pages/OrdensServico'
 import { Agenda } from '@/pages/Agenda'
 import { Matrizes } from '@/pages/Matrizes'
 import { Config } from '@/pages/Config'
+import { Login } from '@/pages/Login'
 import { useOrdens, useEtapas, useCampos, useOperadores, useVinculos } from '@/hooks/useSupabase'
+import { supabase } from '@/lib/supabase'
+import type { User } from '@supabase/supabase-js'
+
+function AuthGuard({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null | undefined>(undefined)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_ev, session) => {
+      setUser(session?.user ?? null)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
+  if (user === undefined) return null
+  if (user === null) return <Login />
+  return <>{children}</>
+}
 
 export default function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -35,6 +54,7 @@ export default function App() {
   }, [darkMode])
 
   return (
+    <AuthGuard>
     <BrowserRouter>
       <ToastProvider>
         <div className="min-h-screen bg-dark-bg text-onsurface font-body">
@@ -100,5 +120,6 @@ export default function App() {
         </div>
       </ToastProvider>
     </BrowserRouter>
+    </AuthGuard>
   )
 }

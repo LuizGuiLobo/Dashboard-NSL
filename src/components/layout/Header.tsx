@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Menu, Sun, Moon, Wifi, WifiOff } from 'lucide-react'
+import { Menu, Sun, Moon, Wifi, WifiOff, LogOut } from 'lucide-react'
 import { formatarDataExtenso } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
 
@@ -52,6 +52,15 @@ export function Header({ onMenuToggle, darkMode, onToggleDark }: HeaderProps) {
           className="p-2 rounded-lg text-dark-muted hover:text-accent hover:bg-dark-surface2 transition-all"
         >
           {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+        </button>
+
+        {/* Logout */}
+        <button
+          onClick={() => supabase.auth.signOut()}
+          className="p-2 rounded-lg text-dark-muted hover:text-red-400 hover:bg-red-500/10 transition-all"
+          title="Sair"
+        >
+          <LogOut className="w-5 h-5" />
         </button>
       </div>
     </header>

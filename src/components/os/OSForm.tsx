@@ -1,7 +1,9 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Link2, ChevronDown } from 'lucide-react'
 import { SETORES, TIPOS_OS } from '@/lib/constants'
 import { gerarNumeroOS } from '@/lib/utils'
+import { useHistorico } from '@/hooks/useSupabase'
 import type { OrdemServico, EtapaKanban, CampoConfig, Operador } from '@/types'
 
 interface OSFormProps {
@@ -17,6 +19,9 @@ interface OSFormProps {
 
 export function OSForm({ os, etapasDoSetor, campos, operadores, ordens, onSave, onCancel, saving }: OSFormProps) {
   const isEdit = !!os
+  const submittingRef = useRef(false)
+  const [vinculoAberto, setVinculoAberto] = useState(false)
+  const { historico } = useHistorico(os?.id || null)
 
   const [form, setForm] = useState({
     numero: os?.numero || gerarNumeroOS(),
@@ -75,8 +80,11 @@ export function OSForm({ os, etapasDoSetor, campos, operadores, ordens, onSave, 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.cliente.trim()) return
+    if (submittingRef.current) return
+    submittingRef.current = true
     const { vinculo, ...data } = form
     onSave(data, vinculo || undefined)
+    setTimeout(() => { submittingRef.current = false }, 3000)
   }
 
   // Check if current status is unknown (not in etapas of this setor)
@@ -145,13 +153,17 @@ export function OSForm({ os, etapasDoSetor, campos, operadores, ordens, onSave, 
         </div>
         <div>
           <label className={labelClass}>Operador / Mecanico</label>
-          <select className={inputClass} value={form.operador} onChange={e => set('operador', e.target.value)}>
-            <option value="">Selecionar...</option>
-            {operadoresDoSetor.map(o => <option key={o.id} value={o.nome}>{o.nome}</option>)}
-          </select>
-          {operadoresDoSetor.length === 0 && (
-            <p className="text-xs text-dark-muted mt-1 font-body">Nenhum operador cadastrado para este setor.</p>
-          )}
+          <input
+            list={`ops-${form.setor}`}
+            className={inputClass}
+            value={form.operador}
+            onChange={e => set('operador', e.target.value)}
+            placeholder={operadoresDoSetor.length ? 'Selecionar ou digitar...' : 'Digitar nome...'}
+            autoComplete="off"
+          />
+          <datalist id={`ops-${form.setor}`}>
+            {operadoresDoSetor.map(o => <option key={o.id} value={o.nome.trim()} />)}
+          </datalist>
         </div>
         <div>
           <label className={labelClass}>Data de Entrada</label>
@@ -184,11 +196,24 @@ export function OSForm({ os, etapasDoSetor, campos, operadores, ordens, onSave, 
       {/* Vinculo com OS de outro setor */}
       {osDisponiveis.length > 0 && (
         <div className="border-t border-dark-border pt-4">
-          <label className={labelClass}>Vincular a OS existente (outro setor)</label>
-          <select className={inputClass} value={form.vinculo} onChange={e => set('vinculo', e.target.value)}>
-            <option value="">Sem vinculo</option>
-            {osDisponiveis.map(o => <option key={o.id} value={o.id}>{o.numero} — {o.cliente} ({o.setor})</option>)}
-          </select>
+          <button
+            type="button"
+            onClick={() => setVinculoAberto(v => !v)}
+            className="flex items-center gap-2 text-xs font-body font-semibold text-dark-muted hover:text-accent transition-all"
+          >
+            <Link2 className="w-3.5 h-3.5" />
+            Vincular a OS de outro setor
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${vinculoAberto ? 'rotate-180' : ''}`} />
+            {form.vinculo && <span className="text-accent text-xs">(vinculado)</span>}
+          </button>
+          {vinculoAberto && (
+            <div className="mt-2">
+              <select className={inputClass + ' w-full'} value={form.vinculo} onChange={e => set('vinculo', e.target.value)}>
+                <option value="">Sem vinculo</option>
+                {osDisponiveis.map(o => <option key={o.id} value={o.id}>{o.numero} — {o.cliente} ({o.setor})</option>)}
+              </select>
+            </div>
+          )}
         </div>
       )}
 
@@ -197,6 +222,45 @@ export function OSForm({ os, etapasDoSetor, campos, operadores, ordens, onSave, 
         <label className={labelClass}>Observacoes</label>
         <textarea className={`${inputClass} min-h-[80px] resize-y`} value={form.observacoes} onChange={e => set('observacoes', e.target.value)} placeholder="Detalhes do servico..." />
       </div>
+
+      {/* Historico */}
+      {isEdit && (
+        <div className="border-t border-dark-border pt-4">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-display tracking-wider text-dark-muted">HISTORICO</p>
+            <button
+              type="button"
+              onClick={() => {
+                const txt = historico.length
+                  ? historico.map(h => `[${new Date(h.criado_em).toLocaleString('pt-BR')}] ${h.tipo === 'criacao' ? 'Criado' : h.tipo === 'edicao' ? 'Editado' : `${h.status_anterior} → ${h.status_novo}`}${h.operador ? ` (${h.operador})` : ''}`).join('\n')
+                  : 'Sem historico'
+                navigator.clipboard?.writeText(`OS ${os?.numero}\n${txt}`)
+              }}
+              className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-body text-dark-muted hover:text-accent hover:bg-accent/10 border border-dark-border transition-all"
+              title="Copiar historico"
+            >
+              📋 Copiar
+            </button>
+          </div>
+          {historico.length === 0 ? (
+            <p className="text-xs text-dark-muted font-body">Sem registros de historico.</p>
+          ) : (
+            <div className="space-y-1.5 max-h-40 overflow-y-auto">
+              {historico.map(h => (
+                <div key={h.id} className="flex items-start gap-2 text-xs font-body">
+                  <span className="text-dark-muted shrink-0 font-mono">{new Date(h.criado_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                  <span className="text-onsurface">
+                    {h.tipo === 'criacao' && 'OS criada'}
+                    {h.tipo === 'edicao' && 'Dados editados'}
+                    {h.tipo === 'status' && <><span className="text-dark-muted">{h.status_anterior}</span> → <span className="text-accent">{h.status_novo}</span></>}
+                  </span>
+                  {h.operador && <span className="text-dark-muted">· {h.operador}</span>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Botoes */}
       <div className="flex gap-3 justify-end pt-2 border-t border-dark-border">
