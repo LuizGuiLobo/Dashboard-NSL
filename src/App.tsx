@@ -11,11 +11,12 @@ import { Agenda } from '@/pages/Agenda'
 import { Matrizes } from '@/pages/Matrizes'
 import { Config } from '@/pages/Config'
 import { Login } from '@/pages/Login'
+import { Usuarios } from '@/pages/Usuarios'
 import { useOrdens, useEtapas, useCampos, useOperadores, useVinculos } from '@/hooks/useSupabase'
 import { supabase } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
 
-function AuthGuard({ children }: { children: React.ReactNode }) {
+function AuthGuard({ children }: { children: (user: User) => React.ReactNode }) {
   const [user, setUser] = useState<User | null | undefined>(undefined)
 
   useEffect(() => {
@@ -28,7 +29,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 
   if (user === undefined) return null
   if (user === null) return <Login />
-  return <>{children}</>
+  return <>{children(user)}</>
 }
 
 export default function App() {
@@ -55,6 +56,7 @@ export default function App() {
 
   return (
     <AuthGuard>
+    {(currentUser) => (
     <BrowserRouter>
       <ToastProvider>
         <div className="min-h-screen bg-dark-bg text-onsurface font-body">
@@ -113,6 +115,7 @@ export default function App() {
                       onSalvarEtapasSetor={salvarSetor} onSalvarCampos={salvarCampos} onSalvarOperadores={salvarOperadores}
                     />
                   } />
+                  <Route path="/usuarios" element={<Usuarios currentUser={currentUser} />} />
                 </Routes>
               </AnimatePresence>
             </main>
@@ -120,6 +123,7 @@ export default function App() {
         </div>
       </ToastProvider>
     </BrowserRouter>
+    )}
     </AuthGuard>
   )
 }

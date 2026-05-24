@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  LayoutDashboard, Columns3, List, Calendar, Grid3X3, Settings, ChevronLeft, ChevronRight, Fuel
+  LayoutDashboard, Columns3, List, Calendar, Grid3X3, Settings, ChevronLeft, ChevronRight, Fuel, Users
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { to: '/agenda', icon: Calendar, label: 'Agenda' },
   { to: '/matrizes', icon: Grid3X3, label: 'Matrizes' },
   { to: '/config', icon: Settings, label: 'Configurações' },
+  { to: '/usuarios', icon: Users, label: 'Usuários' },
 ]
 
 interface SidebarProps {
