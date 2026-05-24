@@ -5,7 +5,7 @@
 CREATE TABLE IF NOT EXISTS operadores (
   id        UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   nome      TEXT NOT NULL,
-  setor     TEXT NOT NULL,
+  setores   TEXT[] NOT NULL DEFAULT '{}',
   ativo     BOOLEAN DEFAULT TRUE,
   criado_em TIMESTAMPTZ DEFAULT NOW()
 );
@@ -24,18 +24,17 @@ ALTER TABLE operadores  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE os_vinculos ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "acesso_total_operadores" ON operadores  USING (true) WITH CHECK (true);
 CREATE POLICY "acesso_total_vinculos"   ON os_vinculos USING (true) WITH CHECK (true);
-CREATE INDEX idx_operadores_setor  ON operadores(setor);
-CREATE INDEX idx_vinculos_origem   ON os_vinculos(os_origem);
-CREATE INDEX idx_vinculos_destino  ON os_vinculos(os_destino);
+CREATE INDEX IF NOT EXISTS idx_operadores_nome ON operadores(nome);
+CREATE INDEX IF NOT EXISTS idx_vinculos_origem   ON os_vinculos(os_origem);
+CREATE INDEX IF NOT EXISTS idx_vinculos_destino  ON os_vinculos(os_destino);
 
 -- Seeds padrão
-INSERT INTO operadores (nome, setor) VALUES
-  ('João',   'Bomba Injetora'),
-  ('Carlos', 'Bomba de Alta'),
-  ('Pedro',  'Injetores Mecânicos'),
-  ('Pedro',  'Injetores Eletrônicos'),
-  ('João',   'Veículo Diesel'),
-  ('João',   'Turbinas')
+INSERT INTO operadores (nome, setores) VALUES
+  ('João',   ARRAY['Bomba Injetora']),
+  ('Carlos', ARRAY['Bomba de Alta']),
+  ('Pedro',  ARRAY['Injetores Mecânicos', 'Injetores Eletrônicos']),
+  ('João',   ARRAY['Veículo Diesel']),
+  ('João',   ARRAY['Turbinas'])
 ON CONFLICT DO NOTHING;
 
 INSERT INTO campos_config (campo_id, label, tipo, obrigatorio, ordem) VALUES

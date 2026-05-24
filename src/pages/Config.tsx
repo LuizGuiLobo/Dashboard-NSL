@@ -133,7 +133,7 @@ export function Config({ todasEtapas, etapasDoSetor, campos, operadores, ordens,
   const salvarOps = async () => {
     setSavingOps(true)
     try {
-      await onSalvarOperadores(opsTemp.map(op => ({ nome: op.nome, setores: [op.setor], ativo: op.ativo })) as any)
+      await onSalvarOperadores(opsTemp.map(op => ({ nome: op.nome, setores: [op.setor], ativo: op.ativo })))
       toast('Operadores salvos!')
     } catch (e: any) { toast(e.message, 'error') }
     setSavingOps(false)
