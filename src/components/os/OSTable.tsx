@@ -1,10 +1,8 @@
 import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { Search, Download, Pencil, Trash2, ChevronUp, ChevronDown, Layers } from 'lucide-react'
-import { Badge } from '@/components/ui/Badge'
+import { Search, Download, Pencil, Trash2, ChevronUp, ChevronDown } from 'lucide-react'
 import { TableSkeleton } from '@/components/ui/Skeleton'
 import { staggerContainer, staggerItem } from '@/hooks/useAnimations'
-import { corDoSetor } from '@/lib/constants'
 import { diasDesdeEntrada, badgeDias, formatarData } from '@/lib/utils'
 import { SETORES } from '@/lib/constants'
 import type { OrdemServico, EtapaKanban } from '@/types'
@@ -143,7 +141,6 @@ export function OSTable({ ordens, todasEtapas, etapasDoSetor, loading, onEdit, o
               {[
                 { key: 'numero' as SortKey, label: 'OS' },
                 { key: 'cliente' as SortKey, label: 'Cliente' },
-                { key: 'setor' as SortKey, label: 'Setor' },
                 { key: 'status_geral' as SortKey, label: 'Status' },
                 { key: 'dias' as SortKey, label: 'Dias' },
                 { key: 'data_entrada' as SortKey, label: 'Entrada' },
@@ -158,7 +155,7 @@ export function OSTable({ ordens, todasEtapas, etapasDoSetor, loading, onEdit, o
           <motion.tbody variants={staggerContainer} initial="hidden" animate="visible">
             {paginadas.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-12 text-center text-dark-muted font-body text-sm">
+                <td colSpan={6} className="px-4 py-12 text-center text-dark-muted font-body text-sm">
                   Nenhuma ordem encontrada.
                 </td>
               </tr>
@@ -173,14 +170,6 @@ export function OSTable({ ordens, todasEtapas, etapasDoSetor, loading, onEdit, o
                     {o.cliente}
                     {o.placa && <span className="text-dark-muted text-xs ml-2 font-mono">{o.placa}</span>}
                     {o.modelo && <span className="text-dark-muted text-xs block">{o.modelo}</span>}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge color={corDoSetor(o.setor)}>{o.setor}</Badge>
-                    {(o.total_setores ?? 0) > 1 && (
-                      <div className="flex items-center gap-1 mt-1 text-[10px] text-dark-muted font-mono">
-                        <Layers className="w-3 h-3" /> {o.total_setores} setores
-                      </div>
-                    )}
                   </td>
                   <td className="px-4 py-3">
                     <StatusGeralBadge status={o.status_geral} />
