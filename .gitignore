@@ -1,3 +1,15 @@
+# Arquivos pessoais
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.docx
+*.xlsx
+*.pptx
+*.lnk
+*.html
+piso.html
+
 .env
 .env.local
 .vercel/
