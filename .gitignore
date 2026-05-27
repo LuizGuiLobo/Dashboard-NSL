@@ -16,6 +16,7 @@ piso.html
 .DS_Store
 Thumbs.db
 .vscode/settings.json
+.claude/
 *.log
 node_modules/
 dist/
