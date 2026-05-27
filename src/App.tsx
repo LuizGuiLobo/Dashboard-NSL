@@ -12,7 +12,7 @@ import { Matrizes } from '@/pages/Matrizes'
 import { Config } from '@/pages/Config'
 import { Login } from '@/pages/Login'
 import { Usuarios } from '@/pages/Usuarios'
-import { useOrdens, useEtapas, useCampos, useOperadores, useVinculos } from '@/hooks/useSupabase'
+import { useOrdens, useEtapas, useCampos, useOperadores, useVinculos, useProfiles } from '@/hooks/useSupabase'
 import { supabase } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
 
@@ -42,6 +42,7 @@ export default function App() {
   const { campos, loading: loadingCampos, salvar: salvarCampos } = useCampos()
   const { operadores, loading: loadingOps, salvar: salvarOperadores } = useOperadores()
   const { vinculos, criar: criarVinculo } = useVinculos()
+  const { profiles, carregar: carregarProfiles, salvar: salvarProfile } = useProfiles()
 
   const loading = loadingOS || loadingEtapas
 
@@ -92,7 +93,7 @@ export default function App() {
                   <Route path="/kanban" element={
                     <Kanban
                       ordens={ordens} etapasDoSetor={etapasDoSetor} todasEtapas={todasEtapas} campos={campos} operadores={operadores}
-                      vinculos={vinculos} criarVinculo={criarVinculo}
+                      vinculos={vinculos} criarVinculo={criarVinculo} profiles={profiles}
                       loading={loading}
                       onCriar={criar} onAtualizar={atualizar} onExcluir={excluir}
                     />
@@ -100,7 +101,7 @@ export default function App() {
                   <Route path="/ordens" element={
                     <OrdensServico
                       ordens={ordens} todasEtapas={todasEtapas} etapasDoSetor={etapasDoSetor} campos={campos} operadores={operadores}
-                      vinculos={vinculos} criarVinculo={criarVinculo}
+                      vinculos={vinculos} criarVinculo={criarVinculo} profiles={profiles}
                       loading={loading}
                       onCriar={criar} onAtualizar={atualizar} onExcluir={excluir}
                     />
@@ -115,7 +116,7 @@ export default function App() {
                       onSalvarEtapasSetor={salvarSetor} onSalvarCampos={salvarCampos} onSalvarOperadores={salvarOperadores}
                     />
                   } />
-                  <Route path="/usuarios" element={<Usuarios currentUser={currentUser} />} />
+                  <Route path="/usuarios" element={<Usuarios currentUser={currentUser} profiles={profiles} onSalvarProfile={salvarProfile} onCarregarProfiles={carregarProfiles} />} />
                 </Routes>
               </AnimatePresence>
             </main>

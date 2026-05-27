@@ -5,7 +5,8 @@ import { KanbanBoard } from '@/components/kanban/KanbanBoard'
 import { OSForm } from '@/components/os/OSForm'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/Toast'
-import type { OrdemServico, EtapaKanban, CampoConfig, Operador, OSVinculo } from '@/types'
+import { useResponsaveis } from '@/hooks/useSupabase'
+import type { OrdemServico, EtapaKanban, CampoConfig, Operador, OSVinculo, Profile } from '@/types'
 
 interface KanbanPageProps {
   ordens: OrdemServico[]
@@ -13,6 +14,7 @@ interface KanbanPageProps {
   todasEtapas: EtapaKanban[]
   campos: CampoConfig[]
   operadores: Operador[]
+  profiles: Profile[]
   vinculos: OSVinculo[]
   criarVinculo: (origemId: string, destinoId: string) => Promise<void>
   loading: boolean
@@ -21,43 +23,53 @@ interface KanbanPageProps {
   onExcluir: (id: string) => Promise<void>
 }
 
-export function Kanban({ ordens, etapasDoSetor, todasEtapas, campos, operadores, vinculos, criarVinculo, loading, onCriar, onAtualizar, onExcluir }: KanbanPageProps) {
+export function Kanban({ ordens, etapasDoSetor, todasEtapas, campos, operadores, profiles, vinculos, criarVinculo, loading, onCriar, onAtualizar, onExcluir }: KanbanPageProps) {
   const [modalCriar, setModalCriar] = useState(false)
   const [osEditando, setOsEditando] = useState<OrdemServico | null>(null)
   const [saving, setSaving] = useState(false)
   const { toast } = useToast()
+  const { definir: definirResponsaveis } = useResponsaveis(osEditando?.id || null)
 
   const handleMove = async (osId: string, novoStatus: string) => {
     try {
       await onAtualizar(osId, { status: novoStatus })
       toast(`OS movida para ${novoStatus}`)
-    } catch (e: any) {
-      toast(e.message, 'error')
+    } catch (e: unknown) {
+      toast((e as Error).message, 'error')
     }
   }
 
-  const handleCriar = async (data: Partial<OrdemServico>, vinculoId?: string) => {
+  const handleCriar = async (data: Partial<OrdemServico>, vinculoId?: string, responsaveisIds?: string[]) => {
     setSaving(true)
     try {
       const novoId = await onCriar(data)
-      if (vinculoId && novoId) await criarVinculo(novoId, vinculoId)
+      if (novoId) {
+        if (vinculoId) await criarVinculo(novoId, vinculoId)
+        if (responsaveisIds?.length) {
+          const { useResponsaveis: _ } = await import('@/hooks/useSupabase')
+          const { supabase } = await import('@/lib/supabase')
+          const rows = responsaveisIds.map(user_id => ({ os_id: novoId, user_id }))
+          await supabase.from('os_responsaveis').insert(rows)
+        }
+      }
       setModalCriar(false)
       toast('OS criada com sucesso!')
-    } catch (e: any) {
-      toast(e.message, 'error')
+    } catch (e: unknown) {
+      toast((e as Error).message, 'error')
     }
     setSaving(false)
   }
 
-  const handleEditar = async (data: Partial<OrdemServico>) => {
+  const handleEditar = async (data: Partial<OrdemServico>, _vinculoId?: string, responsaveisIds?: string[]) => {
     if (!osEditando) return
     setSaving(true)
     try {
       await onAtualizar(osEditando.id, data)
+      if (responsaveisIds !== undefined) await definirResponsaveis(osEditando.id, responsaveisIds)
       setOsEditando(null)
       toast('OS atualizada!')
-    } catch (e: any) {
-      toast(e.message, 'error')
+    } catch (e: unknown) {
+      toast((e as Error).message, 'error')
     }
     setSaving(false)
   }
@@ -67,8 +79,8 @@ export function Kanban({ ordens, etapasDoSetor, todasEtapas, campos, operadores,
     try {
       await onExcluir(id)
       toast('OS excluida')
-    } catch (e: any) {
-      toast(e.message, 'error')
+    } catch (e: unknown) {
+      toast((e as Error).message, 'error')
     }
   }
 
@@ -95,15 +107,13 @@ export function Kanban({ ordens, etapasDoSetor, todasEtapas, campos, operadores,
           onDelete={handleExcluir}
         />
 
-        {/* Modal Criar */}
         <Modal open={modalCriar} onClose={() => setModalCriar(false)} title="Nova Ordem de Servico" size="lg">
-          <OSForm etapasDoSetor={etapasDoSetor} campos={campos} operadores={operadores} ordens={ordens} onSave={handleCriar} onCancel={() => setModalCriar(false)} saving={saving} />
+          <OSForm etapasDoSetor={etapasDoSetor} campos={campos} operadores={operadores} profiles={profiles} ordens={ordens} onSave={handleCriar} onCancel={() => setModalCriar(false)} saving={saving} />
         </Modal>
 
-        {/* Modal Editar */}
         <Modal open={!!osEditando} onClose={() => setOsEditando(null)} title={`Editar ${osEditando?.numero || ''}`} size="lg">
           {osEditando && (
-            <OSForm os={osEditando} etapasDoSetor={etapasDoSetor} campos={campos} operadores={operadores} ordens={ordens} onSave={handleEditar} onCancel={() => setOsEditando(null)} saving={saving} />
+            <OSForm os={osEditando} etapasDoSetor={etapasDoSetor} campos={campos} operadores={operadores} profiles={profiles} ordens={ordens} onSave={handleEditar} onCancel={() => setOsEditando(null)} saving={saving} />
           )}
         </Modal>
       </div>

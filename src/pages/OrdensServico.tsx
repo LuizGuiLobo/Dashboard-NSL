@@ -5,7 +5,7 @@ import { OSTable } from '@/components/os/OSTable'
 import { OSForm } from '@/components/os/OSForm'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/Toast'
-import type { OrdemServico, EtapaKanban, CampoConfig, Operador, OSVinculo } from '@/types'
+import type { OrdemServico, EtapaKanban, CampoConfig, Operador, OSVinculo, Profile } from '@/types'
 
 interface OrdensServicoPageProps {
   ordens: OrdemServico[]
@@ -13,6 +13,7 @@ interface OrdensServicoPageProps {
   etapasDoSetor: (setor: string) => EtapaKanban[]
   campos: CampoConfig[]
   operadores: Operador[]
+  profiles: Profile[]
   vinculos: OSVinculo[]
   criarVinculo: (origemId: string, destinoId: string) => Promise<void>
   loading: boolean
@@ -21,34 +22,49 @@ interface OrdensServicoPageProps {
   onExcluir: (id: string) => Promise<void>
 }
 
-export function OrdensServico({ ordens, todasEtapas, etapasDoSetor, campos, operadores, vinculos, criarVinculo, loading, onCriar, onAtualizar, onExcluir }: OrdensServicoPageProps) {
+export function OrdensServico({ ordens, todasEtapas, etapasDoSetor, campos, operadores, profiles, vinculos, criarVinculo, loading, onCriar, onAtualizar, onExcluir }: OrdensServicoPageProps) {
   const [modalCriar, setModalCriar] = useState(false)
   const [osEditando, setOsEditando] = useState<OrdemServico | null>(null)
   const [saving, setSaving] = useState(false)
   const { toast } = useToast()
 
-  const handleCriar = async (data: Partial<OrdemServico>, vinculoId?: string) => {
+  const handleCriar = async (data: Partial<OrdemServico>, vinculoId?: string, responsaveisIds?: string[]) => {
     setSaving(true)
     try {
       const novoId = await onCriar(data)
-      if (vinculoId && novoId) await criarVinculo(novoId, vinculoId)
+      if (novoId) {
+        if (vinculoId) await criarVinculo(novoId, vinculoId)
+        if (responsaveisIds?.length) {
+          const { supabase } = await import('@/lib/supabase')
+          const rows = responsaveisIds.map(user_id => ({ os_id: novoId, user_id }))
+          await supabase.from('os_responsaveis').insert(rows)
+        }
+      }
       setModalCriar(false)
       toast('OS criada com sucesso!')
-    } catch (e: any) {
-      toast(e.message, 'error')
+    } catch (e: unknown) {
+      toast((e as Error).message, 'error')
     }
     setSaving(false)
   }
 
-  const handleEditar = async (data: Partial<OrdemServico>) => {
+  const handleEditar = async (data: Partial<OrdemServico>, _vinculoId?: string, responsaveisIds?: string[]) => {
     if (!osEditando) return
     setSaving(true)
     try {
       await onAtualizar(osEditando.id, data)
+      if (responsaveisIds !== undefined) {
+        const { supabase } = await import('@/lib/supabase')
+        await supabase.from('os_responsaveis').delete().eq('os_id', osEditando.id)
+        if (responsaveisIds.length) {
+          const rows = responsaveisIds.map(user_id => ({ os_id: osEditando.id, user_id }))
+          await supabase.from('os_responsaveis').insert(rows)
+        }
+      }
       setOsEditando(null)
       toast('OS atualizada!')
-    } catch (e: any) {
-      toast(e.message, 'error')
+    } catch (e: unknown) {
+      toast((e as Error).message, 'error')
     }
     setSaving(false)
   }
@@ -58,8 +74,8 @@ export function OrdensServico({ ordens, todasEtapas, etapasDoSetor, campos, oper
     try {
       await onExcluir(id)
       toast('OS excluida')
-    } catch (e: any) {
-      toast(e.message, 'error')
+    } catch (e: unknown) {
+      toast((e as Error).message, 'error')
     }
   }
 
@@ -84,12 +100,12 @@ export function OrdensServico({ ordens, todasEtapas, etapasDoSetor, campos, oper
         />
 
         <Modal open={modalCriar} onClose={() => setModalCriar(false)} title="Nova Ordem de Servico" size="lg">
-          <OSForm etapasDoSetor={etapasDoSetor} campos={campos} operadores={operadores} ordens={ordens} onSave={handleCriar} onCancel={() => setModalCriar(false)} saving={saving} />
+          <OSForm etapasDoSetor={etapasDoSetor} campos={campos} operadores={operadores} profiles={profiles} ordens={ordens} onSave={handleCriar} onCancel={() => setModalCriar(false)} saving={saving} />
         </Modal>
 
         <Modal open={!!osEditando} onClose={() => setOsEditando(null)} title={`Editar ${osEditando?.numero || ''}`} size="lg">
           {osEditando && (
-            <OSForm os={osEditando} etapasDoSetor={etapasDoSetor} campos={campos} operadores={operadores} ordens={ordens} onSave={handleEditar} onCancel={() => setOsEditando(null)} saving={saving} />
+            <OSForm os={osEditando} etapasDoSetor={etapasDoSetor} campos={campos} operadores={operadores} profiles={profiles} ordens={ordens} onSave={handleEditar} onCancel={() => setOsEditando(null)} saving={saving} />
           )}
         </Modal>
       </div>

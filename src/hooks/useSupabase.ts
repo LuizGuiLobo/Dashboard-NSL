@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { OrdemServico, EtapaKanban, CampoConfig, Operador, OSVinculo, OSHistorico } from '@/types'
+import type { OrdemServico, EtapaKanban, CampoConfig, Operador, OSVinculo, OSHistorico, Profile } from '@/types'
 
 export function useOrdens() {
   const [ordens, setOrdens] = useState<OrdemServico[]>([])
@@ -193,6 +193,61 @@ export function useVinculos() {
   }
 
   return { vinculos, carregar, criar }
+}
+
+export function useProfiles() {
+  const [profiles, setProfiles] = useState<Profile[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const carregar = useCallback(async () => {
+    setLoading(true)
+    const { data, error } = await supabase
+      .from('v_profiles_com_email')
+      .select('*')
+      .order('nome', { ascending: true })
+    if (error) console.error('Erro ao carregar profiles:', error.message)
+    setProfiles((data as Profile[]) || [])
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { carregar() }, [carregar])
+
+  const salvar = async (id: string, dados: Partial<Profile>) => {
+    const { error } = await supabase.from('profiles').update(dados).eq('id', id)
+    if (error) throw new Error(error.message)
+    await carregar()
+  }
+
+  return { profiles, loading, carregar, salvar }
+}
+
+export function useResponsaveis(osId: string | null) {
+  const [responsaveis, setResponsaveis] = useState<Profile[]>([])
+
+  const carregar = useCallback(async () => {
+    if (!osId) { setResponsaveis([]); return }
+    const { data, error } = await supabase
+      .from('os_responsaveis')
+      .select('user_id, v_profiles_com_email!inner(id, nome, email, telefone, setores, role, ativo, criado_em)')
+      .eq('os_id', osId)
+    if (error) console.error('Erro ao carregar responsaveis:', error.message)
+    const lista = (data || []).map((r: Record<string, unknown>) => r['v_profiles_com_email'] as Profile)
+    setResponsaveis(lista)
+  }, [osId])
+
+  useEffect(() => { carregar() }, [carregar])
+
+  const definir = async (osId: string, userIds: string[]) => {
+    await supabase.from('os_responsaveis').delete().eq('os_id', osId)
+    if (userIds.length) {
+      const rows = userIds.map(user_id => ({ os_id: osId, user_id }))
+      const { error } = await supabase.from('os_responsaveis').insert(rows)
+      if (error) throw new Error(error.message)
+    }
+    await carregar()
+  }
+
+  return { responsaveis, carregar, definir }
 }
 
 export function useHistorico(osId: string | null) {

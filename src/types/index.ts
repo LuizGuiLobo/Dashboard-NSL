@@ -53,6 +53,25 @@ export interface OSHistorico {
   criado_em: string
 }
 
+export interface Profile {
+  id: string
+  nome: string
+  role: 'admin' | 'user'
+  ativo: boolean
+  setores: string[]
+  telefone: string
+  criado_em: string
+  email?: string
+}
+
+export interface OSResponsavel {
+  id: string
+  os_id: string
+  user_id: string
+  atribuido_em: string
+  profile?: Profile
+}
+
 export interface OSVinculo {
   id: string
   os_origem: string
