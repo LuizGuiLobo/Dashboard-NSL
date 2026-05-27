@@ -299,10 +299,11 @@ export function useResponsaveis(osId: string | null) {
     if (!osId) { setResponsaveis([]); return }
     const { data, error } = await supabase
       .from('os_responsaveis')
-      .select('user_id, v_profiles_com_email!inner(id, nome, email, telefone, setores, role, ativo, criado_em)')
+      .select('user_id')
       .eq('os_id', osId)
     if (error) console.error('Erro ao carregar responsaveis:', error.message)
-    const lista = (data || []).map((r: Record<string, unknown>) => r['v_profiles_com_email'] as Profile)
+    // Retorna objetos mínimos com id = user_id para compatibilidade com responsaveisSalvos.map(r => r.id)
+    const lista = (data || []).map((r: { user_id: string }) => ({ id: r.user_id } as Profile))
     setResponsaveis(lista)
   }, [osId])
 
