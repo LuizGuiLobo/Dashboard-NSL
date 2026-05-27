@@ -78,7 +78,12 @@ export function Kanban({
         // Aqui adicionamos TODOS os setores do formulário via RPC (ON CONFLICT DO UPDATE é seguro).
         if (setoresIniciais?.length) {
           for (const s of setoresIniciais) {
-            await onAdicionarSetor(novoId, s.setor, s.status)
+            try {
+              await onAdicionarSetor(novoId, s.setor, s.status)
+            } catch (err) {
+              console.error(`Falha ao adicionar setor ${s.setor}:`, (err as Error).message)
+              // continua para o próximo setor
+            }
           }
         }
         await onCarregarKanban()

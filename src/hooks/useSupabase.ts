@@ -9,7 +9,7 @@ export function useOrdens() {
   const carregar = useCallback(async () => {
     setLoading(true)
     const { data, error } = await supabase
-      .from('ordens_servico')
+      .from('v_ordens_com_status')
       .select('*')
       .order('criado_em', { ascending: false })
     if (error) console.error('Erro ao carregar OS:', error.message)

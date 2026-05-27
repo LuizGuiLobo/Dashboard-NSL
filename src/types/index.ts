@@ -13,6 +13,9 @@ export interface OrdemServico {
   extras: Record<string, unknown>
   criado_em: string
   atualizado_em: string
+  // Computed pela view v_ordens_com_status
+  status_geral?: 'Iniciada' | 'Em Andamento' | 'Finalizada'
+  total_setores?: number
 }
 
 export interface EtapaKanban {

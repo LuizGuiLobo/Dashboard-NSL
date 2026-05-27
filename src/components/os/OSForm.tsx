@@ -79,13 +79,23 @@ export function OSForm({
     }
   }, [responsaveisSalvos, isEdit])
 
-  // Atualiza status quando troca setor no primeiro card de criação
+  // Quando etapas carregam (ou setor muda), corrige status vazio nos setores de criação
   useEffect(() => {
     if (!isEdit) {
-      const etapas = etapasDoSetor(form.setor)
-      setForm(prev => ({ ...prev, status: etapas[0]?.label || '' }))
+      setSetoresCriacao(prev => prev.map(s => ({
+        ...s,
+        status: s.status || etapasDoSetor(s.setor)[0]?.label || '',
+      })))
     }
-  }, [form.setor]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [etapasDoSetor, isEdit]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Mantém form.setor/status em sincronia com o primeiro card
+  useEffect(() => {
+    if (!isEdit && setoresCriacao.length > 0) {
+      const primeiro = setoresCriacao[0]
+      setForm(prev => ({ ...prev, setor: primeiro.setor, status: primeiro.status }))
+    }
+  }, [setoresCriacao, isEdit]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Atualiza status do painel "novo setor"
   useEffect(() => {
@@ -164,17 +174,21 @@ export function OSForm({
   }
 
   const adicionarSetorCriacao = () => {
-    if (!novoSetor || !novoStatus) return
-    setSetoresCriacao(prev => [...prev, { setor: novoSetor, status: novoStatus }])
+    if (!novoSetor) return
+    // Garante status mesmo se novoStatus ainda não atualizou
+    const status = novoStatus || etapasDoSetor(novoSetor)[0]?.label || ''
+    setSetoresCriacao(prev => [...prev, { setor: novoSetor, status }])
     setAdicionandoSetor(false)
   }
 
   // ── Ações edição ─────────────────────────────────────────────────
   const handleAdicionarSetorEdit = async () => {
-    if (!os || !onAdicionarSetor || !novoSetor || !novoStatus) return
+    if (!os || !onAdicionarSetor || !novoSetor) return
+    const novoStatusFinal = novoStatus || etapasDoSetor(novoSetor)[0]?.label || ''
+    if (!novoStatusFinal) return // setor sem etapas configuradas
     setLoadingSetorAction('add')
     try {
-      await onAdicionarSetor(os.id, novoSetor, novoStatus)
+      await onAdicionarSetor(os.id, novoSetor, novoStatusFinal)
       await recarregarSetores()
       await onCarregarKanban?.()
       setAdicionandoSetor(false)
