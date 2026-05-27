@@ -28,7 +28,7 @@ export function OrdensServico({ ordens, todasEtapas, etapasDoSetor, campos, oper
   const [saving, setSaving] = useState(false)
   const { toast } = useToast()
 
-  const handleCriar = async (data: Partial<OrdemServico>, vinculoId?: string, responsaveisIds?: string[]) => {
+  const handleCriar = async (data: Partial<OrdemServico>, vinculoId?: string, responsaveisIds?: string[], _setoresIniciais?: { setor: string; status: string }[]) => {
     setSaving(true)
     try {
       const novoId = await onCriar(data)
@@ -48,7 +48,7 @@ export function OrdensServico({ ordens, todasEtapas, etapasDoSetor, campos, oper
     setSaving(false)
   }
 
-  const handleEditar = async (data: Partial<OrdemServico>, _vinculoId?: string, responsaveisIds?: string[]) => {
+  const handleEditar = async (data: Partial<OrdemServico>, _vinculoId?: string, responsaveisIds?: string[], _setoresIniciais?: { setor: string; status: string }[]) => {
     if (!osEditando) return
     setSaving(true)
     try {
