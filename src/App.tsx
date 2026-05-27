@@ -108,6 +108,7 @@ export default function App() {
                       vinculos={vinculos} criarVinculo={criarVinculo} profiles={profiles}
                       loading={loading}
                       onCriar={criar} onAtualizar={atualizar} onExcluir={excluir}
+                      onAdicionarSetor={adicionarSetor} onRemoverSetor={removerSetor} onCarregarKanban={carregarKanban}
                     />
                   } />
                   <Route path="/agenda" element={<Agenda />} />
