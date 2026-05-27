@@ -7,7 +7,7 @@ import { useHistorico, useResponsaveis, useOSSetoresParaOS } from '@/hooks/useSu
 import { supabase } from '@/lib/supabase'
 import type { OrdemServico, EtapaKanban, CampoConfig, Profile } from '@/types'
 
-interface SetorExtra {
+export interface SetorItem {
   setor: string
   status: string
 }
@@ -16,13 +16,11 @@ interface OSFormProps {
   os?: OrdemServico | null
   etapasDoSetor: (setor: string) => EtapaKanban[]
   campos: CampoConfig[]
-  operadores?: never[]
   profiles: Profile[]
   ordens: OrdemServico[]
-  onSave: (data: Partial<OrdemServico>, vinculoId?: string, responsaveisIds?: string[], setoresIniciais?: SetorExtra[]) => void
+  onSave: (data: Partial<OrdemServico>, vinculoId?: string, responsaveisIds?: string[], setoresIniciais?: SetorItem[]) => void
   onCancel: () => void
   saving?: boolean
-  // Gerenciamento de setores ao editar
   onAdicionarSetor?: (osId: string, setor: string, statusInicial: string) => Promise<void>
   onRemoverSetor?: (osSetorId: string) => Promise<void>
   onCarregarKanban?: () => Promise<void>
@@ -40,13 +38,14 @@ export function OSForm({
   const { responsaveis: responsaveisSalvos } = useResponsaveis(os?.id || null)
   const { setores: setoresDB, carregar: recarregarSetores } = useOSSetoresParaOS(os?.id || null)
 
+  // ── Formulário base ──────────────────────────────────────────────
   const [form, setForm] = useState({
     numero: os?.numero || gerarNumeroOS(),
     tipo: os?.tipo || 'Veículo',
     placa: os?.placa || '',
     cliente: os?.cliente || '',
     modelo: os?.modelo || '',
-    setor: os?.setor || SETORES[0].nome,
+    setor: os?.setor || SETORES[0].nome,   // mantido para compatibilidade com ordens_servico
     status: os?.status || '',
     data_entrada: os?.data_entrada ? os.data_entrada.slice(0, 16) : new Date().toISOString().slice(0, 16),
     observacoes: os?.observacoes || '',
@@ -56,103 +55,128 @@ export function OSForm({
 
   const [responsaveisSelecionados, setResponsaveisSelecionados] = useState<string[]>([])
 
-  // Setores extras para criação (além do setor principal)
-  const [setoresExtras, setSetoresExtras] = useState<SetorExtra[]>([])
+  // ── Setores selecionados no modo criação ─────────────────────────
+  // Começa com o primeiro setor pré-selecionado
+  const [setoresCriacao, setSetoresCriacao] = useState<SetorItem[]>(() => {
+    const primeiroSetor = SETORES[0].nome
+    const etapas = etapasDoSetor(primeiroSetor)
+    return [{ setor: primeiroSetor, status: etapas[0]?.label || '' }]
+  })
+
+  // Painel "adicionar setor"
   const [adicionandoSetor, setAdicionandoSetor] = useState(false)
-  const [novoSetor, setNovoSetor] = useState(SETORES[0].nome)
+  const [novoSetor, setNovoSetor] = useState('')
   const [novoStatus, setNovoStatus] = useState('')
 
-  // Para edição: mudança de status por setor
+  // Status por setor em modo edição
   const [mudandoStatusSetor, setMudandoStatusSetor] = useState<Record<string, string>>({})
   const [loadingSetorAction, setLoadingSetorAction] = useState<string | null>(null)
 
+  // ── Efeitos ──────────────────────────────────────────────────────
   useEffect(() => {
     if (isEdit && responsaveisSalvos.length) {
       setResponsaveisSelecionados(responsaveisSalvos.map(r => r.id))
     }
   }, [responsaveisSalvos, isEdit])
 
-  const etapasAtuais = useMemo(() => etapasDoSetor(form.setor), [etapasDoSetor, form.setor])
-
+  // Atualiza status quando troca setor no primeiro card de criação
   useEffect(() => {
-    if (!isEdit && etapasAtuais.length > 0) {
-      setForm(prev => ({ ...prev, status: etapasAtuais[0].label }))
+    if (!isEdit) {
+      const etapas = etapasDoSetor(form.setor)
+      setForm(prev => ({ ...prev, status: etapas[0]?.label || '' }))
     }
-  }, [form.setor, etapasAtuais, isEdit])
+  }, [form.setor]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Atualiza status do painel "novo setor"
   useEffect(() => {
-    if (!isEdit && !form.status && etapasAtuais.length > 0) {
-      setForm(prev => ({ ...prev, status: etapasAtuais[0].label }))
+    if (novoSetor) {
+      const etapas = etapasDoSetor(novoSetor)
+      setNovoStatus(etapas[0]?.label || '')
     }
-  }, [])
-
-  // Ao abrir painel de novo setor, definir status inicial
-  useEffect(() => {
-    const etapas = etapasDoSetor(novoSetor)
-    setNovoStatus(etapas[0]?.label || '')
   }, [novoSetor, etapasDoSetor])
+
+  // Inicializa o painel com o próximo setor disponível
+  useEffect(() => {
+    if (adicionandoSetor) {
+      const emUso = isEdit
+        ? setoresDB.filter(s => !s.finalizado_em).map(s => s.setor)
+        : setoresCriacao.map(s => s.setor)
+      const disponivel = SETORES.find(s => !emUso.includes(s.nome))
+      if (disponivel) {
+        setNovoSetor(disponivel.nome)
+      }
+    }
+  }, [adicionandoSetor]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Dados derivados ──────────────────────────────────────────────
+  const etapasDoSetor1 = useMemo(() => etapasDoSetor(form.setor), [etapasDoSetor, form.setor])
+
+  const setoresAtivosDB = useMemo(
+    () => setoresDB.filter(s => !s.finalizado_em),
+    [setoresDB]
+  )
+
+  const setoresEmUso = useMemo(() => {
+    if (!isEdit) return setoresCriacao.map(s => s.setor)
+    return setoresAtivosDB.map(s => s.setor)
+  }, [isEdit, setoresCriacao, setoresAtivosDB])
+
+  const setoresDisponiveis = SETORES.filter(s => !setoresEmUso.includes(s.nome))
 
   const usuariosDoSetor = useMemo(
     () => profiles.filter(p => p.ativo && p.setores?.includes(form.setor)),
     [profiles, form.setor]
   )
-  const osDisponiveis = ordens.filter(o => o.id !== os?.id && o.setor !== form.setor)
 
-  // Setores já em uso (para evitar duplicatas ao adicionar)
-  const setoresEmUso = useMemo(() => {
-    if (!isEdit) {
-      return [form.setor, ...setoresExtras.map(s => s.setor)]
-    }
-    return setoresDB.map(s => s.setor)
-  }, [isEdit, form.setor, setoresExtras, setoresDB])
+  const osDisponiveis = ordens.filter(o => o.id !== os?.id)
 
-  const setoresDisponiveis = SETORES.filter(s => !setoresEmUso.includes(s.nome))
+  // ── Helpers ──────────────────────────────────────────────────────
+  const set = (field: string, value: string) => setForm(prev => ({ ...prev, [field]: value }))
+  const setExtra = (key: string, value: string) => setForm(prev => ({ ...prev, extras: { ...prev.extras, [key]: value } }))
+  const toggleResponsavel = (id: string) => setResponsaveisSelecionados(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
 
-  const set = (field: string, value: string) => {
-    if (field === 'setor' && !isEdit) {
-      const novasEtapas = etapasDoSetor(value)
-      setForm(prev => ({
-        ...prev, setor: value,
-        status: novasEtapas.length > 0 ? novasEtapas[0].label : '',
-      }))
-      setResponsaveisSelecionados([])
-      return
-    }
-    setForm(prev => ({ ...prev, [field]: value }))
+  // Atualiza um setor do array de criação
+  const updateSetorCriacao = (idx: number, field: 'setor' | 'status', value: string) => {
+    setSetoresCriacao(prev => {
+      const next = [...prev]
+      if (field === 'setor') {
+        const etapas = etapasDoSetor(value)
+        next[idx] = { setor: value, status: etapas[0]?.label || '' }
+        // sync form.setor com o primeiro setor
+        if (idx === 0) setForm(f => ({ ...f, setor: value, status: etapas[0]?.label || '' }))
+      } else {
+        next[idx] = { ...next[idx], status: value }
+        if (idx === 0) setForm(f => ({ ...f, status: value }))
+      }
+      return next
+    })
   }
 
-  const setExtra = (key: string, value: string) => setForm(prev => ({
-    ...prev, extras: { ...prev.extras, [key]: value },
-  }))
-
-  const toggleResponsavel = (id: string) => {
-    setResponsaveisSelecionados(prev =>
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-    )
+  const removerSetorCriacao = (idx: number) => {
+    setSetoresCriacao(prev => {
+      const next = prev.filter((_, i) => i !== idx)
+      // Se removeu o primeiro, sync form.setor
+      if (idx === 0 && next.length > 0) {
+        setForm(f => ({ ...f, setor: next[0].setor, status: next[0].status }))
+      }
+      return next
+    })
   }
 
-  // Adicionar setor extra (modo criação)
-  const adicionarSetorExtra = () => {
+  const adicionarSetorCriacao = () => {
     if (!novoSetor || !novoStatus) return
-    setSetoresExtras(prev => [...prev, { setor: novoSetor, status: novoStatus }])
+    setSetoresCriacao(prev => [...prev, { setor: novoSetor, status: novoStatus }])
     setAdicionandoSetor(false)
-    // Reset para próximo
-    const disponivel = SETORES.find(s => !setoresEmUso.includes(s.nome) && s.nome !== novoSetor)
-    if (disponivel) setNovoSetor(disponivel.nome)
   }
 
-  const removerSetorExtra = (idx: number) => {
-    setSetoresExtras(prev => prev.filter((_, i) => i !== idx))
-  }
-
-  // Adicionar setor ao editar (chamada imediata ao banco)
+  // ── Ações edição ─────────────────────────────────────────────────
   const handleAdicionarSetorEdit = async () => {
     if (!os || !onAdicionarSetor || !novoSetor || !novoStatus) return
     setLoadingSetorAction('add')
     try {
       await onAdicionarSetor(os.id, novoSetor, novoStatus)
       await recarregarSetores()
-      onCarregarKanban?.()
+      await onCarregarKanban?.()
       setAdicionandoSetor(false)
     } catch (e: unknown) {
       console.error((e as Error).message)
@@ -160,7 +184,6 @@ export function OSForm({
     setLoadingSetorAction(null)
   }
 
-  // Remover setor ao editar
   const handleRemoverSetorEdit = async (osSetorId: string) => {
     if (!onRemoverSetor) return
     if (!confirm('Remover este setor da OS?')) return
@@ -168,24 +191,20 @@ export function OSForm({
     try {
       await onRemoverSetor(osSetorId)
       await recarregarSetores()
-      onCarregarKanban?.()
+      await onCarregarKanban?.()
     } catch (e: unknown) {
       console.error((e as Error).message)
     }
     setLoadingSetorAction(null)
   }
 
-  // Mudar status de um setor ao editar
   const handleMoverStatusEdit = async (osSetorId: string, novoStatusVal: string) => {
     setLoadingSetorAction(osSetorId + '_status')
     try {
-      const { error } = await supabase.rpc('mover_status_setor', {
-        p_os_setor_id: osSetorId,
-        p_novo_status: novoStatusVal,
-      })
+      const { error } = await supabase.rpc('mover_status_setor', { p_os_setor_id: osSetorId, p_novo_status: novoStatusVal })
       if (error) throw new Error(error.message)
       await recarregarSetores()
-      onCarregarKanban?.()
+      await onCarregarKanban?.()
       setMudandoStatusSetor(prev => { const n = { ...prev }; delete n[osSetorId]; return n })
     } catch (e: unknown) {
       console.error((e as Error).message)
@@ -193,24 +212,27 @@ export function OSForm({
     setLoadingSetorAction(null)
   }
 
+  // ── Submit ───────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.cliente.trim()) return
     if (submittingRef.current) return
     submittingRef.current = true
     const { vinculo, ...rest } = form
-    const setoresIniciais = setoresExtras.length > 0 ? setoresExtras : undefined
-    onSave(rest, vinculo || undefined, responsaveisSelecionados, setoresIniciais)
+    // Passa TODOS os setores selecionados — o trigger cria o primeiro, os demais são adicionados via RPC
+    onSave(rest, vinculo || undefined, responsaveisSelecionados, setoresCriacao)
     setTimeout(() => { submittingRef.current = false }, 3000)
   }
 
-  const statusDesconhecido = form.status && etapasAtuais.length > 0 && !etapasAtuais.find(e => e.label === form.status)
-
+  // ── Estilos ──────────────────────────────────────────────────────
   const inputClass = 'w-full bg-dark-surface2 border border-dark-border rounded-lg px-3 py-2.5 text-sm text-onsurface font-body placeholder-dark-muted focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all'
   const labelClass = 'text-xs font-body font-semibold text-dark-muted uppercase tracking-wider mb-1.5 block'
 
+  // ── Render ───────────────────────────────────────────────────────
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+
+      {/* Campos base */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className={labelClass}>Numero da OS</label>
@@ -240,19 +262,16 @@ export function OSForm({
         </div>
       </div>
 
-      {/* ── SETORES DA OS ── */}
+      {/* ── SETORES ─────────────────────────────────────────────── */}
       <div className="border-t border-dark-border pt-4">
         <div className="flex items-center justify-between mb-3">
           <p className="text-xs font-display tracking-wider text-dark-muted flex items-center gap-2">
-            <Layers className="w-3.5 h-3.5" /> SETORES DESTA OS
+            <Layers className="w-3.5 h-3.5" /> SETORES
           </p>
           {setoresDisponiveis.length > 0 && (
             <button
               type="button"
-              onClick={() => {
-                setNovoSetor(setoresDisponiveis[0].nome)
-                setAdicionandoSetor(v => !v)
-              }}
+              onClick={() => setAdicionandoSetor(v => !v)}
               className="flex items-center gap-1 text-xs font-body font-semibold text-accent hover:text-accent-hover transition-all"
             >
               <Plus className="w-3.5 h-3.5" /> Adicionar setor
@@ -260,73 +279,48 @@ export function OSForm({
           )}
         </div>
 
-        {/* Setor principal (modo criação) — setor + status editáveis dentro do card */}
-        {!isEdit && (
-          <div
-            className="px-3 py-3 rounded-lg mb-2 border"
-            style={{
-              backgroundColor: `${corDoSetor(form.setor)}10`,
-              borderColor: `${corDoSetor(form.setor)}30`,
-            }}
-          >
-            <div className="flex items-center gap-1.5 mb-2">
-              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: corDoSetor(form.setor) }} />
-              <span className="text-[10px] text-dark-muted font-mono uppercase tracking-wider">Setor principal</span>
-            </div>
-            <div className="flex gap-2">
-              <select
-                className="flex-1 text-sm bg-dark-surface2 border border-dark-border rounded-lg px-3 py-2 text-onsurface font-body focus:outline-none focus:border-accent transition-all"
-                value={form.setor}
-                onChange={e => set('setor', e.target.value)}
-              >
-                {SETORES.map(s => <option key={s.nome} value={s.nome}>{s.icon} {s.nome}</option>)}
-              </select>
-              <AnimatePresence mode="wait">
-                <motion.div key={form.setor} initial={{ opacity: 0, y: 3 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.12 }} className="flex-1">
-                  {statusDesconhecido && (
-                    <p className="text-[10px] text-yellow-400 mb-1 font-body">⚠️ Status desconhecido</p>
-                  )}
-                  <select
-                    className="w-full text-sm bg-dark-surface2 border border-dark-border rounded-lg px-3 py-2 font-mono focus:outline-none focus:border-accent transition-all"
-                    style={{ color: corDoSetor(form.setor) }}
-                    value={form.status}
-                    onChange={e => set('status', e.target.value)}
-                  >
-                    {statusDesconhecido && <option value={form.status}>⚠️ {form.status}</option>}
-                    {etapasAtuais.map(e => <option key={e.id} value={e.label}>{e.label}</option>)}
-                    {etapasAtuais.length === 0 && <option value="">Nenhuma etapa</option>}
-                  </select>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-          </div>
-        )}
-
-        {/* Setores extras (modo criação) */}
-        {!isEdit && setoresExtras.map((s, idx) => {
+        {/* Cards de setores — modo CRIAÇÃO */}
+        {!isEdit && setoresCriacao.map((s, idx) => {
           const etapas = etapasDoSetor(s.setor)
+          const setoresUsados = setoresCriacao.map((x, i) => i !== idx ? x.setor : null).filter(Boolean) as string[]
+          const opcoesSetor = SETORES.filter(opt => !setoresUsados.includes(opt.nome))
           return (
-            <div key={idx} className="flex items-center gap-2 px-3 py-2 rounded-lg mb-2 border border-dark-border bg-dark-surface2">
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: corDoSetor(s.setor) }} />
-              <span className="text-sm font-body font-semibold text-onsurface flex-1">{s.setor}</span>
-              <select
-                className="text-xs bg-dark-surface border border-dark-border rounded px-2 py-1 text-onsurface font-mono"
-                value={s.status}
-                onChange={e => setSetoresExtras(prev => prev.map((x, i) => i === idx ? { ...x, status: e.target.value } : x))}
-              >
-                {etapas.map(e => <option key={e.id} value={e.label}>{e.label}</option>)}
-              </select>
-              <button type="button" onClick={() => removerSetorExtra(idx)} className="p-1 rounded text-dark-muted hover:text-red-400 hover:bg-red-500/10 transition-all">
-                <X className="w-3.5 h-3.5" />
-              </button>
+            <div
+              key={idx}
+              className="px-3 py-3 rounded-lg mb-2 border"
+              style={{ backgroundColor: `${corDoSetor(s.setor)}10`, borderColor: `${corDoSetor(s.setor)}30` }}
+            >
+              <div className="flex gap-2 items-center">
+                <div className="w-2 h-2 rounded-full flex-shrink-0 mt-0.5" style={{ backgroundColor: corDoSetor(s.setor) }} />
+                <select
+                  className="flex-1 text-sm bg-dark-surface2 border border-dark-border rounded-lg px-3 py-2 text-onsurface font-body focus:outline-none focus:border-accent transition-all"
+                  value={s.setor}
+                  onChange={e => updateSetorCriacao(idx, 'setor', e.target.value)}
+                >
+                  {opcoesSetor.map(opt => <option key={opt.nome} value={opt.nome}>{opt.icon} {opt.nome}</option>)}
+                </select>
+                <select
+                  className="flex-1 text-sm bg-dark-surface2 border border-dark-border rounded-lg px-3 py-2 font-mono focus:outline-none focus:border-accent transition-all"
+                  style={{ color: corDoSetor(s.setor) }}
+                  value={s.status}
+                  onChange={e => updateSetorCriacao(idx, 'status', e.target.value)}
+                >
+                  {etapas.map(e => <option key={e.id} value={e.label}>{e.label}</option>)}
+                  {etapas.length === 0 && <option value="">Nenhuma etapa</option>}
+                </select>
+                {setoresCriacao.length > 1 && (
+                  <button type="button" onClick={() => removerSetorCriacao(idx)} className="p-1.5 rounded text-dark-muted hover:text-red-400 hover:bg-red-500/10 transition-all">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
           )
         })}
 
-        {/* Setores do banco (modo edição) */}
-        {isEdit && setoresDB.map(s => {
+        {/* Cards de setores — modo EDIÇÃO (vem do banco) */}
+        {isEdit && setoresAtivosDB.map(s => {
           const etapas = etapasDoSetor(s.setor)
-          const isPrincipal = s.setor === os?.setor
           const editandoStatus = mudandoStatusSetor[s.id] !== undefined
           const loadingThis = loadingSetorAction === s.id || loadingSetorAction === s.id + '_status'
           const logRecente = s.os_status_log?.[0]
@@ -335,66 +329,54 @@ export function OSForm({
             : null
 
           return (
-            <div key={s.id} className="px-3 py-2 rounded-lg mb-2 border border-dark-border bg-dark-surface2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: corDoSetor(s.setor) }} />
-                  <span className="text-sm font-body font-semibold text-onsurface">{s.setor}</span>
-                  {isPrincipal && <span className="text-[10px] text-dark-muted font-mono bg-dark-surface px-1.5 py-0.5 rounded">principal</span>}
-                </div>
-                <div className="flex items-center gap-1">
-                  {/* Status atual ou seletor */}
-                  {editandoStatus ? (
-                    <div className="flex items-center gap-1">
-                      <select
-                        className="text-xs bg-dark-surface border border-dark-border rounded px-2 py-1 text-onsurface font-mono"
-                        value={mudandoStatusSetor[s.id]}
-                        onChange={e => setMudandoStatusSetor(prev => ({ ...prev, [s.id]: e.target.value }))}
-                      >
-                        {etapas.map(e => <option key={e.id} value={e.label}>{e.label}</option>)}
-                      </select>
-                      <button
-                        type="button"
-                        disabled={!!loadingSetorAction}
-                        onClick={() => handleMoverStatusEdit(s.id, mudandoStatusSetor[s.id])}
-                        className="text-xs px-2 py-1 rounded bg-accent text-black font-bold disabled:opacity-50"
-                      >
-                        {loadingThis ? '...' : 'OK'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setMudandoStatusSetor(prev => { const n = { ...prev }; delete n[s.id]; return n })}
-                        className="p-1 rounded text-dark-muted hover:text-onsurface"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setMudandoStatusSetor(prev => ({ ...prev, [s.id]: s.status_atual }))}
-                      className="text-xs px-2 py-0.5 rounded font-mono hover:opacity-80 transition-opacity"
-                      style={{ backgroundColor: `${corDoSetor(s.setor)}20`, color: corDoSetor(s.setor) }}
+            <div key={s.id} className="px-3 py-3 rounded-lg mb-2 border border-dark-border bg-dark-surface2">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: corDoSetor(s.setor) }} />
+                <span className="text-sm font-body font-semibold text-onsurface flex-1">{s.setor}</span>
+                {editandoStatus ? (
+                  <div className="flex items-center gap-1">
+                    <select
+                      className="text-xs bg-dark-surface border border-dark-border rounded px-2 py-1 text-onsurface font-mono"
+                      value={mudandoStatusSetor[s.id]}
+                      onChange={e => setMudandoStatusSetor(prev => ({ ...prev, [s.id]: e.target.value }))}
                     >
-                      {s.status_atual}
-                    </button>
-                  )}
-                  {/* Remover setor (não principal) */}
-                  {!isPrincipal && onRemoverSetor && (
+                      {etapas.map(e => <option key={e.id} value={e.label}>{e.label}</option>)}
+                    </select>
                     <button
                       type="button"
                       disabled={!!loadingSetorAction}
-                      onClick={() => handleRemoverSetorEdit(s.id)}
-                      className="p-1 rounded text-dark-muted hover:text-red-400 hover:bg-red-500/10 transition-all disabled:opacity-50"
+                      onClick={() => handleMoverStatusEdit(s.id, mudandoStatusSetor[s.id])}
+                      className="text-xs px-2 py-1 rounded bg-accent text-black font-bold disabled:opacity-50"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      {loadingThis ? '...' : 'OK'}
                     </button>
-                  )}
-                </div>
+                    <button type="button" onClick={() => setMudandoStatusSetor(prev => { const n = { ...prev }; delete n[s.id]; return n })} className="p-1 rounded text-dark-muted hover:text-onsurface">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setMudandoStatusSetor(prev => ({ ...prev, [s.id]: s.status_atual }))}
+                    className="text-xs px-2 py-0.5 rounded font-mono hover:opacity-80 transition-opacity"
+                    style={{ backgroundColor: `${corDoSetor(s.setor)}20`, color: corDoSetor(s.setor) }}
+                  >
+                    {s.status_atual}
+                  </button>
+                )}
+                {onRemoverSetor && (
+                  <button
+                    type="button"
+                    disabled={!!loadingSetorAction}
+                    onClick={() => handleRemoverSetorEdit(s.id)}
+                    className="p-1 rounded text-dark-muted hover:text-red-400 hover:bg-red-500/10 transition-all disabled:opacity-50"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
-              {/* Tempo no status atual */}
               {minutos !== null && (
-                <div className="flex items-center gap-1 mt-1 text-[10px] text-dark-muted font-mono">
+                <div className="flex items-center gap-1 mt-1.5 ml-4 text-[10px] text-dark-muted font-mono">
                   <Clock className="w-3 h-3" />
                   {minutos < 60 ? `${minutos}min` : `${Math.floor(minutos / 60)}h${minutos % 60 > 0 ? ` ${minutos % 60}min` : ''}`} neste status
                 </div>
@@ -403,23 +385,20 @@ export function OSForm({
           )
         })}
 
-        {/* Painel para adicionar setor */}
+        {/* Painel adicionar novo setor */}
         <AnimatePresence>
           {adicionandoSetor && setoresDisponiveis.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-              className="overflow-hidden"
-            >
-              <div className="flex items-center gap-2 mt-2 p-3 rounded-lg border border-accent/30 bg-accent/5">
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+              <div className="flex items-center gap-2 mt-1 p-3 rounded-lg border border-accent/30 bg-accent/5">
                 <select
-                  className="text-sm bg-dark-surface2 border border-dark-border rounded-lg px-3 py-2 text-onsurface font-body flex-1"
+                  className="flex-1 text-sm bg-dark-surface2 border border-dark-border rounded-lg px-3 py-2 text-onsurface font-body"
                   value={novoSetor}
                   onChange={e => setNovoSetor(e.target.value)}
                 >
                   {setoresDisponiveis.map(s => <option key={s.nome} value={s.nome}>{s.icon} {s.nome}</option>)}
                 </select>
                 <select
-                  className="text-sm bg-dark-surface2 border border-dark-border rounded-lg px-3 py-2 text-onsurface font-mono"
+                  className="flex-1 text-sm bg-dark-surface2 border border-dark-border rounded-lg px-3 py-2 text-onsurface font-mono"
                   value={novoStatus}
                   onChange={e => setNovoStatus(e.target.value)}
                 >
@@ -428,10 +407,10 @@ export function OSForm({
                 <button
                   type="button"
                   disabled={loadingSetorAction === 'add'}
-                  onClick={isEdit ? handleAdicionarSetorEdit : adicionarSetorExtra}
-                  className="px-3 py-2 rounded-lg bg-accent text-black text-sm font-bold hover:bg-accent-hover transition-all disabled:opacity-50"
+                  onClick={isEdit ? handleAdicionarSetorEdit : adicionarSetorCriacao}
+                  className="px-3 py-2 rounded-lg bg-accent text-black text-sm font-bold hover:bg-accent-hover transition-all disabled:opacity-50 whitespace-nowrap"
                 >
-                  {loadingSetorAction === 'add' ? '...' : 'Adicionar'}
+                  {loadingSetorAction === 'add' ? '...' : '+ Adicionar'}
                 </button>
                 <button type="button" onClick={() => setAdicionandoSetor(false)} className="p-2 rounded-lg text-dark-muted hover:text-onsurface">
                   <X className="w-4 h-4" />
@@ -440,19 +419,25 @@ export function OSForm({
             </motion.div>
           )}
         </AnimatePresence>
+
+        {setoresEmUso.length === 0 && !adicionandoSetor && (
+          <p className="text-xs text-dark-muted font-body italic text-center py-4">
+            Nenhum setor adicionado. Clique em "Adicionar setor".
+          </p>
+        )}
       </div>
 
       {/* Responsáveis */}
       <div className="border-t border-dark-border pt-4">
         <label className={labelClass}>
-          Responsáveis — {form.setor}
+          Responsáveis
           {responsaveisSelecionados.length > 0 && (
             <span className="ml-2 text-accent normal-case font-mono">{responsaveisSelecionados.length} selecionado(s)</span>
           )}
         </label>
         {usuariosDoSetor.length === 0 ? (
           <p className="text-xs text-dark-muted font-body italic">
-            Nenhum usuário cadastrado para este setor.{' '}
+            Nenhum usuário cadastrado para o setor selecionado.{' '}
             <span className="text-accent">Configure em Usuários →</span>
           </p>
         ) : (
@@ -464,20 +449,14 @@ export function OSForm({
                   key={u.id} type="button"
                   onClick={() => toggleResponsavel(u.id)}
                   className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-body border transition-all ${
-                    sel
-                      ? 'bg-accent/15 text-accent border-accent/30 shadow-sm'
-                      : 'text-dark-muted border-dark-border hover:text-onsurface hover:bg-dark-surface2'
+                    sel ? 'bg-accent/15 text-accent border-accent/30' : 'text-dark-muted border-dark-border hover:text-onsurface hover:bg-dark-surface2'
                   }`}
                 >
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${sel ? 'bg-accent/20' : 'bg-dark-surface2'}`}>
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${sel ? 'bg-accent/20' : 'bg-dark-surface2'}`}>
                     <User className="w-3.5 h-3.5" />
                   </div>
                   <span>{u.nome || u.email}</span>
-                  {u.telefone && (
-                    <span className="flex items-center gap-0.5 text-xs text-dark-muted">
-                      <Phone className="w-3 h-3" />{u.telefone}
-                    </span>
-                  )}
+                  {u.telefone && <span className="flex items-center gap-0.5 text-xs text-dark-muted"><Phone className="w-3 h-3" />{u.telefone}</span>}
                   {sel && <X className="w-3.5 h-3.5 ml-1 opacity-60" />}
                 </button>
               )
@@ -488,7 +467,7 @@ export function OSForm({
 
       {/* Campos extras */}
       {campos.length > 0 && (
-        <div className="border-t border-dark-border pt-4 mt-4">
+        <div className="border-t border-dark-border pt-4">
           <p className="text-xs font-display tracking-wider text-dark-muted mb-3">CAMPOS EXTRAS</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {campos.map(c => (
@@ -508,19 +487,19 @@ export function OSForm({
         </div>
       )}
 
-      {/* Vinculo */}
+      {/* Vínculo */}
       {osDisponiveis.length > 0 && (
         <div className="border-t border-dark-border pt-4">
           <button type="button" onClick={() => setVinculoAberto(v => !v)} className="flex items-center gap-2 text-xs font-body font-semibold text-dark-muted hover:text-accent transition-all">
             <Link2 className="w-3.5 h-3.5" />
-            Vincular a OS de outro setor
+            Vincular a outra OS
             <ChevronDown className={`w-3.5 h-3.5 transition-transform ${vinculoAberto ? 'rotate-180' : ''}`} />
-            {form.vinculo && <span className="text-accent text-xs">(vinculado)</span>}
+            {form.vinculo && <span className="text-accent">(vinculado)</span>}
           </button>
           {vinculoAberto && (
             <div className="mt-2">
-              <select className={inputClass + ' w-full'} value={form.vinculo} onChange={e => set('vinculo', e.target.value)}>
-                <option value="">Sem vinculo</option>
+              <select className={inputClass} value={form.vinculo} onChange={e => set('vinculo', e.target.value)}>
+                <option value="">Sem vínculo</option>
                 {osDisponiveis.map(o => <option key={o.id} value={o.id}>{o.numero} — {o.cliente} ({o.setor})</option>)}
               </select>
             </div>
@@ -528,28 +507,28 @@ export function OSForm({
         </div>
       )}
 
-      {/* Observacoes */}
+      {/* Observações */}
       <div>
-        <label className={labelClass}>Observacoes</label>
-        <textarea className={`${inputClass} min-h-[80px] resize-y`} value={form.observacoes} onChange={e => set('observacoes', e.target.value)} placeholder="Detalhes do servico..." />
+        <label className={labelClass}>Observações</label>
+        <textarea className={`${inputClass} min-h-[80px] resize-y`} value={form.observacoes} onChange={e => set('observacoes', e.target.value)} placeholder="Detalhes do serviço..." />
       </div>
 
-      {/* Historico */}
+      {/* Histórico */}
       {isEdit && (
         <div className="border-t border-dark-border pt-4">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-display tracking-wider text-dark-muted">HISTORICO</p>
+            <p className="text-xs font-display tracking-wider text-dark-muted">HISTÓRICO</p>
             <button type="button" onClick={() => {
               const txt = historico.length
                 ? historico.map(h => `[${new Date(h.criado_em).toLocaleString('pt-BR')}] ${h.tipo === 'criacao' ? 'Criado' : h.tipo === 'edicao' ? 'Editado' : `${h.status_anterior} → ${h.status_novo}`}${h.operador ? ` (${h.operador})` : ''}`).join('\n')
-                : 'Sem historico'
+                : 'Sem histórico'
               navigator.clipboard?.writeText(`OS ${os?.numero}\n${txt}`)
             }} className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-body text-dark-muted hover:text-accent hover:bg-accent/10 border border-dark-border transition-all">
               📋 Copiar
             </button>
           </div>
           {historico.length === 0 ? (
-            <p className="text-xs text-dark-muted font-body">Sem registros de historico.</p>
+            <p className="text-xs text-dark-muted font-body">Sem registros.</p>
           ) : (
             <div className="space-y-1.5 max-h-40 overflow-y-auto">
               {historico.map(h => (

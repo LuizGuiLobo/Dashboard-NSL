@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus } from 'lucide-react'
 import { PageTransition } from '@/components/layout/PageTransition'
 import { KanbanBoard } from '@/components/kanban/KanbanBoard'
@@ -40,6 +40,11 @@ export function Kanban({
   const [saving, setSaving] = useState(false)
   const { toast } = useToast()
 
+  // Recarrega o Kanban sempre que a página é montada (navegação entre abas)
+  useEffect(() => {
+    onCarregarKanban()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleMove = async (osSetorId: string, novoStatus: string) => {
     try {
       await onMoverStatus(osSetorId, novoStatus)
@@ -50,12 +55,16 @@ export function Kanban({
   }
 
   const handleEdit = (item: KanbanItem) => {
-    // Encontra a OS completa para editar
     const os = ordens.find(o => o.id === item.os_id)
     if (os) setOsEditando(os)
   }
 
-  const handleCriar = async (data: Partial<OrdemServico>, vinculoId?: string, responsaveisIds?: string[], setoresIniciais?: { setor: string; status: string }[]) => {
+  const handleCriar = async (
+    data: Partial<OrdemServico>,
+    vinculoId?: string,
+    responsaveisIds?: string[],
+    setoresIniciais?: { setor: string; status: string }[],
+  ) => {
     setSaving(true)
     try {
       const novoId = await onCriar(data)
@@ -65,8 +74,8 @@ export function Kanban({
           const rows = responsaveisIds.map(user_id => ({ os_id: novoId, user_id }))
           await supabase.from('os_responsaveis').insert(rows)
         }
-        // Setor principal criado automaticamente pelo trigger trg_os_insert_setor
-        // Adicionar apenas setores extras (se houver)
+        // O trigger trg_os_insert_setor já criou o setor da ordens_servico.setor.
+        // Aqui adicionamos TODOS os setores do formulário via RPC (ON CONFLICT DO UPDATE é seguro).
         if (setoresIniciais?.length) {
           for (const s of setoresIniciais) {
             await onAdicionarSetor(novoId, s.setor, s.status)
@@ -82,7 +91,11 @@ export function Kanban({
     setSaving(false)
   }
 
-  const handleEditar = async (data: Partial<OrdemServico>, _vinculoId?: string, responsaveisIds?: string[]) => {
+  const handleEditar = async (
+    data: Partial<OrdemServico>,
+    _vinculoId?: string,
+    responsaveisIds?: string[],
+  ) => {
     if (!osEditando) return
     setSaving(true)
     try {
@@ -146,7 +159,7 @@ export function Kanban({
           />
         </Modal>
 
-        <Modal open={!!osEditando} onClose={() => setOsEditando(null)} title={`Editar ${osEditando?.numero || ''}`} size="lg">
+        <Modal open={!!osEditando} onClose={() => setOsEditando(null)} title={`Editar OS ${osEditando?.numero || ''}`} size="lg">
           {osEditando && (
             <OSForm
               os={osEditando} etapasDoSetor={etapasDoSetor} campos={campos}

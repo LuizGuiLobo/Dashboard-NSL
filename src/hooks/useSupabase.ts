@@ -254,6 +254,7 @@ export function useOSSetoresParaOS(osId: string | null) {
       .from('os_setores')
       .select('*, os_status_log(id, status, inicio, fim, duracao_minutos)')
       .eq('os_id', osId)
+      .is('finalizado_em', null)
       .order('criado_em', { ascending: true })
     if (error) console.error('Erro ao carregar setores da OS:', error.message)
     setSetores((data as OSSetorDetalhe[]) || [])
