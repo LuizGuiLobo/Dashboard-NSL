@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { OrdemServico, EtapaKanban, CampoConfig, Operador, OSVinculo, OSHistorico, Profile } from '@/types'
+import type { OrdemServico, EtapaKanban, CampoConfig, Operador, OSVinculo, OSHistorico, Profile, KanbanItem, OSSetorDetalhe } from '@/types'
 
 export function useOrdens() {
   const [ordens, setOrdens] = useState<OrdemServico[]>([])
@@ -193,6 +193,76 @@ export function useVinculos() {
   }
 
   return { vinculos, carregar, criar }
+}
+
+export function useKanban() {
+  const [items, setItems] = useState<KanbanItem[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const carregar = useCallback(async () => {
+    setLoading(true)
+    const { data, error } = await supabase
+      .from('v_kanban')
+      .select('*')
+      .order('criado_em', { ascending: false })
+    if (error) console.error('Erro ao carregar kanban:', error.message)
+    setItems((data as KanbanItem[]) || [])
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { carregar() }, [carregar])
+
+  const moverStatus = async (osSetorId: string, novoStatus: string) => {
+    const { error } = await supabase.rpc('mover_status_setor', {
+      p_os_setor_id: osSetorId,
+      p_novo_status: novoStatus,
+    })
+    if (error) throw new Error(error.message)
+    await carregar()
+  }
+
+  const adicionarSetor = async (osId: string, setor: string, statusInicial: string) => {
+    const { error } = await supabase.rpc('adicionar_setor_os', {
+      p_os_id: osId,
+      p_setor: setor,
+      p_status_inicial: statusInicial,
+    })
+    if (error) throw new Error(error.message)
+    await carregar()
+  }
+
+  const removerSetor = async (osSetorId: string) => {
+    const { error } = await supabase
+      .from('os_setores')
+      .update({ finalizado_em: new Date().toISOString() })
+      .eq('id', osSetorId)
+    if (error) throw new Error(error.message)
+    await carregar()
+  }
+
+  return { items, loading, carregar, moverStatus, adicionarSetor, removerSetor }
+}
+
+export function useOSSetoresParaOS(osId: string | null) {
+  const [setores, setSetores] = useState<OSSetorDetalhe[]>([])
+  const [loading, setLoading] = useState(false)
+
+  const carregar = useCallback(async () => {
+    if (!osId) { setSetores([]); return }
+    setLoading(true)
+    const { data, error } = await supabase
+      .from('os_setores')
+      .select('*, os_status_log(id, status, inicio, fim, duracao_minutos)')
+      .eq('os_id', osId)
+      .order('criado_em', { ascending: true })
+    if (error) console.error('Erro ao carregar setores da OS:', error.message)
+    setSetores((data as OSSetorDetalhe[]) || [])
+    setLoading(false)
+  }, [osId])
+
+  useEffect(() => { carregar() }, [carregar])
+
+  return { setores, loading, carregar }
 }
 
 export function useProfiles() {

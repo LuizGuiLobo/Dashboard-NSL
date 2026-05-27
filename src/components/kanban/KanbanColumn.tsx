@@ -2,17 +2,17 @@ import { useDroppable } from '@dnd-kit/core'
 import { motion } from 'framer-motion'
 import { KanbanCard } from './KanbanCard'
 import { staggerItem } from '@/hooks/useAnimations'
-import type { OrdemServico, EtapaKanban } from '@/types'
+import type { KanbanItem, EtapaKanban } from '@/types'
 
 interface KanbanColumnProps {
   etapa: EtapaKanban
-  ordens: OrdemServico[]
+  items: KanbanItem[]
   vinculosCountMap: Record<string, number>
-  onEdit: (os: OrdemServico) => void
-  onDelete: (id: string) => void
+  onEdit: (item: KanbanItem) => void
+  onDelete: (osId: string) => void
 }
 
-export function KanbanColumn({ etapa, ordens, vinculosCountMap, onEdit, onDelete }: KanbanColumnProps) {
+export function KanbanColumn({ etapa, items, vinculosCountMap, onEdit, onDelete }: KanbanColumnProps) {
   const { isOver, setNodeRef } = useDroppable({ id: etapa.label })
 
   return (
@@ -22,7 +22,7 @@ export function KanbanColumn({ etapa, ordens, vinculosCountMap, onEdit, onDelete
       className={`min-w-[280px] w-[280px] flex-shrink-0 rounded-xl transition-all duration-300 ${
         isOver ? 'ring-2 ring-offset-2 ring-offset-dark-bg' : ''
       }`}
-      style={isOver ? { ['--tw-ring-color' as any]: etapa.cor } : undefined}
+      style={isOver ? { ['--tw-ring-color' as string]: etapa.cor } : undefined}
     >
       {/* Header */}
       <div className="flex items-center gap-2 mb-3 px-1">
@@ -32,7 +32,7 @@ export function KanbanColumn({ etapa, ordens, vinculosCountMap, onEdit, onDelete
           className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded"
           style={{ backgroundColor: `${etapa.cor}18`, color: etapa.cor }}
         >
-          {ordens.length}
+          {items.length}
         </span>
       </div>
 
@@ -40,14 +40,14 @@ export function KanbanColumn({ etapa, ordens, vinculosCountMap, onEdit, onDelete
       <div className={`space-y-2.5 min-h-[100px] p-2 rounded-lg transition-colors duration-300 ${
         isOver ? 'bg-dark-surface2/40' : 'bg-transparent'
       }`}>
-        {ordens.length === 0 ? (
+        {items.length === 0 ? (
           <div className="text-center py-8 text-dark-muted text-xs font-body">vazio</div>
         ) : (
-          ordens.map(os => (
+          items.map(item => (
             <KanbanCard
-              key={os.id}
-              os={os}
-              vinculosCount={vinculosCountMap[os.id] || 0}
+              key={item.os_setor_id}
+              item={item}
+              vinculosCount={vinculosCountMap[item.os_id] || 0}
               onEdit={onEdit}
               onDelete={onDelete}
             />

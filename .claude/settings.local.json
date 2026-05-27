@@ -31,7 +31,9 @@
       "mcp__1a6a367a-c5ef-4aa9-b353-83e63079629c__list_teams",
       "mcp__1a6a367a-c5ef-4aa9-b353-83e63079629c__list_projects",
       "mcp__1a6a367a-c5ef-4aa9-b353-83e63079629c__deploy_to_vercel",
-      "Bash(npx vercel *)"
+      "Bash(npx vercel *)",
+      "mcp__0ff5c802-017c-4a1f-8429-0ba21013d2d8__execute_sql",
+      "mcp__0ff5c802-017c-4a1f-8429-0ba21013d2d8__apply_migration"
     ]
   }
 }

@@ -5,7 +5,7 @@ import { SETORES, TIPOS_OS, corDoSetor } from '@/lib/constants'
 import { gerarNumeroOS } from '@/lib/utils'
 import { useHistorico, useResponsaveis, useOSSetoresParaOS } from '@/hooks/useSupabase'
 import { supabase } from '@/lib/supabase'
-import type { OrdemServico, EtapaKanban, CampoConfig, Operador, Profile } from '@/types'
+import type { OrdemServico, EtapaKanban, CampoConfig, Profile } from '@/types'
 
 interface SetorExtra {
   setor: string
@@ -16,7 +16,7 @@ interface OSFormProps {
   os?: OrdemServico | null
   etapasDoSetor: (setor: string) => EtapaKanban[]
   campos: CampoConfig[]
-  operadores: Operador[]
+  operadores?: never[]
   profiles: Profile[]
   ordens: OrdemServico[]
   onSave: (data: Partial<OrdemServico>, vinculoId?: string, responsaveisIds?: string[], setoresIniciais?: SetorExtra[]) => void
@@ -29,7 +29,7 @@ interface OSFormProps {
 }
 
 export function OSForm({
-  os, etapasDoSetor, campos, operadores, profiles, ordens,
+  os, etapasDoSetor, campos, profiles, ordens,
   onSave, onCancel, saving,
   onAdicionarSetor, onRemoverSetor, onCarregarKanban,
 }: OSFormProps) {
@@ -48,7 +48,6 @@ export function OSForm({
     modelo: os?.modelo || '',
     setor: os?.setor || SETORES[0].nome,
     status: os?.status || '',
-    operador: os?.operador || '',
     data_entrada: os?.data_entrada ? os.data_entrada.slice(0, 16) : new Date().toISOString().slice(0, 16),
     observacoes: os?.observacoes || '',
     extras: (os?.extras || {}) as Record<string, string>,
@@ -97,7 +96,6 @@ export function OSForm({
     () => profiles.filter(p => p.ativo && p.setores?.includes(form.setor)),
     [profiles, form.setor]
   )
-  const operadoresDoSetor = operadores.filter(o => o.setores?.includes(form.setor) && o.ativo !== false)
   const osDisponiveis = ordens.filter(o => o.id !== os?.id && o.setor !== form.setor)
 
   // Setores já em uso (para evitar duplicatas ao adicionar)
@@ -116,7 +114,6 @@ export function OSForm({
       setForm(prev => ({
         ...prev, setor: value,
         status: novasEtapas.length > 0 ? novasEtapas[0].label : '',
-        operador: '',
       }))
       setResponsaveisSelecionados([])
       return
@@ -201,9 +198,9 @@ export function OSForm({
     if (!form.cliente.trim()) return
     if (submittingRef.current) return
     submittingRef.current = true
-    const { vinculo, ...data } = form
+    const { vinculo, ...rest } = form
     const setoresIniciais = setoresExtras.length > 0 ? setoresExtras : undefined
-    onSave(data, vinculo || undefined, responsaveisSelecionados, setoresIniciais)
+    onSave(rest, vinculo || undefined, responsaveisSelecionados, setoresIniciais)
     setTimeout(() => { submittingRef.current = false }, 3000)
   }
 
@@ -238,30 +235,6 @@ export function OSForm({
           <input className={inputClass} value={form.modelo} onChange={e => set('modelo', e.target.value)} placeholder="Ex: Scania R450" />
         </div>
         <div>
-          <label className={labelClass}>Setor Principal</label>
-          <select className={inputClass} value={form.setor} onChange={e => set('setor', e.target.value)} disabled={isEdit}>
-            {SETORES.map(s => <option key={s.nome} value={s.nome}>{s.icon} {s.nome}</option>)}
-          </select>
-          {isEdit && <p className="text-[10px] text-dark-muted mt-1 font-body">Setor principal não pode ser alterado.</p>}
-        </div>
-        {!isEdit && (
-          <div>
-            <label className={labelClass}>Status / Etapa</label>
-            <AnimatePresence mode="wait">
-              <motion.div key={form.setor} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} transition={{ duration: 0.15 }}>
-                {statusDesconhecido && (
-                  <p className="text-xs text-yellow-400 mb-1 font-body">⚠️ Status "{form.status}" nao existe neste setor.</p>
-                )}
-                <select className={inputClass} value={form.status} onChange={e => set('status', e.target.value)}>
-                  {statusDesconhecido && <option value={form.status}>⚠️ {form.status} (desconhecido)</option>}
-                  {etapasAtuais.map(e => <option key={e.id} value={e.label}>{e.label}</option>)}
-                  {etapasAtuais.length === 0 && <option value="">Nenhuma etapa configurada</option>}
-                </select>
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        )}
-        <div>
           <label className={labelClass}>Data de Entrada</label>
           <input type="datetime-local" className={inputClass} value={form.data_entrada} onChange={e => set('data_entrada', e.target.value)} />
         </div>
@@ -287,23 +260,45 @@ export function OSForm({
           )}
         </div>
 
-        {/* Setor principal (modo criação) */}
+        {/* Setor principal (modo criação) — setor + status editáveis dentro do card */}
         {!isEdit && (
           <div
-            className="flex items-center justify-between px-3 py-2 rounded-lg mb-2 border"
+            className="px-3 py-3 rounded-lg mb-2 border"
             style={{
               backgroundColor: `${corDoSetor(form.setor)}10`,
               borderColor: `${corDoSetor(form.setor)}30`,
             }}
           >
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: corDoSetor(form.setor) }} />
-              <span className="text-sm font-body font-semibold text-onsurface">{form.setor}</span>
-              <span className="text-xs text-dark-muted font-mono">principal</span>
+            <div className="flex items-center gap-1.5 mb-2">
+              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: corDoSetor(form.setor) }} />
+              <span className="text-[10px] text-dark-muted font-mono uppercase tracking-wider">Setor principal</span>
             </div>
-            <span className="text-xs px-2 py-0.5 rounded font-mono" style={{ backgroundColor: `${corDoSetor(form.setor)}20`, color: corDoSetor(form.setor) }}>
-              {form.status || '—'}
-            </span>
+            <div className="flex gap-2">
+              <select
+                className="flex-1 text-sm bg-dark-surface2 border border-dark-border rounded-lg px-3 py-2 text-onsurface font-body focus:outline-none focus:border-accent transition-all"
+                value={form.setor}
+                onChange={e => set('setor', e.target.value)}
+              >
+                {SETORES.map(s => <option key={s.nome} value={s.nome}>{s.icon} {s.nome}</option>)}
+              </select>
+              <AnimatePresence mode="wait">
+                <motion.div key={form.setor} initial={{ opacity: 0, y: 3 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.12 }} className="flex-1">
+                  {statusDesconhecido && (
+                    <p className="text-[10px] text-yellow-400 mb-1 font-body">⚠️ Status desconhecido</p>
+                  )}
+                  <select
+                    className="w-full text-sm bg-dark-surface2 border border-dark-border rounded-lg px-3 py-2 font-mono focus:outline-none focus:border-accent transition-all"
+                    style={{ color: corDoSetor(form.setor) }}
+                    value={form.status}
+                    onChange={e => set('status', e.target.value)}
+                  >
+                    {statusDesconhecido && <option value={form.status}>⚠️ {form.status}</option>}
+                    {etapasAtuais.map(e => <option key={e.id} value={e.label}>{e.label}</option>)}
+                    {etapasAtuais.length === 0 && <option value="">Nenhuma etapa</option>}
+                  </select>
+                </motion.div>
+              </AnimatePresence>
+            </div>
           </div>
         )}
 
@@ -487,22 +482,6 @@ export function OSForm({
                 </button>
               )
             })}
-          </div>
-        )}
-        {operadoresDoSetor.length > 0 && (
-          <div className="mt-3">
-            <label className={labelClass + ' text-[10px] opacity-70'}>Mecânico (legado)</label>
-            <input
-              list={`ops-${form.setor}`}
-              className={inputClass}
-              value={form.operador}
-              onChange={e => set('operador', e.target.value)}
-              placeholder="Selecionar ou digitar..."
-              autoComplete="off"
-            />
-            <datalist id={`ops-${form.setor}`}>
-              {operadoresDoSetor.map(o => <option key={o.id} value={o.nome.trim()} />)}
-            </datalist>
           </div>
         )}
       </div>

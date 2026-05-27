@@ -4,20 +4,21 @@ import { Pencil, Trash2, User, Clock, Link } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
 import { diasDesdeEntrada, badgeDias } from '@/lib/utils'
 import { corDoSetor } from '@/lib/constants'
-import type { OrdemServico } from '@/types'
+import type { KanbanItem } from '@/types'
 
 interface KanbanCardProps {
-  os: OrdemServico
+  item: KanbanItem
   vinculosCount?: number
-  onEdit: (os: OrdemServico) => void
-  onDelete: (id: string) => void
+  onEdit: (item: KanbanItem) => void
+  onDelete: (osId: string) => void
   overlay?: boolean
 }
 
-export function KanbanCard({ os, vinculosCount, onEdit, onDelete, overlay }: KanbanCardProps) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: os.id })
-  const dias = diasDesdeEntrada(os.data_entrada)
+export function KanbanCard({ item, vinculosCount, onEdit, onDelete, overlay }: KanbanCardProps) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: item.os_setor_id })
+  const dias = diasDesdeEntrada(item.data_entrada)
   const diasStyle = badgeDias(dias)
+  const isSecundario = item.setor !== item.setor_principal
 
   const style = transform
     ? { transform: `translate(${transform.x}px, ${transform.y}px)` }
@@ -39,16 +40,16 @@ export function KanbanCard({ os, vinculosCount, onEdit, onDelete, overlay }: Kan
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-mono font-bold text-accent">{os.numero}</span>
+        <span className="text-xs font-mono font-bold text-accent">{item.numero}</span>
         <div className="flex gap-1">
           <button
-            onClick={(e) => { e.stopPropagation(); onEdit(os) }}
+            onClick={(e) => { e.stopPropagation(); onEdit(item) }}
             className="p-1 rounded text-dark-muted hover:text-accent hover:bg-accent/10 transition-all"
           >
             <Pencil className="w-3.5 h-3.5" />
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); onDelete(os.id) }}
+            onClick={(e) => { e.stopPropagation(); onDelete(item.os_id) }}
             className="p-1 rounded text-dark-muted hover:text-red-400 hover:bg-red-500/10 transition-all"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -56,17 +57,31 @@ export function KanbanCard({ os, vinculosCount, onEdit, onDelete, overlay }: Kan
         </div>
       </div>
 
+      {/* Setor badge (secundário) */}
+      {isSecundario && (
+        <div
+          className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-body font-semibold mb-2 border"
+          style={{
+            backgroundColor: `${corDoSetor(item.setor)}18`,
+            color: corDoSetor(item.setor),
+            borderColor: `${corDoSetor(item.setor)}35`,
+          }}
+        >
+          + {item.setor}
+        </div>
+      )}
+
       {/* Tipo badge */}
-      {os.tipo && (
-        <Badge color={os.tipo === 'Veículo' ? '#3b82f6' : '#10b981'} className="mb-2 text-[10px]">
-          {os.tipo === 'Veículo' ? '🚛' : '🔧'} {os.tipo}
+      {item.tipo && (
+        <Badge color={item.tipo === 'Veículo' ? '#3b82f6' : '#10b981'} className="mb-2 text-[10px]">
+          {item.tipo === 'Veículo' ? '🚛' : '🔧'} {item.tipo}
         </Badge>
       )}
 
       {/* Info */}
-      {os.placa && <p className="text-sm font-mono font-bold text-onsurface">{os.placa}</p>}
-      {os.modelo && <p className="text-xs text-dark-muted">{os.modelo}</p>}
-      <p className="text-sm font-body font-semibold text-onsurface mt-1">{os.cliente}</p>
+      {item.placa && <p className="text-sm font-mono font-bold text-onsurface">{item.placa}</p>}
+      {item.modelo && <p className="text-xs text-dark-muted">{item.modelo}</p>}
+      <p className="text-sm font-body font-semibold text-onsurface mt-1">{item.cliente}</p>
 
       {/* Dias */}
       <div className={`flex items-center gap-1 mt-2 text-xs font-mono font-bold px-2 py-1 rounded border w-fit ${diasStyle.bg} ${diasStyle.cor}`}>
@@ -74,23 +89,23 @@ export function KanbanCard({ os, vinculosCount, onEdit, onDelete, overlay }: Kan
       </div>
 
       {/* Operador */}
-      {os.operador && (
+      {item.operador && (
         <div className="flex items-center gap-1.5 mt-2 text-xs text-dark-muted">
-          <User className="w-3 h-3" /> {os.operador}
+          <User className="w-3 h-3" /> {item.operador}
         </div>
       )}
 
-      {/* Vinculos */}
+      {/* Vínculos */}
       {!!vinculosCount && (
         <div className="flex items-center gap-1 mt-1.5 text-[10px] text-primary font-mono">
           <Link className="w-3 h-3" /> {vinculosCount} vínculo{vinculosCount > 1 ? 's' : ''}
         </div>
       )}
 
-      {/* Observacoes preview */}
-      {os.observacoes && (
+      {/* Observações preview */}
+      {item.observacoes && (
         <p className="text-xs text-dark-muted mt-2 line-clamp-2 pt-2" style={{ borderTop: '1px solid rgba(68,70,79,0.3)' }}>
-          {os.observacoes}
+          {item.observacoes}
         </p>
       )}
     </motion.div>

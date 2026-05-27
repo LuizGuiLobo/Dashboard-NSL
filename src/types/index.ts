@@ -53,6 +53,45 @@ export interface OSHistorico {
   criado_em: string
 }
 
+export interface KanbanItem {
+  os_setor_id: string
+  setor: string
+  status_atual: string
+  setor_inicio: string
+  finalizado_em: string | null
+  setor_principal: string
+  os_id: string
+  numero: string
+  tipo: string
+  placa: string
+  cliente: string
+  modelo: string
+  operador: string
+  observacoes: string
+  extras: Record<string, unknown>
+  data_entrada: string
+  criado_em: string
+}
+
+export interface OSStatusLog {
+  id: string
+  os_setor_id: string
+  status: string
+  inicio: string
+  fim: string | null
+  duracao_minutos: number | null
+}
+
+export interface OSSetorDetalhe {
+  id: string
+  os_id: string
+  setor: string
+  status_atual: string
+  criado_em: string
+  finalizado_em: string | null
+  os_status_log?: OSStatusLog[]
+}
+
 export interface Profile {
   id: string
   nome: string

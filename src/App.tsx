@@ -12,7 +12,7 @@ import { Matrizes } from '@/pages/Matrizes'
 import { Config } from '@/pages/Config'
 import { Login } from '@/pages/Login'
 import { Usuarios } from '@/pages/Usuarios'
-import { useOrdens, useEtapas, useCampos, useOperadores, useVinculos, useProfiles } from '@/hooks/useSupabase'
+import { useOrdens, useEtapas, useCampos, useOperadores, useVinculos, useProfiles, useKanban } from '@/hooks/useSupabase'
 import { supabase } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
 
@@ -43,6 +43,7 @@ export default function App() {
   const { operadores, loading: loadingOps, salvar: salvarOperadores } = useOperadores()
   const { vinculos, criar: criarVinculo } = useVinculos()
   const { profiles, carregar: carregarProfiles, salvar: salvarProfile } = useProfiles()
+  const { items: kanbanItems, loading: loadingKanban, carregar: carregarKanban, moverStatus, adicionarSetor, removerSetor } = useKanban()
 
   const loading = loadingOS || loadingEtapas
 
@@ -92,15 +93,18 @@ export default function App() {
                   } />
                   <Route path="/kanban" element={
                     <Kanban
-                      ordens={ordens} etapasDoSetor={etapasDoSetor} todasEtapas={todasEtapas} campos={campos} operadores={operadores}
+                      ordens={ordens} etapasDoSetor={etapasDoSetor} todasEtapas={todasEtapas} campos={campos}
                       vinculos={vinculos} criarVinculo={criarVinculo} profiles={profiles}
+                      kanbanItems={kanbanItems} loadingKanban={loadingKanban}
+                      onMoverStatus={moverStatus} onAdicionarSetor={adicionarSetor} onRemoverSetor={removerSetor}
+                      onCarregarKanban={carregarKanban}
                       loading={loading}
                       onCriar={criar} onAtualizar={atualizar} onExcluir={excluir}
                     />
                   } />
                   <Route path="/ordens" element={
                     <OrdensServico
-                      ordens={ordens} todasEtapas={todasEtapas} etapasDoSetor={etapasDoSetor} campos={campos} operadores={operadores}
+                      ordens={ordens} todasEtapas={todasEtapas} etapasDoSetor={etapasDoSetor} campos={campos}
                       vinculos={vinculos} criarVinculo={criarVinculo} profiles={profiles}
                       loading={loading}
                       onCriar={criar} onAtualizar={atualizar} onExcluir={excluir}

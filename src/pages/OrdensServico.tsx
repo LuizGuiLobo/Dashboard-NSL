@@ -5,14 +5,13 @@ import { OSTable } from '@/components/os/OSTable'
 import { OSForm } from '@/components/os/OSForm'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/Toast'
-import type { OrdemServico, EtapaKanban, CampoConfig, Operador, OSVinculo, Profile } from '@/types'
+import type { OrdemServico, EtapaKanban, CampoConfig, OSVinculo, Profile } from '@/types'
 
 interface OrdensServicoPageProps {
   ordens: OrdemServico[]
   todasEtapas: EtapaKanban[]
   etapasDoSetor: (setor: string) => EtapaKanban[]
   campos: CampoConfig[]
-  operadores: Operador[]
   profiles: Profile[]
   vinculos: OSVinculo[]
   criarVinculo: (origemId: string, destinoId: string) => Promise<void>
@@ -22,7 +21,7 @@ interface OrdensServicoPageProps {
   onExcluir: (id: string) => Promise<void>
 }
 
-export function OrdensServico({ ordens, todasEtapas, etapasDoSetor, campos, operadores, profiles, vinculos, criarVinculo, loading, onCriar, onAtualizar, onExcluir }: OrdensServicoPageProps) {
+export function OrdensServico({ ordens, todasEtapas, etapasDoSetor, campos, profiles, vinculos, criarVinculo, loading, onCriar, onAtualizar, onExcluir }: OrdensServicoPageProps) {
   const [modalCriar, setModalCriar] = useState(false)
   const [osEditando, setOsEditando] = useState<OrdemServico | null>(null)
   const [saving, setSaving] = useState(false)
@@ -100,12 +99,12 @@ export function OrdensServico({ ordens, todasEtapas, etapasDoSetor, campos, oper
         />
 
         <Modal open={modalCriar} onClose={() => setModalCriar(false)} title="Nova Ordem de Servico" size="lg">
-          <OSForm etapasDoSetor={etapasDoSetor} campos={campos} operadores={operadores} profiles={profiles} ordens={ordens} onSave={handleCriar} onCancel={() => setModalCriar(false)} saving={saving} />
+          <OSForm etapasDoSetor={etapasDoSetor} campos={campos} profiles={profiles} ordens={ordens} onSave={handleCriar} onCancel={() => setModalCriar(false)} saving={saving} />
         </Modal>
 
         <Modal open={!!osEditando} onClose={() => setOsEditando(null)} title={`Editar ${osEditando?.numero || ''}`} size="lg">
           {osEditando && (
-            <OSForm os={osEditando} etapasDoSetor={etapasDoSetor} campos={campos} operadores={operadores} profiles={profiles} ordens={ordens} onSave={handleEditar} onCancel={() => setOsEditando(null)} saving={saving} />
+            <OSForm os={osEditando} etapasDoSetor={etapasDoSetor} campos={campos} profiles={profiles} ordens={ordens} onSave={handleEditar} onCancel={() => setOsEditando(null)} saving={saving} />
           )}
         </Modal>
       </div>

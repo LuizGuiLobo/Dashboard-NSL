@@ -5,52 +5,74 @@ import { KanbanBoard } from '@/components/kanban/KanbanBoard'
 import { OSForm } from '@/components/os/OSForm'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/Toast'
-import { useResponsaveis } from '@/hooks/useSupabase'
-import type { OrdemServico, EtapaKanban, CampoConfig, Operador, OSVinculo, Profile } from '@/types'
+import { supabase } from '@/lib/supabase'
+import type { OrdemServico, EtapaKanban, CampoConfig, OSVinculo, Profile, KanbanItem } from '@/types'
 
 interface KanbanPageProps {
   ordens: OrdemServico[]
   etapasDoSetor: (setor: string) => EtapaKanban[]
   todasEtapas: EtapaKanban[]
   campos: CampoConfig[]
-  operadores: Operador[]
   profiles: Profile[]
   vinculos: OSVinculo[]
   criarVinculo: (origemId: string, destinoId: string) => Promise<void>
+  kanbanItems: KanbanItem[]
+  loadingKanban: boolean
+  onMoverStatus: (osSetorId: string, novoStatus: string) => Promise<void>
+  onAdicionarSetor: (osId: string, setor: string, statusInicial: string) => Promise<void>
+  onRemoverSetor: (osSetorId: string) => Promise<void>
+  onCarregarKanban: () => Promise<void>
   loading: boolean
   onCriar: (os: Partial<OrdemServico>) => Promise<string | undefined>
   onAtualizar: (id: string, dados: Partial<OrdemServico>) => Promise<void>
   onExcluir: (id: string) => Promise<void>
 }
 
-export function Kanban({ ordens, etapasDoSetor, todasEtapas, campos, operadores, profiles, vinculos, criarVinculo, loading, onCriar, onAtualizar, onExcluir }: KanbanPageProps) {
+export function Kanban({
+  ordens, etapasDoSetor, todasEtapas, campos, profiles,
+  vinculos, criarVinculo,
+  kanbanItems, loadingKanban,
+  onMoverStatus, onAdicionarSetor, onRemoverSetor, onCarregarKanban,
+  loading, onCriar, onAtualizar, onExcluir,
+}: KanbanPageProps) {
   const [modalCriar, setModalCriar] = useState(false)
   const [osEditando, setOsEditando] = useState<OrdemServico | null>(null)
   const [saving, setSaving] = useState(false)
   const { toast } = useToast()
-  const { definir: definirResponsaveis } = useResponsaveis(osEditando?.id || null)
 
-  const handleMove = async (osId: string, novoStatus: string) => {
+  const handleMove = async (osSetorId: string, novoStatus: string) => {
     try {
-      await onAtualizar(osId, { status: novoStatus })
-      toast(`OS movida para ${novoStatus}`)
+      await onMoverStatus(osSetorId, novoStatus)
+      toast(`Movido para ${novoStatus}`)
     } catch (e: unknown) {
       toast((e as Error).message, 'error')
     }
   }
 
-  const handleCriar = async (data: Partial<OrdemServico>, vinculoId?: string, responsaveisIds?: string[]) => {
+  const handleEdit = (item: KanbanItem) => {
+    // Encontra a OS completa para editar
+    const os = ordens.find(o => o.id === item.os_id)
+    if (os) setOsEditando(os)
+  }
+
+  const handleCriar = async (data: Partial<OrdemServico>, vinculoId?: string, responsaveisIds?: string[], setoresIniciais?: { setor: string; status: string }[]) => {
     setSaving(true)
     try {
       const novoId = await onCriar(data)
       if (novoId) {
         if (vinculoId) await criarVinculo(novoId, vinculoId)
         if (responsaveisIds?.length) {
-          const { useResponsaveis: _ } = await import('@/hooks/useSupabase')
-          const { supabase } = await import('@/lib/supabase')
           const rows = responsaveisIds.map(user_id => ({ os_id: novoId, user_id }))
           await supabase.from('os_responsaveis').insert(rows)
         }
+        // Setor principal criado automaticamente pelo trigger trg_os_insert_setor
+        // Adicionar apenas setores extras (se houver)
+        if (setoresIniciais?.length) {
+          for (const s of setoresIniciais) {
+            await onAdicionarSetor(novoId, s.setor, s.status)
+          }
+        }
+        await onCarregarKanban()
       }
       setModalCriar(false)
       toast('OS criada com sucesso!')
@@ -65,7 +87,14 @@ export function Kanban({ ordens, etapasDoSetor, todasEtapas, campos, operadores,
     setSaving(true)
     try {
       await onAtualizar(osEditando.id, data)
-      if (responsaveisIds !== undefined) await definirResponsaveis(osEditando.id, responsaveisIds)
+      if (responsaveisIds !== undefined) {
+        await supabase.from('os_responsaveis').delete().eq('os_id', osEditando.id)
+        if (responsaveisIds.length) {
+          const rows = responsaveisIds.map(user_id => ({ os_id: osEditando.id, user_id }))
+          await supabase.from('os_responsaveis').insert(rows)
+        }
+      }
+      await onCarregarKanban()
       setOsEditando(null)
       toast('OS atualizada!')
     } catch (e: unknown) {
@@ -74,11 +103,12 @@ export function Kanban({ ordens, etapasDoSetor, todasEtapas, campos, operadores,
     setSaving(false)
   }
 
-  const handleExcluir = async (id: string) => {
+  const handleExcluir = async (osId: string) => {
     if (!confirm('Excluir esta OS?')) return
     try {
-      await onExcluir(id)
-      toast('OS excluida')
+      await onExcluir(osId)
+      await onCarregarKanban()
+      toast('OS excluída')
     } catch (e: unknown) {
       toast((e as Error).message, 'error')
     }
@@ -91,29 +121,39 @@ export function Kanban({ ordens, etapasDoSetor, todasEtapas, campos, operadores,
           <h1 className="text-3xl font-display tracking-wider text-onsurface">KANBAN POR SETOR</h1>
           <button
             onClick={() => setModalCriar(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent text-black font-body font-bold text-sm hover:bg-accent-hover transition-all shadow-lg shadow-accent/20 hover:shadow-accent/40"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent text-black font-body font-bold text-sm hover:bg-accent-hover transition-all shadow-lg shadow-accent/20"
           >
             <Plus className="w-4 h-4" /> Nova OS
           </button>
         </div>
 
         <KanbanBoard
-          ordens={ordens}
+          items={kanbanItems}
           etapasDoSetor={etapasDoSetor}
           vinculos={vinculos}
-          loading={loading}
+          loading={loadingKanban || loading}
           onMove={handleMove}
-          onEdit={setOsEditando}
+          onEdit={handleEdit}
           onDelete={handleExcluir}
         />
 
-        <Modal open={modalCriar} onClose={() => setModalCriar(false)} title="Nova Ordem de Servico" size="lg">
-          <OSForm etapasDoSetor={etapasDoSetor} campos={campos} operadores={operadores} profiles={profiles} ordens={ordens} onSave={handleCriar} onCancel={() => setModalCriar(false)} saving={saving} />
+        <Modal open={modalCriar} onClose={() => setModalCriar(false)} title="Nova Ordem de Serviço" size="lg">
+          <OSForm
+            etapasDoSetor={etapasDoSetor} campos={campos}
+            profiles={profiles} ordens={ordens}
+            onSave={handleCriar} onCancel={() => setModalCriar(false)} saving={saving}
+            onAdicionarSetor={onAdicionarSetor} onRemoverSetor={onRemoverSetor} onCarregarKanban={onCarregarKanban}
+          />
         </Modal>
 
         <Modal open={!!osEditando} onClose={() => setOsEditando(null)} title={`Editar ${osEditando?.numero || ''}`} size="lg">
           {osEditando && (
-            <OSForm os={osEditando} etapasDoSetor={etapasDoSetor} campos={campos} operadores={operadores} profiles={profiles} ordens={ordens} onSave={handleEditar} onCancel={() => setOsEditando(null)} saving={saving} />
+            <OSForm
+              os={osEditando} etapasDoSetor={etapasDoSetor} campos={campos}
+              profiles={profiles} ordens={ordens}
+              onSave={handleEditar} onCancel={() => setOsEditando(null)} saving={saving}
+              onAdicionarSetor={onAdicionarSetor} onRemoverSetor={onRemoverSetor} onCarregarKanban={onCarregarKanban}
+            />
           )}
         </Modal>
       </div>
