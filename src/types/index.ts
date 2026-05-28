@@ -13,6 +13,7 @@ export interface OrdemServico {
   extras: Record<string, unknown>
   criado_em: string
   atualizado_em: string
+  data_conclusao?: string
   // Computed pela view v_ordens_com_status
   status_geral?: 'Iniciada' | 'Em Andamento' | 'Finalizada'
   total_setores?: number
@@ -52,7 +53,7 @@ export interface OSHistorico {
   status_anterior: string
   status_novo: string
   operador: string
-  tipo: 'status' | 'criacao' | 'edicao'
+  tipo: 'status' | 'criacao' | 'edicao' | 'conclusao'
   criado_em: string
 }
 

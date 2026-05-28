@@ -20,12 +20,13 @@ interface OrdensServicoPageProps {
   onCriar: (os: Partial<OrdemServico>) => Promise<string | undefined>
   onAtualizar: (id: string, dados: Partial<OrdemServico>) => Promise<void>
   onExcluir: (id: string) => Promise<void>
+  onEncerrar: (id: string, operador: string) => Promise<void>
   onAdicionarSetor: (osId: string, setor: string, statusInicial: string) => Promise<void>
   onRemoverSetor: (osSetorId: string) => Promise<void>
   onCarregarKanban: () => Promise<void>
 }
 
-export function OrdensServico({ ordens, todasEtapas, etapasDoSetor, campos, profiles, vinculos, criarVinculo, loading, onCriar, onAtualizar, onExcluir, onAdicionarSetor, onRemoverSetor, onCarregarKanban }: OrdensServicoPageProps) {
+export function OrdensServico({ ordens, todasEtapas, etapasDoSetor, campos, profiles, vinculos, criarVinculo, loading, onCriar, onAtualizar, onExcluir, onEncerrar, onAdicionarSetor, onRemoverSetor, onCarregarKanban }: OrdensServicoPageProps) {
   const [modalCriar, setModalCriar] = useState(false)
   const [osEditando, setOsEditando] = useState<OrdemServico | null>(null)
   const [saving, setSaving] = useState(false)
@@ -89,6 +90,17 @@ export function OrdensServico({ ordens, todasEtapas, etapasDoSetor, campos, prof
     setSaving(false)
   }
 
+  const handleEncerrar = async (osId: string) => {
+    const os = ordens.find(o => o.id === osId)
+    try {
+      await onEncerrar(osId, os?.operador || '')
+      setOsEditando(null)
+      toast('OS encerrada e registrada!')
+    } catch (e: unknown) {
+      toast((e as Error).message, 'error')
+    }
+  }
+
   const handleExcluir = async (id: string) => {
     if (!confirm('Excluir esta OS?')) return
     try {
@@ -133,6 +145,7 @@ export function OrdensServico({ ordens, todasEtapas, etapasDoSetor, campos, prof
               os={osEditando} etapasDoSetor={etapasDoSetor} campos={campos} profiles={profiles} ordens={ordens}
               onSave={handleEditar} onCancel={() => setOsEditando(null)} saving={saving}
               onAdicionarSetor={onAdicionarSetor} onRemoverSetor={onRemoverSetor} onCarregarKanban={onCarregarKanban}
+              onEncerrar={handleEncerrar}
             />
           )}
         </Modal>

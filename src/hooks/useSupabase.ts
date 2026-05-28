@@ -51,6 +51,18 @@ export function useOrdens() {
     await carregar()
   }
 
+  const encerrar = async (id: string, operador: string) => {
+    const osAtual = ordens.find(o => o.id === id)
+    const agora = new Date().toISOString()
+    const { error } = await supabase.from('ordens_servico').update({ data_conclusao: agora }).eq('id', id)
+    if (error) throw new Error(error.message)
+    await supabase.from('os_historico').insert([{
+      os_id: id, setor: osAtual?.setor || '', status_anterior: osAtual?.status || '',
+      status_novo: osAtual?.status || '', operador, tipo: 'conclusao',
+    }])
+    await carregar()
+  }
+
   const excluir = async (id: string) => {
     await supabase.from('os_historico').delete().eq('os_id', id)
     await supabase.from('os_vinculos').delete().or(`os_origem.eq.${id},os_destino.eq.${id}`)
@@ -59,7 +71,7 @@ export function useOrdens() {
     await carregar()
   }
 
-  return { ordens, loading, carregar, criar, atualizar, excluir }
+  return { ordens, loading, carregar, criar, atualizar, encerrar, excluir }
 }
 
 export function useEtapas() {

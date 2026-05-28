@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Link2, ChevronDown, Phone, User, X, Plus, Layers, Clock, Trash2 } from 'lucide-react'
+import { Link2, ChevronDown, Phone, User, X, Plus, Layers, Clock, Trash2, CheckCircle2 } from 'lucide-react'
 import { SETORES, TIPOS_OS, corDoSetor } from '@/lib/constants'
 import { gerarNumeroOS } from '@/lib/utils'
 import { useHistorico, useResponsaveis, useOSSetoresParaOS } from '@/hooks/useSupabase'
@@ -24,12 +24,13 @@ interface OSFormProps {
   onAdicionarSetor?: (osId: string, setor: string, statusInicial: string) => Promise<void>
   onRemoverSetor?: (osSetorId: string) => Promise<void>
   onCarregarKanban?: () => Promise<void>
+  onEncerrar?: (osId: string) => Promise<void>
 }
 
 export function OSForm({
   os, etapasDoSetor, campos, profiles, ordens,
   onSave, onCancel, saving,
-  onAdicionarSetor, onRemoverSetor, onCarregarKanban,
+  onAdicionarSetor, onRemoverSetor, onCarregarKanban, onEncerrar,
 }: OSFormProps) {
   const isEdit = !!os
   const submittingRef = useRef(false)
@@ -67,6 +68,8 @@ export function OSForm({
   const [adicionandoSetor, setAdicionandoSetor] = useState(false)
   const [novoSetor, setNovoSetor] = useState('')
   const [novoStatus, setNovoStatus] = useState('')
+
+  const [encerrando, setEncerrando] = useState(false)
 
   // Status por setor em modo edição
   const [mudandoStatusSetor, setMudandoStatusSetor] = useState<Record<string, string>>({})
@@ -117,6 +120,28 @@ export function OSForm({
       }
     }
   }, [adicionandoSetor]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Encerrar OS ──────────────────────────────────────────────────
+  const ultimaEtapa = useMemo(() => {
+    if (!os) return null
+    const etapas = etapasDoSetor(os.setor)
+    return etapas.length > 0 ? etapas[etapas.length - 1] : null
+  }, [os, etapasDoSetor])
+
+  const isUltimaEtapa = !!(ultimaEtapa && os?.status === ultimaEtapa.label)
+
+  const handleEncerrar = async () => {
+    if (!os || !onEncerrar) return
+    if (!confirm('Encerrar esta OS e registrar como entregue?')) return
+    setEncerrando(true)
+    try {
+      await onEncerrar(os.id)
+      onCancel()
+    } catch (e: unknown) {
+      console.error((e as Error).message)
+    }
+    setEncerrando(false)
+  }
 
   // ── Dados derivados ──────────────────────────────────────────────
   const etapasDoSetor1 = useMemo(() => etapasDoSetor(form.setor), [etapasDoSetor, form.setor])
@@ -552,11 +577,34 @@ export function OSForm({
                     {h.tipo === 'criacao' && 'OS criada'}
                     {h.tipo === 'edicao' && 'Dados editados'}
                     {h.tipo === 'status' && <><span className="text-dark-muted">{h.status_anterior}</span> → <span className="text-accent">{h.status_novo}</span></>}
+                    {h.tipo === 'conclusao' && <span className="text-emerald-400 font-semibold">✓ OS Encerrada / Entregue</span>}
                   </span>
                   {h.operador && <span className="text-dark-muted">· {h.operador}</span>}
                 </div>
               ))}
             </div>
+          )}
+        </div>
+      )}
+
+      {/* Encerrar OS */}
+      {isEdit && isUltimaEtapa && onEncerrar && (
+        <div className="border-t border-dark-border pt-4">
+          {os?.data_conclusao ? (
+            <div className="flex items-center gap-2 text-sm text-emerald-400 font-body font-semibold">
+              <CheckCircle2 className="w-4 h-4" />
+              OS encerrada em {new Date(os.data_conclusao).toLocaleString('pt-BR')}
+            </div>
+          ) : (
+            <button
+              type="button"
+              disabled={encerrando}
+              onClick={handleEncerrar}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-body font-bold text-sm hover:bg-emerald-500/25 transition-all disabled:opacity-50"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              {encerrando ? 'Encerrando...' : 'Encerrar OS e Registrar Entrega'}
+            </button>
           )}
         </div>
       )}

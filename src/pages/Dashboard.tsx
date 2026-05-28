@@ -46,8 +46,8 @@ export function Dashboard({ ordens, todasEtapas, etapasDoSetor, todasEtapasUnica
   }).length
   const mes = new Date().getMonth()
   const concluidas = ordens.filter(o => {
-    const d = new Date(o.atualizado_em || o.criado_em)
-    return finalStatuses.has(o.status) && d.getMonth() === mes
+    if (!o.data_conclusao) return false
+    return new Date(o.data_conclusao).getMonth() === mes
   }).length
   const patio = ordens.filter(o => o.setor === 'Veículo Diesel' && !finalStatuses.has(o.status)).length
 

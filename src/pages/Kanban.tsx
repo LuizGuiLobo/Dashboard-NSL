@@ -26,6 +26,7 @@ interface KanbanPageProps {
   onCriar: (os: Partial<OrdemServico>) => Promise<string | undefined>
   onAtualizar: (id: string, dados: Partial<OrdemServico>) => Promise<void>
   onExcluir: (id: string) => Promise<void>
+  onEncerrar: (id: string, operador: string) => Promise<void>
 }
 
 export function Kanban({
@@ -33,7 +34,7 @@ export function Kanban({
   vinculos, criarVinculo,
   kanbanItems, loadingKanban,
   onMoverStatus, onAdicionarSetor, onRemoverSetor, onCarregarKanban,
-  loading, onCriar, onAtualizar, onExcluir,
+  loading, onCriar, onAtualizar, onExcluir, onEncerrar,
 }: KanbanPageProps) {
   const [modalCriar, setModalCriar] = useState(false)
   const [osEditando, setOsEditando] = useState<OrdemServico | null>(null)
@@ -121,6 +122,18 @@ export function Kanban({
     setSaving(false)
   }
 
+  const handleEncerrar = async (osId: string) => {
+    const os = ordens.find(o => o.id === osId)
+    try {
+      await onEncerrar(osId, os?.operador || '')
+      await onCarregarKanban()
+      setOsEditando(null)
+      toast('OS encerrada e registrada!')
+    } catch (e: unknown) {
+      toast((e as Error).message, 'error')
+    }
+  }
+
   const handleExcluir = async (osId: string) => {
     if (!confirm('Excluir esta OS?')) return
     try {
@@ -171,6 +184,7 @@ export function Kanban({
               profiles={profiles} ordens={ordens}
               onSave={handleEditar} onCancel={() => setOsEditando(null)} saving={saving}
               onAdicionarSetor={onAdicionarSetor} onRemoverSetor={onRemoverSetor} onCarregarKanban={onCarregarKanban}
+              onEncerrar={handleEncerrar}
             />
           )}
         </Modal>

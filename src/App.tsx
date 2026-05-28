@@ -37,7 +37,7 @@ export default function App() {
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') !== 'light')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-  const { ordens, loading: loadingOS, criar, atualizar, excluir } = useOrdens()
+  const { ordens, loading: loadingOS, criar, atualizar, encerrar, excluir } = useOrdens()
   const { todasEtapas, loading: loadingEtapas, etapasDoSetor, todasEtapasUnicas, salvarSetor, carregar: carregarEtapas } = useEtapas()
   const { campos, loading: loadingCampos, salvar: salvarCampos } = useCampos()
   const { operadores, loading: loadingOps, salvar: salvarOperadores } = useOperadores()
@@ -99,7 +99,7 @@ export default function App() {
                       onMoverStatus={moverStatus} onAdicionarSetor={adicionarSetor} onRemoverSetor={removerSetor}
                       onCarregarKanban={carregarKanban}
                       loading={loading}
-                      onCriar={criar} onAtualizar={atualizar} onExcluir={excluir}
+                      onCriar={criar} onAtualizar={atualizar} onExcluir={excluir} onEncerrar={encerrar}
                     />
                   } />
                   <Route path="/ordens" element={
@@ -107,7 +107,7 @@ export default function App() {
                       ordens={ordens} todasEtapas={todasEtapas} etapasDoSetor={etapasDoSetor} campos={campos}
                       vinculos={vinculos} criarVinculo={criarVinculo} profiles={profiles}
                       loading={loading}
-                      onCriar={criar} onAtualizar={atualizar} onExcluir={excluir}
+                      onCriar={criar} onAtualizar={atualizar} onExcluir={excluir} onEncerrar={encerrar}
                       onAdicionarSetor={adicionarSetor} onRemoverSetor={removerSetor} onCarregarKanban={carregarKanban}
                     />
                   } />
