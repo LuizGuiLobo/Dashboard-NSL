@@ -19,6 +19,15 @@ export interface OrdemServico {
   total_setores?: number
 }
 
+export interface HistoricoMensal {
+  mes: string
+  mes_label: string
+  total_os: number
+  total_veiculos: number
+  total_pecas: number
+  media_dias: number
+}
+
 export interface EtapaKanban {
   id: string
   etapa_id?: string

@@ -10,9 +10,10 @@ interface KanbanColumnProps {
   vinculosCountMap: Record<string, number>
   onEdit: (item: KanbanItem) => void
   onDelete: (osId: string) => void
+  onFinalizar?: (osId: string) => void
 }
 
-export function KanbanColumn({ etapa, items, vinculosCountMap, onEdit, onDelete }: KanbanColumnProps) {
+export function KanbanColumn({ etapa, items, vinculosCountMap, onEdit, onDelete, onFinalizar }: KanbanColumnProps) {
   const { isOver, setNodeRef } = useDroppable({ id: etapa.label })
 
   return (
@@ -50,6 +51,7 @@ export function KanbanColumn({ etapa, items, vinculosCountMap, onEdit, onDelete 
               vinculosCount={vinculosCountMap[item.os_id] || 0}
               onEdit={onEdit}
               onDelete={onDelete}
+              onFinalizar={onFinalizar}
             />
           ))
         )}

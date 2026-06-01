@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { OrdemServico, EtapaKanban, CampoConfig, Operador, OSVinculo, OSHistorico, Profile, KanbanItem, OSSetorDetalhe } from '@/types'
+import type { OrdemServico, EtapaKanban, CampoConfig, Operador, OSVinculo, OSHistorico, Profile, KanbanItem, OSSetorDetalhe, HistoricoMensal } from '@/types'
 
 export function useOrdens() {
   const [ordens, setOrdens] = useState<OrdemServico[]>([])
@@ -252,7 +252,32 @@ export function useKanban() {
     await carregar()
   }
 
-  return { items, loading, carregar, moverStatus, adicionarSetor, removerSetor }
+  const finalizarOS = async (osId: string) => {
+    const { error } = await supabase.rpc('finalizar_os', { p_os_id: osId })
+    if (error) throw new Error(error.message)
+    await carregar()
+  }
+
+  return { items, loading, carregar, moverStatus, adicionarSetor, removerSetor, finalizarOS }
+}
+
+export function useHistoricoMensal() {
+  const [historico, setHistorico] = useState<HistoricoMensal[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const carregar = useCallback(async () => {
+    setLoading(true)
+    const { data, error } = await supabase
+      .from('v_historico_mensal')
+      .select('*')
+    if (error) console.error('Erro ao carregar histórico mensal:', error.message)
+    setHistorico((data as HistoricoMensal[]) || [])
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { carregar() }, [carregar])
+
+  return { historico, loading, carregar }
 }
 
 export function useOSSetoresParaOS(osId: string | null) {

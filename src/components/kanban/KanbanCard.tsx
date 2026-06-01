@@ -1,6 +1,6 @@
 import { useDraggable } from '@dnd-kit/core'
 import { motion } from 'framer-motion'
-import { Pencil, Trash2, User, Clock, Link } from 'lucide-react'
+import { Pencil, Trash2, User, Clock, Link, CheckCircle2 } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
 import { diasDesdeEntrada, badgeDias } from '@/lib/utils'
 import { corDoSetor } from '@/lib/constants'
@@ -11,10 +11,11 @@ interface KanbanCardProps {
   vinculosCount?: number
   onEdit: (item: KanbanItem) => void
   onDelete: (osId: string) => void
+  onFinalizar?: (osId: string) => void
   overlay?: boolean
 }
 
-export function KanbanCard({ item, vinculosCount, onEdit, onDelete, overlay }: KanbanCardProps) {
+export function KanbanCard({ item, vinculosCount, onEdit, onDelete, onFinalizar, overlay }: KanbanCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: item.os_setor_id })
   const dias = diasDesdeEntrada(item.data_entrada)
   const diasStyle = badgeDias(dias)
@@ -42,6 +43,20 @@ export function KanbanCard({ item, vinculosCount, onEdit, onDelete, overlay }: K
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-mono font-bold text-accent">{item.numero}</span>
         <div className="flex gap-1">
+          {onFinalizar && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                if (confirm(`Finalizar OS ${item.numero}? Todos os setores serão encerrados.`)) {
+                  onFinalizar(item.os_id)
+                }
+              }}
+              title="Finalizar OS"
+              className="p-1 rounded text-dark-muted hover:text-emerald-400 hover:bg-emerald-500/10 transition-all"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+            </button>
+          )}
           <button
             onClick={(e) => { e.stopPropagation(); onEdit(item) }}
             className="p-1 rounded text-dark-muted hover:text-accent hover:bg-accent/10 transition-all"

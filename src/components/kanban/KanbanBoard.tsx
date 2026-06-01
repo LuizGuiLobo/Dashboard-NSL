@@ -16,9 +16,10 @@ interface KanbanBoardProps {
   onMove: (osSetorId: string, novoStatus: string) => void
   onEdit: (item: KanbanItem) => void
   onDelete: (osId: string) => void
+  onFinalizar: (osId: string) => void
 }
 
-export function KanbanBoard({ items, etapasDoSetor, vinculos, loading, onMove, onEdit, onDelete }: KanbanBoardProps) {
+export function KanbanBoard({ items, etapasDoSetor, vinculos, loading, onMove, onEdit, onDelete, onFinalizar }: KanbanBoardProps) {
   const [setorAtivo, setSetorAtivo] = useState(SETORES[0].nome)
   const [dragging, setDragging] = useState<KanbanItem | null>(null)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
@@ -104,6 +105,7 @@ export function KanbanBoard({ items, etapasDoSetor, vinculos, loading, onMove, o
                   vinculosCountMap={vinculosCountMap}
                   onEdit={onEdit}
                   onDelete={onDelete}
+                  onFinalizar={onFinalizar}
                 />
               ))
             )}

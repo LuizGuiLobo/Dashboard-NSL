@@ -26,7 +26,7 @@ interface KanbanPageProps {
   onCriar: (os: Partial<OrdemServico>) => Promise<string | undefined>
   onAtualizar: (id: string, dados: Partial<OrdemServico>) => Promise<void>
   onExcluir: (id: string) => Promise<void>
-  onEncerrar: (id: string, operador: string) => Promise<void>
+  onFinalizarOS: (osId: string) => Promise<void>
 }
 
 export function Kanban({
@@ -34,7 +34,7 @@ export function Kanban({
   vinculos, criarVinculo,
   kanbanItems, loadingKanban,
   onMoverStatus, onAdicionarSetor, onRemoverSetor, onCarregarKanban,
-  loading, onCriar, onAtualizar, onExcluir, onEncerrar,
+  loading, onCriar, onAtualizar, onExcluir, onFinalizarOS,
 }: KanbanPageProps) {
   const [modalCriar, setModalCriar] = useState(false)
   const [osEditando, setOsEditando] = useState<OrdemServico | null>(null)
@@ -122,13 +122,12 @@ export function Kanban({
     setSaving(false)
   }
 
-  const handleEncerrar = async (osId: string) => {
-    const os = ordens.find(o => o.id === osId)
+  const handleFinalizar = async (osId: string) => {
     try {
-      await onEncerrar(osId, os?.operador || '')
+      await onFinalizarOS(osId)
       await onCarregarKanban()
       setOsEditando(null)
-      toast('OS encerrada e registrada!')
+      toast('OS finalizada e registrada no histórico!')
     } catch (e: unknown) {
       toast((e as Error).message, 'error')
     }
@@ -166,6 +165,7 @@ export function Kanban({
           onMove={handleMove}
           onEdit={handleEdit}
           onDelete={handleExcluir}
+          onFinalizar={handleFinalizar}
         />
 
         <Modal open={modalCriar} onClose={() => setModalCriar(false)} title="Nova Ordem de Serviço" size="lg">
@@ -184,7 +184,7 @@ export function Kanban({
               profiles={profiles} ordens={ordens}
               onSave={handleEditar} onCancel={() => setOsEditando(null)} saving={saving}
               onAdicionarSetor={onAdicionarSetor} onRemoverSetor={onRemoverSetor} onCarregarKanban={onCarregarKanban}
-              onEncerrar={handleEncerrar}
+              onEncerrar={handleFinalizar}
             />
           )}
         </Modal>

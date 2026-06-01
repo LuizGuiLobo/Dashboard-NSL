@@ -43,7 +43,7 @@ export default function App() {
   const { operadores, loading: loadingOps, salvar: salvarOperadores } = useOperadores()
   const { vinculos, criar: criarVinculo } = useVinculos()
   const { profiles, carregar: carregarProfiles, salvar: salvarProfile } = useProfiles()
-  const { items: kanbanItems, loading: loadingKanban, carregar: carregarKanban, moverStatus, adicionarSetor, removerSetor } = useKanban()
+  const { items: kanbanItems, loading: loadingKanban, carregar: carregarKanban, moverStatus, adicionarSetor, removerSetor, finalizarOS } = useKanban()
 
   const loading = loadingOS || loadingEtapas
 
@@ -99,7 +99,7 @@ export default function App() {
                       onMoverStatus={moverStatus} onAdicionarSetor={adicionarSetor} onRemoverSetor={removerSetor}
                       onCarregarKanban={carregarKanban}
                       loading={loading}
-                      onCriar={criar} onAtualizar={atualizar} onExcluir={excluir} onEncerrar={encerrar}
+                      onCriar={criar} onAtualizar={atualizar} onExcluir={excluir} onFinalizarOS={finalizarOS}
                     />
                   } />
                   <Route path="/ordens" element={
