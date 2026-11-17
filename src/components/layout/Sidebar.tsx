@@ -30,7 +30,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 h-16">
         <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{ background: 'linear-gradient(135deg, #B3C5FE 0%, #405284 100%)' }}
+          style={{ background: 'linear-gradient(135deg, #2faa4a 0%, #1d7a35 100%)' }}
         >
           <Fuel className="w-5 h-5 text-white" />
         </div>

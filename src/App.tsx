@@ -32,7 +32,7 @@ function AuthGuard({ children }: { children: (user: User) => React.ReactNode }) 
   return <>{children(user)}</>
 }
 
-export default function App() {
+function AppShell({ currentUser }: { currentUser: User }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') !== 'light')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -57,8 +57,6 @@ export default function App() {
   }, [darkMode])
 
   return (
-    <AuthGuard>
-    {(currentUser) => (
     <BrowserRouter>
       <ToastProvider>
         <div className="min-h-screen bg-dark-bg text-onsurface font-body">
@@ -129,7 +127,20 @@ export default function App() {
         </div>
       </ToastProvider>
     </BrowserRouter>
-    )}
+  )
+}
+
+// Os dados só são carregados depois do login: o AppShell (e seus hooks)
+// só é montado quando existe sessão. Antes disso, nenhuma consulta é feita.
+export default function App() {
+  useEffect(() => {
+    const dark = localStorage.getItem('theme') !== 'light'
+    document.documentElement.classList.toggle('dark', dark)
+  }, [])
+
+  return (
+    <AuthGuard>
+      {(currentUser) => <AppShell key={currentUser.id} currentUser={currentUser} />}
     </AuthGuard>
   )
 }

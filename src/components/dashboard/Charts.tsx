@@ -126,10 +126,10 @@ export function ChartEvolucaoMensal({ ordens }: { ordens: OrdemServico[] }) {
           <Line
             type="monotone"
             dataKey="abertas"
-            stroke="#FFBA46"
+            stroke="#2faa4a"
             strokeWidth={2.5}
-            dot={{ fill: '#FFBA46', r: 4, strokeWidth: 0 }}
-            activeDot={{ r: 6, fill: '#FFBA46', stroke: '#FFDDB0', strokeWidth: 2 }}
+            dot={{ fill: '#2faa4a', r: 4, strokeWidth: 0 }}
+            activeDot={{ r: 6, fill: '#2faa4a', stroke: '#5fd07c', strokeWidth: 2 }}
             animationDuration={1500}
           />
         </LineChart>

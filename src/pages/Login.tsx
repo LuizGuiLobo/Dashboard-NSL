@@ -22,8 +22,9 @@ export function Login() {
     <div className="min-h-screen bg-dark-bg flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-display tracking-widest text-onsurface">NSL DIESEL</h1>
-          <p className="text-sm text-dark-muted font-body mt-1">Sistema de Gestão Operacional</p>
+          <p className="text-xs font-body font-bold uppercase tracking-wider text-accent mb-2">Gestão operacional</p>
+          <h1 className="text-3xl font-display font-bold text-onsurface">Nova São Luiz Diesel</h1>
+          <div className="mx-auto mt-4 h-1.5 w-20 rounded-full bg-accent" aria-hidden="true" />
         </div>
 
         <form onSubmit={handleLogin} className="bg-dark-surface border border-dark-border rounded-2xl p-6 space-y-4 shadow-2xl">

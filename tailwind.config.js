@@ -13,14 +13,15 @@ module.exports = {
           border: 'var(--color-border)',
           muted: 'var(--color-muted)',
         },
+        // Design system Nova São Luiz Diesel
         primary: {
-          DEFAULT: '#B3C5FE',
-          container: '#405284',
+          DEFAULT: 'rgb(var(--primary-rgb) / <alpha-value>)',
+          container: '#1b2a8c',
         },
         accent: {
-          DEFAULT: '#FFBA46',
-          hover: '#D08E00',
-          fixed: '#FFDDB0',
+          DEFAULT: 'rgb(var(--accent-rgb) / <alpha-value>)',
+          hover: '#27903f',
+          fixed: '#bfe8c9',
         },
         onsurface: 'var(--color-onsurface)',
         setor: {
@@ -33,8 +34,8 @@ module.exports = {
         },
       },
       fontFamily: {
-        display: ['"Manrope"', 'sans-serif'],
-        body: ['"Inter"', 'sans-serif'],
+        display: ['"Outfit"', '"Century Gothic"', 'system-ui', 'sans-serif'],
+        body: ['"Outfit"', '"Century Gothic"', 'system-ui', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'monospace'],
       },
       keyframes: {

@@ -4,38 +4,48 @@
 
 /* ── Theme tokens ─────────────────────────────────────── */
 :root {
-  --color-bg: #131313;
-  --color-surface: #1B1B1B;
-  --color-surface2: #2A2A2A;
-  --color-surface3: #353535;
-  --color-border: #44464F;
-  --color-muted: #737373;
-  --color-onsurface: #E5E2E1;
-  --modal-bg: rgba(53, 53, 53, 0.82);
-  --modal-border: rgba(68, 70, 79, 0.25);
-  --chart-tooltip-bg: rgba(53, 53, 53, 0.92);
-  --chart-tooltip-border: rgba(68, 70, 79, 0.3);
-  --chart-grid: #2A2A2A;
-  --scrollbar-thumb: #44464F;
-  --scrollbar-thumb-hover: #5C5F6B;
+  /* Design system Nova São Luiz Diesel — tema escuro */
+  --color-bg: #131316;        /* grafite-profundo */
+  --color-surface: #1e1e22;   /* superficie */
+  --color-surface2: #29292e;
+  --color-surface3: #3a3a3e;  /* grafite */
+  --color-border: #3a3b40;    /* linha */
+  --color-muted: #b4b6bc;     /* mudo */
+  --color-onsurface: #f3f3f1; /* tinta */
+  --accent-rgb: 47 170 74;    /* verde */
+  --accent-text: #5fd07c;     /* verde-texto */
+  --primary-rgb: 107 124 242; /* azul-royal */
+  --modal-bg: rgba(41, 41, 46, 0.9);
+  --modal-border: rgba(58, 59, 64, 0.6);
+  --chart-tooltip-bg: rgba(41, 41, 46, 0.95);
+  --chart-tooltip-border: rgba(58, 59, 64, 0.6);
+  --chart-grid: #29292e;
+  --scrollbar-thumb: #3a3b40;
+  --scrollbar-thumb-hover: #4d4e53;
 }
 
 html:not(.dark) {
-  --color-bg: #F0F0F0;
-  --color-surface: #FFFFFF;
-  --color-surface2: #F7F7F7;
-  --color-surface3: #EFEFEF;
-  --color-border: #D0D0D0;
-  --color-muted: #8A8A8A;
-  --color-onsurface: #1C1C1C;
-  --modal-bg: rgba(255, 255, 255, 0.92);
+  /* Design system Nova São Luiz Diesel — tema claro */
+  --color-bg: #f6f6f4;        /* superficie */
+  --color-surface: #ffffff;
+  --color-surface2: #f0f0ee;
+  --color-surface3: #e6e6e3;
+  --color-border: #d9dadb;    /* linha */
+  --color-muted: #60626a;     /* mudo */
+  --color-onsurface: #232326; /* tinta */
+  --accent-text: #1d7a35;     /* verde-texto */
+  --primary-rgb: 27 42 140;   /* azul-royal */
+  --modal-bg: rgba(255, 255, 255, 0.95);
   --modal-border: rgba(0, 0, 0, 0.12);
   --chart-tooltip-bg: rgba(255, 255, 255, 0.97);
   --chart-tooltip-border: rgba(0, 0, 0, 0.12);
-  --chart-grid: #E0E0E0;
-  --scrollbar-thumb: #C0C0C0;
-  --scrollbar-thumb-hover: #A0A0A0;
+  --chart-grid: #e6e6e3;
+  --scrollbar-thumb: #c4c5c7;
+  --scrollbar-thumb-hover: #a5a6a9;
 }
+
+/* Texto em verde usa o tom de texto do design system (contraste AA) */
+.text-accent { color: var(--accent-text); }
 
 /* ── Scrollbar ────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -44,13 +54,13 @@ html:not(.dark) {
 ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
 
 /* ── Selection ────────────────────────────────────────── */
-::selection { background: rgba(255, 186, 70, 0.25); color: inherit; }
+::selection { background: rgba(47, 170, 74, 0.28); color: inherit; }
 
 /* ── Base ─────────────────────────────────────────────── */
 body {
   background: var(--color-bg);
   color: var(--color-onsurface);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Outfit', 'Century Gothic', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -61,7 +71,7 @@ body {
 
 /* ── Focus visible ────────────────────────────────────── */
 :focus-visible {
-  outline: 2px solid #FFBA46;
+  outline: 2px solid #2faa4a;
   outline-offset: 2px;
   border-radius: 4px;
 }
